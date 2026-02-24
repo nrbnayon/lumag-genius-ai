@@ -104,8 +104,26 @@ export const SignInForm = () => {
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col lg:flex-row-reverse">
-      {/* Left - Form */}
+    <div className="relative h-screen w-full flex flex-col lg:flex-row">
+      {/* Left - Image (hidden on mobile) */}
+      <motion.div
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="hidden lg:block lg:flex-1 h-screen overflow-hidden bg-[#E6F4FF]"
+      >
+        <div className="w-full h-full flex items-center justify-center">
+          <Image
+            src="/auth/logo.png"
+            alt="Auth Background"
+            width={200}
+            height={200}
+            className="object-cover"
+          />
+        </div>
+      </motion.div>
+
+      {/* Right - Form */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -115,16 +133,6 @@ export const SignInForm = () => {
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
           {/* Logo + Title */}
           <div className="text-center space-y-3">
-            <div className="flex justify-center mb-6 md:mb-8">
-              <Image
-                src="/icons/logo.png"
-                alt="Xandra Logo"
-                width={140}
-                height={140}
-                className="w-28 sm:w-36 h-auto"
-                priority
-              />
-            </div>
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
               Log In
             </h1>
@@ -224,9 +232,6 @@ export const SignInForm = () => {
           </form>
         </div>
       </motion.div>
-
-      {/* Right - Image (hidden on mobile) */}
-      <RightSideImage />
     </div>
   );
 };

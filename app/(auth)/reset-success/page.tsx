@@ -20,7 +20,7 @@ export default function ResetSuccessPage() {
           {/* Logo */}
           <div className="flex justify-center mb-6 md:mb-8">
             <Image
-              src="/icons/logo.png"
+              src="/auth/reset-success.png"
               alt="Xandra Logo"
               width={140}
               height={140}

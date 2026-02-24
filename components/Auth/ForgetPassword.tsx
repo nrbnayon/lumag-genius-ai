@@ -74,13 +74,33 @@ const ForgetPassword = () => {
   };
 
   return (
-    <div className="relative h-screen w-full flex flex-col lg:flex-row-reverse">
-      {/* Left - Form */}
+    <div className="relative h-screen w-full flex flex-col lg:flex-row">
+
+       <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="hidden lg:block lg:flex-1 h-screen bg-[#E6F4FF]"
+      >
+        <div className="w-full h-full flex items-center justify-center p-20">
+          <div className="relative w-full h-full max-w-2xl transition-transform duration-700 hover:scale-105">
+            <Image
+              src="/auth/forget-password.png"
+              alt="Security Illustration"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Right - Form */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7 }}
-        className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-white lg:min-h-screen"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6 }}
+        className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white"
       >
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
           {/* Logo + Title */}
@@ -151,8 +171,6 @@ const ForgetPassword = () => {
         </div>
       </motion.div>
 
-      {/* Right - Image (hidden on mobile) */}
-      <RightSideImage />
     </div>
   );
 };
