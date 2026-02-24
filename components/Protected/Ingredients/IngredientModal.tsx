@@ -345,7 +345,7 @@ export function IngredientModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2 bg-[#0190FE] text-white rounded-full font-semibold hover:bg-blue-600 transition-colors shadow-sm cursor-pointer"
+              className="flex-1 px-6 py-2 bg-primary text-white rounded-full font-semibold hover:bg-blue-600 transition-colors shadow-sm cursor-pointer"
             >
               {mode === "add" ? "+ Add" : "Save"}
             </button>

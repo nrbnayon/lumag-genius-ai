@@ -57,7 +57,7 @@ export function ExportModal({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
+      <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
