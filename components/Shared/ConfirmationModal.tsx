@@ -34,16 +34,14 @@ export function ConfirmationModal({
         <button
           onClick={onClose}
           disabled={isLoading}
-          className="absolute right-4 top-4 text-secondary hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50"
+          className="absolute right-4 top-4 text-secondary hover:text-foreground dark:hover:text-gray-200 disabled:opacity-50"
         >
           <X size={20} />
         </button>
 
         <h3 className="text-lg font-semibold text-primary mb-2">{title}</h3>
 
-        <p className="text-sm text-secondary mb-6">
-          {message}
-        </p>
+        <p className="text-sm text-secondary mb-6">{message}</p>
 
         <div className="flex justify-end gap-3">
           <Button
@@ -58,7 +56,7 @@ export function ConfirmationModal({
             variant={isDestructive ? "destructive" : "default"}
             onClick={() => {
               // We don't close immediately if loading is involved, usually parent handles that
-              onConfirm(); 
+              onConfirm();
             }}
             disabled={isLoading}
             className={

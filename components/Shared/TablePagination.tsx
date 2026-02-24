@@ -29,7 +29,7 @@ export function TablePagination({
 }: TablePaginationProps) {
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
-    
+
     if (totalPages <= 7) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -45,7 +45,7 @@ export function TablePagination({
           totalPages - 3,
           totalPages - 2,
           totalPages - 1,
-          totalPages
+          totalPages,
         );
       } else {
         pages.push(
@@ -55,7 +55,7 @@ export function TablePagination({
           currentPage,
           currentPage + 1,
           "...",
-          totalPages
+          totalPages,
         );
       }
     }
@@ -71,14 +71,14 @@ export function TablePagination({
     <div
       className={cn(
         "px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-4">
         <div className="text-sm text-secondary">
           Showing {startItem} to {endItem} of {totalItems} entries
         </div>
-        
+
         {showPageSize && onPageSizeChange && (
           <div className="flex items-center gap-2">
             <label htmlFor="pageSize" className="text-sm text-secondary">
@@ -130,7 +130,7 @@ export function TablePagination({
                 "w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors cursor-pointer",
                 currentPage === page
                   ? "bg-primary text-white shadow-sm"
-                  : "border border-gray-200 text-gray-700 hover:bg-gray-100"
+                  : "border border-gray-200 text-foreground hover:bg-gray-100",
               )}
               aria-label={`Go to page ${page}`}
               aria-current={currentPage === page ? "page" : undefined}

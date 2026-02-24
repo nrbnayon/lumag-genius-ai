@@ -12,12 +12,19 @@ export function RecentAlerts() {
       </div>
       <div className="space-y-4">
         {recentAlerts.map((alert) => (
-          <div key={alert.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+          <div
+            key={alert.id}
+            className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
+          >
             <div className="flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-red-500" />
-              <span className="text-gray-700 text-sm font-medium">{alert.title}</span>
+              <span className="text-foreground text-sm font-medium">
+                {alert.title}
+              </span>
             </div>
-            <span className="text-gray-400 text-xs whitespace-nowrap">{alert.time}</span>
+            <span className="text-gray-400 text-xs whitespace-nowrap">
+              {alert.time}
+            </span>
           </div>
         ))}
       </div>

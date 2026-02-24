@@ -42,7 +42,7 @@ export default function PrivacyPolicyClient() {
 
   const handleTitleChange = (id: string, value: string) => {
     setPolicies(
-      policies.map((p) => (p.id === id ? { ...p, title: value } : p))
+      policies.map((p) => (p.id === id ? { ...p, title: value } : p)),
     );
     setHasChanges(true);
   };
@@ -55,17 +55,14 @@ export default function PrivacyPolicyClient() {
       return;
     }
     setPolicies(
-      policies.map((p) => (p.id === id ? { ...p, description: value } : p))
+      policies.map((p) => (p.id === id ? { ...p, description: value } : p)),
     );
     setHasChanges(true);
   };
 
   const handleAddPolicy = () => {
     const newId = Date.now().toString();
-    setPolicies([
-      ...policies,
-      { id: newId, title: "", description: "" },
-    ]);
+    setPolicies([...policies, { id: newId, title: "", description: "" }]);
     setHasChanges(true);
     toast.success("New policy added", {
       description: "Fill in the details for the new policy.",
@@ -89,7 +86,7 @@ export default function PrivacyPolicyClient() {
   const handleSave = async () => {
     // Validate all policies
     const hasEmptyFields = policies.some(
-      (p) => !p.title.trim() || !p.description.trim()
+      (p) => !p.title.trim() || !p.description.trim(),
     );
 
     if (hasEmptyFields) {
@@ -109,7 +106,7 @@ export default function PrivacyPolicyClient() {
       });
       setHasChanges(false);
     } catch (error) {
-      console.error(error)
+      console.error(error);
       toast.error("Failed to save", {
         description: "Please try again.",
       });
@@ -121,7 +118,7 @@ export default function PrivacyPolicyClient() {
   const handleCancel = () => {
     if (hasChanges) {
       const confirm = window.confirm(
-        "You have unsaved changes. Are you sure you want to cancel?"
+        "You have unsaved changes. Are you sure you want to cancel?",
       );
       if (!confirm) return;
     }
@@ -166,7 +163,7 @@ export default function PrivacyPolicyClient() {
             variant="outline"
             onClick={handleCancel}
             disabled={isSaving}
-            className="text-gray-700 border-gray-300 hover:bg-gray-50 dark:text-gray-200 dark:border-secondary  "
+            className="text-foreground border-gray-300 hover:bg-gray-50 dark:text-gray-200 dark:border-secondary  "
           >
             Cancel
           </Button>
@@ -200,7 +197,7 @@ export default function PrivacyPolicyClient() {
 
             <div className="flex flex-col gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-medium text-foreground dark:text-gray-300">
                   Policy title
                 </label>
                 <Input
@@ -212,7 +209,7 @@ export default function PrivacyPolicyClient() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="text-sm font-medium text-foreground dark:text-gray-300">
                   Description
                 </label>
                 <Textarea

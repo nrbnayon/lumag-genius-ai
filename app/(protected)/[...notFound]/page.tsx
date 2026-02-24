@@ -91,7 +91,7 @@ export default function DashboardNotFound() {
           {/* Path Display */}
           {/* <motion.div variants={itemVariants} className="inline-block mt-4">
             <div className="px-5 py-2.5 bg-gray-50 rounded-xl border border-gray-200">
-              <code className="text-sm text-gray-700 font-mono">
+              <code className="text-sm text-foreground font-mono">
                 {pathname}
               </code>
             </div>

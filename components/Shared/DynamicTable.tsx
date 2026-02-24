@@ -12,7 +12,13 @@ import {
   ConfirmationConfig,
   TableColumn,
 } from "@/types/table.types";
-import { ArrowUpDown, ArrowUp, ArrowDown, PackageOpen, Search } from "lucide-react";
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  PackageOpen,
+  Search,
+} from "lucide-react";
 import { TableSkeleton } from "@/components/Skeleton/TableSkeleton";
 
 export function DynamicTable<T extends Record<string, any>>({
@@ -38,7 +44,7 @@ export function DynamicTable<T extends Record<string, any>>({
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState<T[]>(
-    selection?.selectedRows || []
+    selection?.selectedRows || [],
   );
   const [confirmationModal, setConfirmationModal] = useState<{
     isOpen: boolean;
@@ -59,7 +65,7 @@ export function DynamicTable<T extends Record<string, any>>({
       }
       return String(row.id || index);
     },
-    [selection]
+    [selection],
   );
 
   // Filter data
@@ -129,7 +135,7 @@ export function DynamicTable<T extends Record<string, any>>({
     const column = config.columns.find((col) => col.key === columnKey);
     if (!column?.sortable) return;
 
-    setSortConfig((prev) => {
+    setSortConfig((prev: SortConfig | null) => {
       if (prev?.key === columnKey) {
         return {
           key: columnKey,
@@ -145,9 +151,7 @@ export function DynamicTable<T extends Record<string, any>>({
     if (!selection?.enabled) return;
 
     const rowId = getRowId(row, index);
-    const isSelected = selectedRows.some(
-      (r, i) => getRowId(r, i) === rowId
-    );
+    const isSelected = selectedRows.some((r, i) => getRowId(r, i) === rowId);
 
     let newSelection: T[];
 
@@ -169,21 +173,23 @@ export function DynamicTable<T extends Record<string, any>>({
     const allSelected =
       paginatedData.length > 0 &&
       paginatedData.every((row, index) =>
-        selectedRows.some((r, i) => getRowId(r, i) === getRowId(row, index))
+        selectedRows.some((r, i) => getRowId(r, i) === getRowId(row, index)),
       );
 
     const newSelection = allSelected
       ? selectedRows.filter(
           (r, i) =>
             !paginatedData.some(
-              (row, index) => getRowId(row, index) === getRowId(r, i)
-            )
+              (row, index) => getRowId(row, index) === getRowId(r, i),
+            ),
         )
       : [
           ...selectedRows,
           ...paginatedData.filter(
             (row, index) =>
-              !selectedRows.some((r, i) => getRowId(r, i) === getRowId(row, index))
+              !selectedRows.some(
+                (r, i) => getRowId(r, i) === getRowId(row, index),
+              ),
           ),
         ];
 
@@ -195,7 +201,7 @@ export function DynamicTable<T extends Record<string, any>>({
   const handleAction = async (
     action: TableAction<T>,
     row: T,
-    index: number
+    index: number,
   ) => {
     if (action.disabled?.(row)) return;
 
@@ -232,7 +238,7 @@ export function DynamicTable<T extends Record<string, any>>({
             : row[column.accessor]
           : row[column.key],
         row,
-        index
+        index,
       );
     }
 
@@ -247,7 +253,12 @@ export function DynamicTable<T extends Record<string, any>>({
   const visibleColumns = config.columns.filter((col) => !col.hidden);
 
   return (
-    <div className={cn("bg-white rounded-3xl shadow-[0px_1px_2px_0px_#0A0D120F,0px_1px_3px_0px_#0A0D121A] w-full", className)}>
+    <div
+      className={cn(
+        "bg-white rounded-3xl shadow-[0px_1px_2px_0px_#0A0D120F,0px_1px_3px_0px_#0A0D121A] w-full p-6",
+        className,
+      )}
+    >
       {/* Header */}
       {(title || filter?.enabled) && (
         <div className="p-6 border-b border-border">
@@ -279,12 +290,8 @@ export function DynamicTable<T extends Record<string, any>>({
       {/* Table */}
       <div className="overflow-x-auto pb-4">
         <div className={stickyHeader ? "max-h-[600px] overflow-y-auto" : ""}>
-          <table className="w-full min-w-[800px]">
-            <thead
-              className={cn(
-                stickyHeader && "sticky top-0 z-10"
-              )}
-            >
+          <table className="w-full min-w-[600px]">
+            <thead className={cn(stickyHeader && "sticky top-0 z-10")}>
               <tr className={cn("bg-primary", headerClassName)}>
                 {/* Selection Column */}
                 {/* {selection?.enabled && selection.mode === "multiple" && (
@@ -314,13 +321,11 @@ export function DynamicTable<T extends Record<string, any>>({
                       column.align === "center" && "text-center",
                       column.align === "right" && "text-right",
                       !column.align && "text-left",
-                      index === 0 &&
-                        !selection?.enabled &&
-                        "",
+                      index === 0 && !selection?.enabled && "",
                       index === visibleColumns.length - 1 &&
                         !config.showActions &&
                         "",
-                      column.className
+                      column.className,
                     )}
                     style={{ width: column.width }}
                   >
@@ -329,11 +334,9 @@ export function DynamicTable<T extends Record<string, any>>({
                         "flex items-center gap-2",
                         column.align === "center" && "justify-center",
                         column.align === "right" && "justify-end",
-                        column.sortable && "cursor-pointer select-none"
+                        column.sortable && "cursor-pointer select-none",
                       )}
-                      onClick={() =>
-                        column.sortable && handleSort(column.key)
-                      }
+                      onClick={() => column.sortable && handleSort(column.key)}
                     >
                       {column.header}
                       {column.sortable && (
@@ -360,7 +363,7 @@ export function DynamicTable<T extends Record<string, any>>({
                       "py-4 px-6 font-semibold text-sm",
                       config.actionsAlign === "center" && "text-center",
                       config.actionsAlign === "right" && "text-right",
-                      !config.actionsAlign && "text-center"
+                      !config.actionsAlign && "text-center",
                     )}
                     style={{ width: config.actionsWidth }}
                   >
@@ -395,22 +398,25 @@ export function DynamicTable<T extends Record<string, any>>({
                     className="py-16 text-center text-gray-500"
                   >
                     <div className="flex flex-col items-center justify-center gap-3">
-                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
-                            <PackageOpen className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="font-semibold text-lg text-foreground">No data found</p>
-                            <p className="text-sm text-foreground/80">{emptyMessage}</p>
-                        </div>
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                        <PackageOpen className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-semibold text-lg text-foreground">
+                          No data found
+                        </p>
+                        <p className="text-sm text-foreground/80">
+                          {emptyMessage}
+                        </p>
+                      </div>
                     </div>
                   </td>
                 </tr>
               ) : (
                 paginatedData.map((row, rowIndex) => {
-                  const globalIndex =
-                    (currentPage - 1) * pageSize + rowIndex;
+                  const globalIndex = (currentPage - 1) * pageSize + rowIndex;
                   const isSelected = selectedRows.some(
-                    (r, i) => getRowId(r, i) === getRowId(row, globalIndex)
+                    (r, i) => getRowId(r, i) === getRowId(row, globalIndex),
                   );
                   const rowClass =
                     typeof rowClassName === "function"
@@ -426,7 +432,7 @@ export function DynamicTable<T extends Record<string, any>>({
                         isSelected && "bg-blue-50",
                         onRowClick && "cursor-pointer",
                         "transition-colors",
-                        rowClass
+                        rowClass,
                       )}
                       onClick={() => onRowClick?.(row, globalIndex)}
                     >
@@ -453,7 +459,7 @@ export function DynamicTable<T extends Record<string, any>>({
                             "py-4 px-6",
                             column.align === "center" && "text-center",
                             column.align === "right" && "text-right",
-                            column.className
+                            column.className,
                           )}
                         >
                           {getCellValue(row, column, globalIndex)}
@@ -465,17 +471,15 @@ export function DynamicTable<T extends Record<string, any>>({
                         <td
                           className={cn(
                             "py-4 px-6",
-                            config.actionsAlign === "center" &&
-                              "text-center",
+                            config.actionsAlign === "center" && "text-center",
                             config.actionsAlign === "right" && "text-right",
-                            !config.actionsAlign && "text-center"
+                            !config.actionsAlign && "text-center",
                           )}
                         >
                           <div className="flex items-center justify-center gap-2">
                             {config.actions
                               .filter(
-                                (action) =>
-                                  !action.show || action.show(row)
+                                (action) => !action.show || action.show(row),
                               )
                               .map((action, actionIndex) => (
                                 <button
@@ -486,17 +490,17 @@ export function DynamicTable<T extends Record<string, any>>({
                                   }}
                                   disabled={action.disabled?.(row)}
                                   className={cn(
-                                    "p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                                    "p-2 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
                                     action.variant === "danger" &&
-                                      "hover:bg-red-50 text-red-600",
+                                      "bg-red-50 hover:bg-red-100 text-red-600",
                                     action.variant === "success" &&
-                                      "hover:bg-green-50 text-green-600",
+                                      "bg-green-50 hover:bg-green-100 text-green-600",
                                     action.variant === "warning" &&
-                                      "hover:bg-orange-50 text-orange-600",
+                                      "bg-orange-50 hover:bg-orange-100 text-orange-600",
                                     action.variant === "primary" &&
-                                      "hover:bg-blue-50 text-blue-600",
+                                      "bg-blue-50 hover:bg-blue-100 text-blue-600",
                                     !action.variant &&
-                                      "hover:bg-gray-100 text-secondary"
+                                      "hover:bg-gray-100 text-secondary",
                                   )}
                                   title={action.tooltip}
                                   aria-label={action.label}
@@ -542,7 +546,10 @@ export function DynamicTable<T extends Record<string, any>>({
         isLoading={isActionLoading}
         title={confirmationModal.config.title || "Confirm Action"}
         message={confirmationModal.config.description || "Are you sure?"}
-        isDestructive={confirmationModal.config.type === "delete" || confirmationModal.config.type === "warning"}
+        isDestructive={
+          confirmationModal.config.type === "delete" ||
+          confirmationModal.config.type === "warning"
+        }
         confirmText={confirmationModal.config.confirmText}
         cancelText={confirmationModal.config.cancelText}
       />
