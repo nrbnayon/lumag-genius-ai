@@ -104,6 +104,7 @@ export default function IngredientsClient() {
         currentStock: Number(formData.currentStock),
         minimumStock: Number(formData.minimumStock),
         status: "Approved",
+        image: formData.image ? URL.createObjectURL(formData.image) : undefined,
       };
       setIngredients([newIngredient, ...ingredients]);
       toast.success("Ingredient added successfully");
@@ -117,6 +118,9 @@ export default function IngredientsClient() {
                 price: Number(formData.price),
                 currentStock: Number(formData.currentStock),
                 minimumStock: Number(formData.minimumStock),
+                image: formData.image
+                  ? URL.createObjectURL(formData.image)
+                  : i.image,
               }
             : i,
         ),
@@ -134,8 +138,11 @@ export default function IngredientsClient() {
     setIsDeleteModalOpen(false);
   };
 
-  const handleConfirmExport = () => {
-    toast.success("Data exported to Excel format");
+  const handleConfirmExport = (data: Ingredient | Ingredient[]) => {
+    const count = Array.isArray(data) ? data.length : 1;
+    toast.success(
+      `Successfully exported ${count} ingredient${count > 1 ? "s" : ""} to Excel`,
+    );
     setIsExportModalOpen(false);
   };
 

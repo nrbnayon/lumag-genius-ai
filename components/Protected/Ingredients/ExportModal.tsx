@@ -2,11 +2,12 @@
 
 import { X, Download } from "lucide-react";
 import { Ingredient } from "@/types/ingredient";
+import * as XLSX from "xlsx";
 
 interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onExport: () => void;
+  onExport: (data: Ingredient | Ingredient[]) => void;
   data: Ingredient | Ingredient[];
 }
 
@@ -17,6 +18,33 @@ export function ExportModal({
   data,
 }: ExportModalProps) {
   if (!isOpen) return null;
+
+  const handleExport = () => {
+    const exportData = Array.isArray(data) ? data : [data];
+
+    // Transform data for Excel
+    const worksheetData = exportData.map((item) => ({
+      "Ingredient Name": item.name,
+      Price: item.price,
+      Unit: item.unit,
+      Category: item.category,
+      "Current Stock": item.currentStock,
+      "Minimum Stock": item.minimumStock,
+      Status: item.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Ingredients");
+
+    // Generate file name
+    const fileName = Array.isArray(data)
+      ? "all_ingredients.xlsx"
+      : `${data.name.toLowerCase().replace(/\s+/g, "_")}_details.xlsx`;
+
+    XLSX.writeFile(workbook, fileName);
+    onExport(data);
+  };
 
   const sample = Array.isArray(data) ? data[0] : data;
 
@@ -73,7 +101,7 @@ export function ExportModal({
               Cancel
             </button>
             <button
-              onClick={onExport}
+              onClick={handleExport}
               className="flex-1 px-6 py-3 bg-[#0EA5E9] text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" />

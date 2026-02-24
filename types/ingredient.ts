@@ -10,6 +10,7 @@ export interface Ingredient {
   minimumStock: number;
   status: IngredientStatus;
   hasWarning?: boolean;
+  image?: string;
 }
 
 export interface IngredientFormData {
@@ -19,6 +20,7 @@ export interface IngredientFormData {
   category: string;
   currentStock: string;
   minimumStock: string;
+  image: File | null;
 }
 
 export interface IngredientStats {

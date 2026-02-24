@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, UploadCloud } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { X, UploadCloud, Trash2, Camera } from "lucide-react";
 import { Ingredient, IngredientFormData } from "@/types/ingredient";
+import { cn } from "@/lib/utils";
 
 interface IngredientModalProps {
   isOpen: boolean;
@@ -26,7 +27,12 @@ export function IngredientModal({
     category: "Other",
     currentStock: "",
     minimumStock: "",
+    image: null,
   });
+
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [errors, setErrors] = useState<Partial<IngredientFormData>>({});
 
@@ -39,7 +45,9 @@ export function IngredientModal({
         category: ingredient.category,
         currentStock: ingredient.currentStock.toString(),
         minimumStock: ingredient.minimumStock.toString(),
+        image: null, // Reset image on edit unless we had one
       });
+      // setPreview(ingredient.image || null); // If ingredient has an image field
     } else {
       setFormData({
         name: "",
@@ -48,10 +56,47 @@ export function IngredientModal({
         category: "Other",
         currentStock: "",
         minimumStock: "",
+        image: null,
       });
+      setPreview(null);
     }
     setErrors({});
   }, [ingredient, isOpen]);
+
+  const handleFileChange = (file: File) => {
+    if (file && file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+        setFormData((prev) => ({ ...prev, image: file }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileChange(file);
+  };
+
+  const removeImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPreview(null);
+    setFormData((prev) => ({ ...prev, image: null }));
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   if (!isOpen) return null;
 
@@ -230,13 +275,63 @@ export function IngredientModal({
             <label className="block text-sm font-medium text-foreground">
               Upload Ingredients <span className="text-red-500">*</span>
             </label>
-            <div className="border-2 border-dashed border-blue-200 rounded-xl p-8 bg-blue-50/50 flex flex-col items-center justify-center hover:bg-blue-50 transition-colors cursor-pointer group">
-              <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <UploadCloud className="w-6 h-6 text-blue-500" />
-              </div>
-              <p className="text-sm font-medium text-gray-900">
-                Click to upload or drag and drop
-              </p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileChange(file);
+              }}
+            />
+
+            <div
+              onDragOver={onDragOver}
+              onDragLeave={onDragLeave}
+              onDrop={onDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer group relative overflow-hidden",
+                isDragging
+                  ? "border-[#0190FE] bg-blue-50"
+                  : "border-blue-200 bg-blue-50/50 hover:bg-blue-50",
+                preview ? "p-0 min-h-[160px]" : "p-8",
+              )}
+            >
+              {preview ? (
+                <div className="relative w-full h-full group/preview">
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="w-full h-40 object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                    <div className="flex flex-col items-center text-white">
+                      <Camera className="w-6 h-6 mb-1" />
+                      <span className="text-xs font-bold">Change Image</span>
+                    </div>
+                    <button
+                      onClick={removeImage}
+                      className="p-2 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-[#0190FE]">
+                    <UploadCloud className="w-6 h-6" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-900 text-center">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Recommended size: 800x600px
+                  </p>
+                </>
+              )}
             </div>
           </div>
 
