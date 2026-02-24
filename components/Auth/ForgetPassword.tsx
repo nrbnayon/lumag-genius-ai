@@ -140,7 +140,7 @@ const ForgetPassword = () => {
                 type="button"
                 onClick={() => setCountdown(60)}
                 disabled={countdown > 0}
-                className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors disabled:opacity-70 disabled:no-underline"
+                className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors disabled:opacity-70 disabled:no-underline cursor-pointer"
               >
                 {countdown > 0
                   ? `Resent in ${formatTime(countdown)}`

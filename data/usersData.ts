@@ -10,7 +10,7 @@ const mockOrders: Order[] = [
 export const usersData: User[] = [
     {
     id: "1",
-    name: "Nayon",
+    name: "Nayon II",
     email: "admin@gmail.com",
     role: "admin",
     status: "Active",

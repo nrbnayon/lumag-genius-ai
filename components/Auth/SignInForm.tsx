@@ -73,7 +73,7 @@ export const SignInForm = () => {
       await new Promise((resolve) => setTimeout(resolve, 1500)); // simulate delay
 
       const mockUser = {
-        name: "Nayon", // or from real response
+        name: "Nayon II", // or from real response
         email: cleanData.email,
         role: "admin",
         image: "/images/avatar.png",
@@ -162,7 +162,7 @@ export const SignInForm = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors z-10 p-1"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors z-10 p-1 cursor-pointer"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (

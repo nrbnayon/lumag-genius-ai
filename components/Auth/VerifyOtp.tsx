@@ -188,7 +188,7 @@ const VerifyOtp = () => {
                 type="button"
                 onClick={handleResend}
                 disabled={countdown > 0 || isLoading}
-                className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors disabled:opacity-70 disabled:no-underline"
+                className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors disabled:opacity-70 disabled:no-underline cursor-pointer"
               >
                 {countdown > 0
                   ? `Resent in ${formatTime(countdown)}`
