@@ -70,8 +70,8 @@ export default function NotificationsClient() {
                 "new_order"
             ];
             roleNotifications = notifications.filter(n => sellerTypes.includes(n.type));
-        } else if (role === "super_admin") {
-            const superAdminTypes: NotificationType[] = [
+        } else if (role === "admin") {
+            const adminTypes: NotificationType[] = [
                 "driver_location_off",
                 "delivery_request_rejected",
                 "emergency_alert",
@@ -80,7 +80,7 @@ export default function NotificationsClient() {
                 "delivery_request_accepted",
                 "parcel_delivered"
             ];
-            roleNotifications = notifications.filter(n => superAdminTypes.includes(n.type));
+            roleNotifications = notifications.filter(n => adminTypes.includes(n.type));
         }
 
         // Filter based on tab

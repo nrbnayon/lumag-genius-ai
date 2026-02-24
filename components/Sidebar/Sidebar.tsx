@@ -13,18 +13,19 @@ import {
   PanelRightOpen,
   ChevronDown,
   ChevronUp,
-  Bell,
-  CreditCard,
-  ScrollText,
-  ShieldCheck,
+  ClipboardList,
+  Truck,
+  User,
+  Bot,
+  BarChart3,
+  Bolt,
+  Leaf,
 } from "lucide-react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  BbqGrillIcon,
+  CheckmarkCircle03Icon,
   DashboardSquare02Icon,
-  Dollar01Icon,
-  PackageAddIcon,
-  Settings01Icon,
-  UserMultiple03Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
@@ -71,59 +72,64 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   // Navigation links configuration
   const links: LinkType[] = useMemo(
     () => [
-      // Admin Routes
       {
-        label: "Dashboard",
+        label: "Dashboard Overview",
         href: "/dashboard",
         icon: DashboardSquare02Icon,
         roles: ["admin"],
       },
       {
-        label: "User Management",
-        href: "/user-management",
-        icon: UserMultiple03Icon,
+        label: "Ingredients",
+        href: "/ingredients",
+        icon: <Leaf className="w-6 h-6 p-1 rounded-full border border-current" />,
         roles: ["admin"],
       },
       {
-        label: "Products",
-        href: "/products",
-        icon: PackageAddIcon,
+        label: "Recipe Management",
+        href: "/recipe-management",
+        icon: BbqGrillIcon,
         roles: ["admin"],
       },
       {
-        label: "Payment History",
-        href: "/payment-history",
-        icon: <CreditCard />,
+        label: "Menu Management",
+        href: "/menu-management",
+        icon: <ClipboardList />,
         roles: ["admin"],
       },
       {
-        label: "Order Management",
-        href: "/order-management",
-        icon: <ScrollText />, 
+        label: "Suppliers",
+        href: "/suppliers",
+        icon: <Truck />,
         roles: ["admin"],
       },
       {
-        label: "Commission Tracking",
-        href: "/commission-tracking",
-        icon: Dollar01Icon, 
+        label: "Staff Management",
+        href: "/staff-management",
+        icon: <User />,
         roles: ["admin"],
       },
       {
-        label: "Privacy & policy",
-        href: "/privacy-policy",
-        icon: <ShieldCheck />, 
+        label: "Approvals",
+        href: "/approvals",
+        icon: CheckmarkCircle03Icon,
         roles: ["admin"],
       },
       {
-        label: "Notifications",
-        href: "/notifications",
-        icon: <Bell className="w-5 h-5" />,
+        label: "AI Assistant",
+        href: "/ai-assistant",
+        icon: <Bot />,
+        roles: ["admin"],
+      },
+      {
+        label: "Analytics",
+        href: "/analytics",
+        icon: <BarChart3 />,
         roles: ["admin"],
       },
       {
         label: "Settings",
         href: "/settings",
-        icon: Settings01Icon,
+        icon: <Bolt />,
         roles: ["admin"],
       },
     ],
@@ -620,7 +626,7 @@ const Logo = ({ open }: { open: boolean }) => {
         <Image
           className="w-full h-full object-contain"
           alt="Logo"
-          src="/icons/logo.svg"
+          src="/icons/logo.png"
           width={open ? 120 : 40}
           height={open ? 120 : 40}
           priority

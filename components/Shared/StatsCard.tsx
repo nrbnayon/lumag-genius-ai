@@ -11,6 +11,7 @@ interface StatsCardProps {
   isUp?: boolean;
   subtitle?: string;
   className?: string;
+  percentage?: string;
 }
 
 export function StatsCard({
@@ -22,16 +23,17 @@ export function StatsCard({
   isUp,
   subtitle,
   className,
+  percentage,
 }: StatsCardProps) {
   // Extract percentage from subtitle if exists
   const percentageMatch = subtitle?.match(/(\d+\.?\d*)%/);
-  const percentage = percentageMatch ? percentageMatch[1] : null;
+  // const percentage = percentageMatch ? percentageMatch[1] : null;
   const subtitleText = subtitle?.replace(/(\d+\.?\d*)%\s*/, '') || '';
 
   return (
     <div
       className={cn(
-        "bg-white px-5 py-6 rounded-lg flex items-start justify-between h-full border-none cursor-pointer transition-all hover:bg-gray-50 shadow-[6px_6px_54px_0px_rgba(0,0,0,0.05)] hover:shadow-lg",
+        "bg-white px-5 py-5 rounded-xl flex items-start justify-between h-full border-none cursor-pointer transition-all hover:bg-gray-50 shadow-[6px_6px_54px_0px_rgba(0,0,0,0.05)] hover:shadow-lg",
         className
       )}
     >

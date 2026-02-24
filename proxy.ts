@@ -84,7 +84,7 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
     // Exact match
     if (pathname === route) return true;
     // Prefix match (e.g., /dashboard matches /dashboard/*)
-    // Ensure we match directory boundary so /super-admin doesn't match /super-admin-fake
+    // Ensure we match directory boundary so /admin doesn't match /admin-fake
     if (pathname.startsWith(route + "/")) return true;
     return false;
   });
@@ -94,7 +94,7 @@ function matchesRoute(pathname: string, routes: string[]): boolean {
  * Check if a user role has access to a specific path
  */
 function hasRoleAccess(pathname: string, userRole: string): boolean {
-  // 0. Super User / Admin Bypass
+  // 0. User / Admin Bypass
   if (userRole === ROLES.ADMIN) return true;
 
   // 1. Check Universal Protected Routes (All Auth Users)
