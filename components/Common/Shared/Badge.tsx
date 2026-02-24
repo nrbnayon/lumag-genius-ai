@@ -19,7 +19,7 @@ export function Badge({
   className,
 }: BadgeProps) {
   const variants = {
-    default: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300",
+    default: "bg-gray-100 text-foreground dark:bg-gray-700 dark:text-gray-300",
     leader:
       "bg-[#ECFDF3] text-[#027A48] dark:bg-green-900/30 dark:text-green-400",
     donor:
@@ -38,7 +38,7 @@ export function Badge({
       className={cn(
         "inline-flex items-center px-2.5 pt-0.5 pb-1 rounded-full text-xs font-medium",
         variants[variant],
-        className
+        className,
       )}
     >
       {children}

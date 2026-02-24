@@ -16,7 +16,7 @@ import { dashboardStats } from "@/data/dashboardData";
 
 export default function DashboardClient() {
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pb-10">
+    <div className="pb-10">
       <DashboardHeader 
         title="Dashboard Overview" 
         description="Monitor your F&B operations and financial performance in real-time" 

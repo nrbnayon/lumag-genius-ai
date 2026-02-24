@@ -126,7 +126,7 @@ export function MenuModal({
       />
       <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-foreground">
             {mode === "add" ? "Add Menu" : "Edit Menu"}
           </h2>
           <button
@@ -263,7 +263,7 @@ export function MenuModal({
                 <span className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or</span>
+                <span className="bg-white px-2 text-secondary">Or</span>
               </div>
             </div>
 
@@ -287,7 +287,7 @@ export function MenuModal({
               className={cn(
                 "border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden",
                 isDragging
-                  ? "border-[#0190FE] bg-blue-50"
+                  ? "border-primary bg-blue-50"
                   : "border-blue-200 bg-blue-50/50 hover:bg-blue-50",
                 preview ? "p-0 h-40" : "p-8 h-32",
               )}
@@ -317,10 +317,10 @@ export function MenuModal({
               ) : (
                 <>
                   <UploadCloud className="w-8 h-8 text-[#0EA5E9] mb-2" />
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-secondary">
                     Max. File Size: 50MB
                   </p>
                 </>
@@ -332,7 +332,7 @@ export function MenuModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-xl text-foreground font-bold hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>

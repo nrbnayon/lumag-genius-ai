@@ -133,7 +133,7 @@ export default function MenuManagementClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pb-10">
+    <div className="pb-10">
       <DashboardHeader
         title="Menu Management"
         description="Manage menu with AI-generated technical sheets and cost analysis"
@@ -151,7 +151,7 @@ export default function MenuManagementClient() {
           </button>
           <button
             onClick={() => handleExportClick()}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-gray-500 border border-gray-200 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-secondary border border-gray-200 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <Download className="w-5 h-5" />
             Export All
@@ -234,10 +234,10 @@ export default function MenuManagementClient() {
               <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                 <Search className="w-10 h-10 text-gray-300" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-xl font-bold text-foreground mb-2">
                 No menus found
               </h3>
-              <p className="text-gray-500">
+              <p className="text-secondary">
                 Try adjusting your search to find what you're looking for.
               </p>
             </div>

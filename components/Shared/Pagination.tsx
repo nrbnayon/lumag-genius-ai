@@ -36,7 +36,7 @@ export function Pagination({
           totalPages - 3,
           totalPages - 2,
           totalPages - 1,
-          totalPages
+          totalPages,
         );
       } else {
         pages.push(
@@ -46,7 +46,7 @@ export function Pagination({
           currentPage,
           currentPage + 1,
           "...",
-          totalPages
+          totalPages,
         );
       }
     }
@@ -59,29 +59,37 @@ export function Pagination({
   const endItem = Math.min(startItem + itemsPerPage - 1, totalItems);
 
   return (
-    <div className={cn("px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4", className)}>
+    <div
+      className={cn(
+        "px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4",
+        className,
+      )}
+    >
       <div className="text-sm text-secondary">
         Showing {startItem} to {endItem} of {totalItems} entries
       </div>
-      
+
       <div className="flex items-center gap-2">
-        <button 
+        <button
           className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={currentPage === 1}
           onClick={() => onPageChange(currentPage - 1)}
         >
           <ChevronLeft className="w-4 h-4 text-secondary" />
         </button>
-        
+
         {getPageNumbers().map((page, index) => {
           if (page === "...") {
             return (
-              <span key={`dots-${index}`} className="w-8 h-8 flex items-center justify-center text-gray-500">
+              <span
+                key={`dots-${index}`}
+                className="w-8 h-8 flex items-center justify-center text-secondary"
+              >
                 ...
               </span>
             );
           }
-          
+
           return (
             <button
               key={page}
@@ -90,15 +98,15 @@ export function Pagination({
                 "w-8 h-8 flex items-center justify-center rounded-sm text-sm font-medium transition-colors cursor-pointer",
                 currentPage === page
                   ? "bg-primary/70 text-white"
-                  : "border border-gray-200 text-secondary hover:bg-gray-100"
+                  : "border border-gray-200 text-secondary hover:bg-gray-100",
               )}
             >
               {page}
             </button>
           );
         })}
-        
-        <button 
+
+        <button
           className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           disabled={currentPage === totalPages}
           onClick={() => onPageChange(currentPage + 1)}

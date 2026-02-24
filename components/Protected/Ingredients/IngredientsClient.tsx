@@ -157,7 +157,7 @@ export default function IngredientsClient() {
             {item.hasWarning && (
               <AlertTriangle className="w-4 h-4 text-red-500" />
             )}
-            <span className="font-bold text-gray-900">{item.name}</span>
+            <span className="font-bold text-foreground">{item.name}</span>
           </div>
         ),
       },
@@ -227,7 +227,7 @@ export default function IngredientsClient() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pb-10">
+    <div className="pb-10">
       <DashboardHeader
         title="Ingredients Management"
         description="Manage ingredient inventory, pricing, and purchase requests"
@@ -304,7 +304,7 @@ export default function IngredientsClient() {
                     "py-4 px-2 text-sm font-bold transition-all relative cursor-pointer",
                     activeTab === tab
                       ? "text-[#0EA5E9]"
-                      : "text-gray-500 hover:text-foreground",
+                      : "text-secondary hover:text-foreground",
                   )}
                 >
                   {tab}

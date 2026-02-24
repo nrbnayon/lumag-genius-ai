@@ -244,7 +244,7 @@ export default function NotificationsClient() {
                       {formatTimestamp(notification.timestamp)}
                     </span>
                   </div>
-                  <p className="text-xs md:text-sm font-medium text-gray-500 line-clamp-2 md:line-clamp-none">
+                  <p className="text-xs md:text-sm font-medium text-secondary line-clamp-2 md:line-clamp-none">
                     {notification.message}
                   </p>
                 </div>
@@ -320,7 +320,7 @@ export default function NotificationsClient() {
             {/* Modal Body */}
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
               {/* Timestamp */}
-              <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+              <div className="flex items-center gap-2 text-sm text-secondary mb-6">
                 <Calendar className="w-4 h-4" />
                 <span>
                   {formatFullTimestamp(selectedNotification.timestamp)}
@@ -340,7 +340,7 @@ export default function NotificationsClient() {
                   <div className="flex items-start gap-3">
                     <Hash className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">
+                      <p className="text-xs font-bold text-secondary mb-1">
                         Tracking Number
                       </p>
                       <p className="text-sm font-bold text-primary">
@@ -354,7 +354,7 @@ export default function NotificationsClient() {
                   <div className="flex items-start gap-3">
                     <User className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">
+                      <p className="text-xs font-bold text-secondary mb-1">
                         Driver
                       </p>
                       <p className="text-sm font-medium text-foreground">
@@ -368,7 +368,7 @@ export default function NotificationsClient() {
                   <div className="flex items-start gap-3">
                     <User className="w-5 h-5 text-gray-400 mt-0.5" />
                     <div>
-                      <p className="text-xs font-bold text-gray-500 mb-1">
+                      <p className="text-xs font-bold text-secondary mb-1">
                         Seller
                       </p>
                       <p className="text-sm font-medium text-foreground">
@@ -383,7 +383,7 @@ export default function NotificationsClient() {
                     <div className="flex items-start gap-3">
                       <Info className="w-5 h-5 text-gray-400 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-xs font-bold text-gray-500 mb-2">
+                        <p className="text-xs font-bold text-secondary mb-2">
                           Additional Details
                         </p>
                         <div className="space-y-2">
@@ -393,7 +393,7 @@ export default function NotificationsClient() {
                                 key={key}
                                 className="flex justify-between items-center"
                               >
-                                <span className="text-xs text-gray-500 capitalize">
+                                <span className="text-xs text-secondary capitalize">
                                   {key.replace(/_/g, " ")}:
                                 </span>
                                 <span className="text-xs font-medium text-foreground">

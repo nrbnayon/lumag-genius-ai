@@ -143,7 +143,7 @@ export function RecipeModal({
       />
       <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-foreground">
             {mode === "add" ? "Add Recipe" : "Edit Recipe"}
           </h2>
           <button
@@ -245,7 +245,7 @@ export function RecipeModal({
               </div>
 
               <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-gray-500 px-1">
+                <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-secondary px-1">
                   <div className="col-span-4">Name</div>
                   <div className="col-span-2 text-center">Quantity</div>
                   <div className="col-span-3 text-center">Unit</div>
@@ -306,8 +306,10 @@ export function RecipeModal({
                 ))}
 
                 <div className="flex justify-end pt-1 pr-12 gap-4">
-                  <span className="text-xs font-bold text-gray-500">Total</span>
-                  <span className="text-sm font-bold text-gray-900">
+                  <span className="text-xs font-bold text-secondary">
+                    Total
+                  </span>
+                  <span className="text-sm font-bold text-foreground">
                     ${totalIngredientsCost}
                   </span>
                 </div>
@@ -322,7 +324,7 @@ export function RecipeModal({
                 <span className="w-full border-t border-gray-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Or</span>
+                <span className="bg-white px-2 text-secondary">Or</span>
               </div>
             </div>
 
@@ -346,7 +348,7 @@ export function RecipeModal({
               className={cn(
                 "border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all overflow-hidden",
                 isDragging
-                  ? "border-[#0190FE] bg-blue-50"
+                  ? "border-primary bg-blue-50"
                   : "border-blue-200 bg-blue-50/50 hover:bg-blue-50",
                 preview ? "p-0 h-40" : "p-8 h-32",
               )}
@@ -376,10 +378,10 @@ export function RecipeModal({
               ) : (
                 <>
                   <UploadCloud className="w-8 h-8 text-[#0EA5E9] mb-2" />
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-sm font-medium text-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-[10px] text-gray-500">
+                  <p className="text-[10px] text-secondary">
                     Max. File Size: 50MB
                   </p>
                 </>
@@ -391,7 +393,7 @@ export function RecipeModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-xl text-foreground font-bold hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>

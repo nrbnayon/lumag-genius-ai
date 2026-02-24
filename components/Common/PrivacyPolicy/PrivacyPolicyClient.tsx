@@ -154,7 +154,7 @@ export default function PrivacyPolicyClient() {
           <h1 className="text-2xl font-bold text-foreground dark:text-gray-50">
             Privacy and policy
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-secondary mt-1">
             Track, manage and forecast your privacy policies.
           </p>
         </div>
@@ -220,7 +220,7 @@ export default function PrivacyPolicyClient() {
                   className="min-h-35 bg-white dark:bg-foreground border-gray-300 dark:border-secondary text-foreground dark:text-gray-100 resize-none focus:ring-2 focus:ring-primary/20"
                   placeholder="Enter policy description"
                 />
-                <div className="text-right text-xs text-gray-500   font-medium">
+                <div className="text-right text-xs text-secondary   font-medium">
                   {275 - policy.description.length} characters left
                 </div>
               </div>
@@ -231,7 +231,7 @@ export default function PrivacyPolicyClient() {
         {/* Add Policy Button */}
         <button
           onClick={handleAddPolicy}
-          className="w-full border-2 border-dashed border-gray-300 dark:border-secondary rounded-xl p-6 flex items-center justify-center gap-2 text-gray-500   font-medium hover:bg-gray-50  /50 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+          className="w-full border-2 border-dashed border-gray-300 dark:border-secondary rounded-xl p-6 flex items-center justify-center gap-2 text-secondary   font-medium hover:bg-gray-50  /50 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
         >
           <Plus className="w-5 h-5" />
           Add Policy

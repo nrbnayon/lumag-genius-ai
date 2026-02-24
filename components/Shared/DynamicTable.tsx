@@ -395,7 +395,7 @@ export function DynamicTable<T extends Record<string, any>>({
                       (selection?.enabled ? 1 : 0) +
                       (config.showActions ? 1 : 0)
                     }
-                    className="py-16 text-center text-gray-500"
+                    className="py-16 text-center text-secondary"
                   >
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">

@@ -133,7 +133,7 @@ export function IngredientModal({
       {/* Modal Content */}
       <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-foreground">
             {mode === "add" ? "Add Ingredient" : "Edit Ingredient"}
           </h2>
           <button
@@ -266,7 +266,7 @@ export function IngredientModal({
               <span className="w-full border-t border-gray-200"></span>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or</span>
+              <span className="bg-white px-2 text-secondary">Or</span>
             </div>
           </div>
 
@@ -294,7 +294,7 @@ export function IngredientModal({
               className={cn(
                 "border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center transition-all cursor-pointer group relative overflow-hidden",
                 isDragging
-                  ? "border-[#0190FE] bg-blue-50"
+                  ? "border-primary bg-blue-50"
                   : "border-blue-200 bg-blue-50/50 hover:bg-blue-50",
                 preview ? "p-0 min-h-[160px]" : "p-8",
               )}
@@ -321,13 +321,13 @@ export function IngredientModal({
                 </div>
               ) : (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-[#0190FE]">
+                  <div className="w-12 h-12 rounded-full bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-primary">
                     <UploadCloud className="w-6 h-6" />
                   </div>
-                  <p className="text-sm font-medium text-gray-900 text-center">
+                  <p className="text-sm font-medium text-foreground text-center">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-secondary mt-1">
                     Recommended size: 800x600px
                   </p>
                 </>

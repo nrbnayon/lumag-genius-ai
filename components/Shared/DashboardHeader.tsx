@@ -29,7 +29,7 @@ export default function DashboardHeader({
 
       <div className="hidden md:flex items-center gap-6">
         {/* Notification Icon */}
-        <Link 
+        <Link
           href="/notifications"
           className="relative p-2.5 bg-[#F5F6FA] hover:bg-gray-100 rounded-full transition-colors border border-transparent"
           aria-label="Notifications"
@@ -57,12 +57,12 @@ export default function DashboardHeader({
             <p className="text-sm font-bold text-foreground font-nunito">
               {name || "User"}
             </p>
-            <p className="text-xs text-gray-500 font-bold capitalize">
+            <p className="text-xs text-secondary font-bold capitalize">
               {role || "User"}
             </p>
           </div>
         </Link>
       </div>
     </div>
-  )
+  );
 }

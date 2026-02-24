@@ -2,7 +2,7 @@
 
 export function MenuSkeleton() {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50 flex flex-col gap-4 relative animate-pulse">
+    <div className="bg-white rounded-2xl p-6 shadow-[0px_4px_16px_0px_#A9A9A940] border-none flex flex-col gap-4 relative animate-pulse">
       <div className="flex items-center justify-between">
         <div className="h-6 w-24 bg-gray-100 rounded-full" />
         <div className="flex items-center gap-2">

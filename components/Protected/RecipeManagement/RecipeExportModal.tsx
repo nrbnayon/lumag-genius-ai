@@ -68,7 +68,7 @@ export function RecipeExportModal({
       <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
+          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-secondary cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -78,7 +78,7 @@ export function RecipeExportModal({
 
           <div className="border border-gray-200 rounded-xl overflow-x-auto mb-8">
             <table className="w-full text-sm text-center">
-              <thead className="bg-gray-50/50 text-gray-500 font-bold border-b border-gray-200">
+              <thead className="bg-gray-50/50 text-secondary font-bold border-b border-gray-200">
                 <tr>
                   <th className="p-4 min-w-[150px]">Recipe name</th>
                   <th className="p-4 min-w-[100px]">Avg. Time</th>
@@ -98,16 +98,16 @@ export function RecipeExportModal({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 <tr>
-                  <td className="p-4 font-medium text-gray-900 border-r border-gray-50">
+                  <td className="p-4 font-medium text-foreground border-r border-gray-50">
                     {sample.name}
                   </td>
-                  <td className="p-4 text-gray-900 border-r border-gray-50">
+                  <td className="p-4 text-foreground border-r border-gray-50">
                     {sample.cookingTime}
                   </td>
-                  <td className="p-4 text-gray-900 border-r border-gray-50">
+                  <td className="p-4 text-foreground border-r border-gray-50">
                     {sample.sellingPrice}
                   </td>
-                  <td className="p-4 text-gray-500 text-xs text-left max-w-[200px] truncate border-r border-gray-50">
+                  <td className="p-4 text-secondary text-xs text-left max-w-[200px] truncate border-r border-gray-50">
                     {sample.instruction}
                   </td>
                   <td colSpan={4} className="p-0">
@@ -131,7 +131,7 @@ export function RecipeExportModal({
                           <td colSpan={3} className="p-2 text-right">
                             Total Cost
                           </td>
-                          <td className="p-2 text-gray-900">{sample.cost}</td>
+                          <td className="p-2 text-foreground">{sample.cost}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -144,7 +144,7 @@ export function RecipeExportModal({
           <div className="flex gap-4">
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-foreground font-bold hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>

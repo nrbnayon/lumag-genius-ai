@@ -1,15 +1,15 @@
 "use client";
 
-
 export default function OfflinePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 dark:bg-foreground p-4">
       <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100">
+        <h1 className="text-4xl font-bold text-foreground dark:text-gray-100">
           You are Offline
         </h1>
         <p className="text-secondary dark:text-gray-400 max-w-md mx-auto">
-          It looks like you've lost your internet connection. Please check your network and try again.
+          It looks like you've lost your internet connection. Please check your
+          network and try again.
         </p>
         <button
           onClick={() => window.location.reload()}

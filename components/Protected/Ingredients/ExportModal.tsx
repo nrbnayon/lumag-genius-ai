@@ -60,7 +60,7 @@ export function ExportModal({
       <div className="relative w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-secondary transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -68,28 +68,28 @@ export function ExportModal({
         <div className="p-10">
           <div className="grid grid-cols-6 gap-0 border border-gray-100 rounded-lg overflow-hidden text-center text-sm font-medium mb-8">
             <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-gray-500 mb-2">Ingredient name</p>
-              <p className="text-gray-900">{sample?.name || "Chicken"}</p>
+              <p className="text-secondary mb-2">Ingredient name</p>
+              <p className="text-foreground">{sample?.name || "Chicken"}</p>
             </div>
             <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-gray-500 mb-2">Unit</p>
-              <p className="text-gray-900">{sample?.unit || "Kg"}</p>
+              <p className="text-secondary mb-2">Unit</p>
+              <p className="text-foreground">{sample?.unit || "Kg"}</p>
             </div>
             <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-gray-500 mb-2">Price</p>
-              <p className="text-gray-900">${sample?.price || "20"}</p>
+              <p className="text-secondary mb-2">Price</p>
+              <p className="text-foreground">${sample?.price || "20"}</p>
             </div>
             <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-gray-500 mb-2">Current Stock</p>
-              <p className="text-gray-900">{sample?.currentStock || "20"}</p>
+              <p className="text-secondary mb-2">Current Stock</p>
+              <p className="text-foreground">{sample?.currentStock || "20"}</p>
             </div>
             <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-gray-500 mb-2">Minimum Stock</p>
-              <p className="text-gray-900">{sample?.minimumStock || "12"}</p>
+              <p className="text-secondary mb-2">Minimum Stock</p>
+              <p className="text-foreground">{sample?.minimumStock || "12"}</p>
             </div>
             <div className="bg-gray-50/50 p-4">
-              <p className="text-gray-500 mb-2">Category</p>
-              <p className="text-gray-900">{sample?.category || "Others"}</p>
+              <p className="text-secondary mb-2">Category</p>
+              <p className="text-foreground">{sample?.category || "Others"}</p>
             </div>
           </div>
 

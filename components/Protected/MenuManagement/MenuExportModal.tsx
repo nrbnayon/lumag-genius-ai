@@ -55,7 +55,7 @@ export function MenuExportModal({
       <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
+          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-secondary cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -65,7 +65,7 @@ export function MenuExportModal({
 
           <div className="border border-gray-100 rounded-xl overflow-hidden mb-8">
             <table className="w-full text-sm text-center">
-              <thead className="bg-gray-50/50 text-gray-500 font-bold border-b border-gray-100">
+              <thead className="bg-gray-50/50 text-secondary font-bold border-b border-gray-100">
                 <tr>
                   <th className="p-4 border-r border-gray-100">Menu name</th>
                   <th className="p-4 border-r border-gray-100">Type</th>
@@ -77,16 +77,16 @@ export function MenuExportModal({
               </thead>
               <tbody>
                 <tr className="border-b border-gray-50">
-                  <td className="p-4 text-gray-900 border-r border-gray-50">
+                  <td className="p-4 text-foreground border-r border-gray-50">
                     {sample.name}
                   </td>
-                  <td className="p-4 text-gray-900 border-r border-gray-50">
+                  <td className="p-4 text-foreground border-r border-gray-50">
                     {sample.type}
                   </td>
-                  <td className="p-4 text-gray-900 border-r border-gray-50">
+                  <td className="p-4 text-foreground border-r border-gray-50">
                     {sample.dishes.join(", ")}
                   </td>
-                  <td className="p-4 text-gray-900">{sample.cost}</td>
+                  <td className="p-4 text-foreground">{sample.cost}</td>
                 </tr>
               </tbody>
             </table>
@@ -95,7 +95,7 @@ export function MenuExportModal({
           <div className="flex gap-4">
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-gray-700 font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-foreground font-bold hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>

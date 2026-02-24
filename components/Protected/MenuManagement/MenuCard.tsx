@@ -13,7 +13,7 @@ interface MenuCardProps {
 
 export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-50 flex flex-col gap-4 relative group hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl p-6 shadow-[0px_4px_16px_0px_#A9A9A940] border-none flex flex-col gap-4 relative group hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <span
           className={cn(
@@ -48,22 +48,22 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-xl font-bold text-gray-900 leading-tight">
+        <h3 className="text-xl font-bold text-foreground leading-tight">
           {menu.name}
         </h3>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 font-medium">Items</span>
-            <span className="text-gray-900 font-bold">{menu.itemsCount}</span>
+            <span className="text-secondary font-medium">Items</span>
+            <span className="text-foreground font-bold">{menu.itemsCount}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 font-medium">Cost</span>
-            <span className="text-gray-900 font-bold">{menu.cost}</span>
+            <span className="text-secondary font-medium">Cost</span>
+            <span className="text-foreground font-bold">{menu.cost}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500 font-medium">Type</span>
-            <span className="text-gray-900 font-bold">{menu.type}</span>
+            <span className="text-secondary font-medium">Type</span>
+            <span className="text-foreground font-bold">{menu.type}</span>
           </div>
         </div>
       </div>

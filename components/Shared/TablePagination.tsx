@@ -115,7 +115,7 @@ export function TablePagination({
             return (
               <span
                 key={`dots-${index}`}
-                className="w-8 h-8 flex items-center justify-center text-gray-500"
+                className="w-8 h-8 flex items-center justify-center text-secondary"
               >
                 ...
               </span>
