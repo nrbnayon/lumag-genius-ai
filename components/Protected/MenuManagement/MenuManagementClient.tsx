@@ -4,28 +4,27 @@ import { useState, useMemo } from "react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { StatsCard } from "@/components/Shared/StatsCard";
 import {
-  UtensilsCrossed,
-  Percent,
+  Utensils,
+  LayoutGrid,
   TrendingUp,
   Clock,
   Plus,
   Download,
   Search,
-  PackageX,
 } from "lucide-react";
 import SearchBar from "@/components/Shared/SearchBar";
 import { Pagination } from "@/components/Shared/Pagination";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
-import { RecipeGridSkeleton } from "@/components/Skeleton/RecipeSkeleton";
 import { toast } from "sonner";
-import { recipesData } from "@/data/recipeData";
-import { Recipe, RecipeFormData } from "@/types/recipe";
-import { RecipeCard } from "./RecipeCard";
-import { RecipeModal } from "./RecipeModal";
-import { RecipeExportModal } from "./RecipeExportModal";
+import { menuData } from "@/data/menuData";
+import { Menu, MenuFormData } from "@/types/menu";
+import { MenuCard } from "./MenuCard";
+import { MenuModal } from "./MenuModal";
+import { MenuExportModal } from "./MenuExportModal";
+import { MenuGridSkeleton } from "@/components/Skeleton/MenuSkeleton";
 
-export default function RecipeClient() {
-  const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
+export default function MenuManagementClient() {
+  const [menus, setMenus] = useState<Menu[]>(menuData);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -36,110 +35,108 @@ export default function RecipeClient() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [selectedMenu, setSelectedMenu] = useState<Menu | null>(null);
 
   // Filtered data
-  const filteredRecipes = useMemo(() => {
-    return recipes.filter((item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredMenus = useMemo(() => {
+    return menus.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.type.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [recipes, searchQuery]);
+  }, [menus, searchQuery]);
 
   // Paginated data
-  const paginatedRecipes = useMemo(() => {
+  const paginatedMenus = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return filteredRecipes.slice(start, start + itemsPerPage);
-  }, [filteredRecipes, currentPage]);
+    return filteredMenus.slice(start, start + itemsPerPage);
+  }, [filteredMenus, currentPage]);
 
-  const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredMenus.length / itemsPerPage);
 
   // Handlers
   const handleAddClick = () => {
     setModalMode("add");
-    setSelectedRecipe(null);
+    setSelectedMenu(null);
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (recipe: Recipe) => {
+  const handleEditClick = (menu: Menu) => {
     setModalMode("edit");
-    setSelectedRecipe(recipe);
+    setSelectedMenu(menu);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (recipe: Recipe) => {
-    setSelectedRecipe(recipe);
+  const handleDeleteClick = (menu: Menu) => {
+    setSelectedMenu(menu);
     setIsDeleteModalOpen(true);
   };
 
-  const handleExportClick = (recipe?: Recipe) => {
-    if (recipe) {
-      setSelectedRecipe(recipe);
+  const handleExportClick = (menu?: Menu) => {
+    if (menu) {
+      setSelectedMenu(menu);
     } else {
-      setSelectedRecipe(null);
+      setSelectedMenu(null);
     }
     setIsExportModalOpen(true);
   };
 
-  const handleConfirmModal = (formData: RecipeFormData) => {
+  const handleConfirmModal = (formData: MenuFormData) => {
     if (modalMode === "add") {
-      const newRecipe: Recipe = {
+      const newMenu: Menu = {
         id: Math.random().toString(36).substr(2, 9),
         name: formData.name,
-        cookingTime: formData.cookingTime,
-        sellingPrice: formData.sellingPrice,
-        instruction: formData.instruction,
-        ingredients: formData.ingredients,
-        ingredientsCount: formData.ingredients.length,
-        cost: `$${formData.ingredients.reduce((acc, curr) => acc + parseFloat(curr.cost.replace(/[^0-9.-]+/g, "") || "0"), 0)}`,
+        type: formData.type,
+        cost: formData.cost,
+        dishes: formData.dishes,
+        itemsCount: formData.dishes.length,
         status: "Pending",
         image: formData.image ? URL.createObjectURL(formData.image) : undefined,
       };
-      setRecipes([newRecipe, ...recipes]);
-      toast.success("Recipe added and sent for approval");
-    } else if (selectedRecipe) {
-      setRecipes(
-        recipes.map((r) =>
-          r.id === selectedRecipe.id
+      setMenus([newMenu, ...menus]);
+      toast.success("Menu added successfully");
+    } else if (selectedMenu) {
+      setMenus(
+        menus.map((m) =>
+          m.id === selectedMenu.id
             ? {
-                ...r,
+                ...m,
                 name: formData.name,
-                cookingTime: formData.cookingTime,
-                sellingPrice: formData.sellingPrice,
-                instruction: formData.instruction,
-                ingredients: formData.ingredients,
-                ingredientsCount: formData.ingredients.length,
-                cost: `$${formData.ingredients.reduce((acc, curr) => acc + parseFloat(curr.cost.replace(/[^0-9.-]+/g, "") || "0"), 0)}`,
+                type: formData.type,
+                cost: formData.cost,
+                dishes: formData.dishes,
+                itemsCount: formData.dishes.length,
                 image: formData.image
                   ? URL.createObjectURL(formData.image)
-                  : r.image,
+                  : m.image,
               }
-            : r,
+            : m,
         ),
       );
-      toast.success("Recipe updated successfully");
+      toast.success("Menu updated successfully");
     }
     setIsModalOpen(false);
   };
 
   const handleConfirmDelete = () => {
-    if (selectedRecipe) {
-      setRecipes(recipes.filter((r) => r.id !== selectedRecipe.id));
-      toast.success("Recipe deleted successfully");
+    if (selectedMenu) {
+      setMenus(menus.filter((m) => m.id !== selectedMenu.id));
+      toast.success("Menu deleted successfully");
     }
     setIsDeleteModalOpen(false);
   };
 
-  const handleConfirmExport = (data: Recipe | Recipe[]) => {
+  const handleConfirmExport = (data: Menu | Menu[]) => {
     const count = Array.isArray(data) ? data.length : 1;
-    toast.success(`Exported ${count} recipe technical sheet(s) to Excel`);
+    toast.success(`Exported ${count} menu(s) to Excel`);
     setIsExportModalOpen(false);
   };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] pb-10">
       <DashboardHeader
-        title="Recipe Management"
-        description="Manage recipes with AI-generated technical sheets and cost analysis"
+        title="Menu Management"
+        description="Manage menu with AI-generated technical sheets and cost analysis"
       />
 
       <main className="p-4 md:p-8 space-y-8">
@@ -150,7 +147,7 @@ export default function RecipeClient() {
             className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5 font-bold" />
-            Add Recipes
+            Add Menu
           </button>
           <button
             onClick={() => handleExportClick()}
@@ -164,16 +161,16 @@ export default function RecipeClient() {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
-            title="Total Recipes"
-            value={22}
-            icon={UtensilsCrossed}
+            title="Total Menus"
+            value={6}
+            icon={Utensils}
             iconColor="#EF4444"
             iconBgColor="#FEE2E2"
           />
           <StatsCard
-            title="Avg Food Cost %"
-            value="22.5"
-            icon={Percent}
+            title="Total Menus Items"
+            value={60}
+            icon={LayoutGrid}
             iconColor="#3B82F6"
             iconBgColor="#DBEAFE"
           />
@@ -196,7 +193,7 @@ export default function RecipeClient() {
         {/* Search & Grid */}
         <div className="space-y-6">
           <SearchBar
-            placeholder="Search Recipes"
+            placeholder="Search Menus"
             className="max-w-2xl bg-white border border-gray-100 shadow-xs"
             onSearch={(val) => {
               setLoading(true);
@@ -206,14 +203,14 @@ export default function RecipeClient() {
           />
 
           {loading ? (
-            <RecipeGridSkeleton />
-          ) : filteredRecipes.length > 0 ? (
+            <MenuGridSkeleton />
+          ) : filteredMenus.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 gap-4 2xl:gap-6">
-                {paginatedRecipes.map((recipe) => (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 2xl:gap-6">
+                {paginatedMenus.map((menu) => (
+                  <MenuCard
+                    key={menu.id}
+                    menu={menu}
                     onEdit={handleEditClick}
                     onDelete={handleDeleteClick}
                     onExport={handleExportClick}
@@ -226,9 +223,9 @@ export default function RecipeClient() {
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={setCurrentPage}
-                  totalItems={filteredRecipes.length}
+                  totalItems={filteredMenus.length}
                   itemsPerPage={itemsPerPage}
-                  currentItemsCount={paginatedRecipes.length}
+                  currentItemsCount={paginatedMenus.length}
                 />
               </div>
             </>
@@ -238,7 +235,7 @@ export default function RecipeClient() {
                 <Search className="w-10 h-10 text-gray-300" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                No recipes found
+                No menus found
               </h3>
               <p className="text-gray-500">
                 Try adjusting your search to find what you're looking for.
@@ -249,11 +246,11 @@ export default function RecipeClient() {
       </main>
 
       {/* Modals */}
-      <RecipeModal
+      <MenuModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleConfirmModal}
-        recipe={selectedRecipe}
+        menu={selectedMenu}
         mode={modalMode}
       />
 
@@ -261,15 +258,15 @@ export default function RecipeClient() {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
-        title="Delete Recipe"
-        description={`Are you sure you want to delete "${selectedRecipe?.name}"? This action cannot be undone.`}
+        title="Delete Menu"
+        description={`Are you sure you want to delete "${selectedMenu?.name}"? This action cannot be undone.`}
       />
 
-      <RecipeExportModal
+      <MenuExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         onExport={handleConfirmExport}
-        data={selectedRecipe || recipes}
+        data={selectedMenu || menus}
       />
     </div>
   );
