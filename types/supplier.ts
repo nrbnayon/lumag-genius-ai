@@ -52,3 +52,34 @@ export interface ProductHistory {
   historyData: PriceHistoryPoint[];
   suppliers: string[]; // List of supplier names for the legend/lines
 }
+
+// ── All Purchases ──────────────────────────────────────────────────────────
+
+export type PurchaseCategory =
+  | "Vegetable"
+  | "Fruit"
+  | "Meat"
+  | "Seafood"
+  | "Dairy"
+  | "Bakery"
+  | "Beverage"
+  | "Spice"
+  | "Other";
+
+export interface Purchase {
+  id: string;
+  productName: string;
+  price: string;
+  unit: string;
+  category: PurchaseCategory;
+  quantity: number;
+  supplierName: string;
+  purchaseDate: string;
+  isSelected?: boolean;
+  /** true shows the red X icon in the list */
+  hasProblem?: boolean;
+  fileUrl?: string;
+  reportUrl?: string;
+}
+
+export type OtherProduct = Purchase;
