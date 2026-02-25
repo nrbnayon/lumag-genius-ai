@@ -128,36 +128,6 @@ export default function ApprovalsClient() {
     return (request.data as any).name;
   };
 
-  const getIconColor = (type: string) => {
-    switch (type) {
-      case "Ingredient":
-        return "#EF4444";
-      case "Recipe":
-        return "#3B82F6";
-      case "Leave":
-        return "#F59E0B";
-      case "Menu":
-        return "#EC4899";
-      default:
-        return "#3B82F6";
-    }
-  };
-
-  const getIconBgColor = (type: string) => {
-    switch (type) {
-      case "Ingredient":
-        return "#FEF2F2";
-      case "Recipe":
-        return "#EFF6FF";
-      case "Leave":
-        return "#FFFBEB";
-      case "Menu":
-        return "#FDF2F8";
-      default:
-        return "#EFF6FF";
-    }
-  };
-
   return (
     <div className="pb-10 bg-[#F9FAFB] min-h-screen">
       <DashboardHeader

@@ -3,11 +3,6 @@
 import Image from "next/image";
 import {
   X,
-  Calendar,
-  User,
-  ShoppingBag,
-  BookOpen,
-  Utensils,
 } from "lucide-react";
 import {
   ApprovalRequest,
