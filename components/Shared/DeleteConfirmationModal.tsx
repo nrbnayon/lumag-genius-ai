@@ -23,19 +23,19 @@ export function DeleteConfirmationModal({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4  transition-opacity duration-300 ${
         isOpen ? "opacity-100" : "opacity-0"
       }`}
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in zoom-in duration-300"
         onClick={!isLoading ? onClose : undefined}
       />
 
       {/* Modal Container */}
       <div
-        className={`relative w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl transform transition-all duration-300 ${
+        className={`relative w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl transform transition-all animate-in fade-in zoom-in duration-300 ${
           isOpen ? "scale-100 translate-y-0" : "scale-95 translate-y-4"
         }`}
       >

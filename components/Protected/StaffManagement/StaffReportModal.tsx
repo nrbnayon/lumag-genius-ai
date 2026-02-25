@@ -77,7 +77,7 @@ export function StaffReportModal({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
+      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300">
         <button
           onClick={onClose}
           className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 cursor-pointer z-10"
@@ -85,20 +85,20 @@ export function StaffReportModal({
           <X className="w-6 h-6" />
         </button>
 
-        <div className="p-8">
+        <div className="md:p-8 p-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xl font-bold">
                 {initials}
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-foreground">
+                <h2 className="md:text-2xl text-xl font-bold text-foreground">
                   {staff.name}'s Schedule
                 </h2>
-                <p className="text-sm font-medium text-secondary">
+                <p className="md:text-sm text-xs font-medium text-secondary">
                   {staff.position}
                 </p>
-                <p className="text-sm font-medium text-secondary">
+                <p className="md:text-sm text-xs font-medium text-secondary">
                   {staff.email}
                 </p>
               </div>
@@ -106,7 +106,7 @@ export function StaffReportModal({
             <div className="flex gap-3">
               <button
                 onClick={onViewCV}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-primary text-xs font-bold rounded-sm hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 View CV
               </button>
@@ -114,7 +114,7 @@ export function StaffReportModal({
                 href={staff.cvUrl?.replace("/view", "/download") || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-500 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-500 text-xs font-bold rounded-sm hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 Download CV
@@ -122,7 +122,7 @@ export function StaffReportModal({
             </div>
           </div>
 
-          <div className="bg-blue-50/50 rounded-2xl p-6 mb-8 border border-blue-100/50">
+          <div className="bg-blue-50/50 rounded-xl p-4 md:mb-8 mb-6 border border-[#B0DDFF]">
             <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-2">
               Current Shift
             </p>
