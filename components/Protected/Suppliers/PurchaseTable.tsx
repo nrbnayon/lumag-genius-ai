@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Pencil, Download, Trash2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Download, Trash2, SquarePen } from "lucide-react";
 import type { Purchase } from "@/types/supplier";
 import { TablePagination } from "@/components/Shared/TablePagination";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 import { PurchaseModal } from "./PurchaseModal";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 const COLS = [
   "Product Name",
@@ -26,6 +25,7 @@ interface PurchaseTableProps {
   subtitle?: string;
   initialData: Purchase[];
   modalType?: "purchase" | "other";
+  externalSearch?: string;
 }
 
 export function PurchaseTable({
@@ -33,9 +33,15 @@ export function PurchaseTable({
   subtitle,
   initialData,
   modalType = "purchase",
+  externalSearch = "",
 }: PurchaseTableProps) {
   const [items, setItems] = useState<Purchase[]>(initialData);
-  const [search, setSearch] = useState("");
+
+  // Sync with initialData when it changes externally (like searching)
+  useEffect(() => {
+    setItems(initialData);
+  }, [initialData]);
+
   const [page, setPage] = useState(1);
 
   // Modal states
@@ -53,11 +59,11 @@ export function PurchaseTable({
     () =>
       items.filter(
         (i) =>
-          i.productName.toLowerCase().includes(search.toLowerCase()) ||
-          i.supplierName.toLowerCase().includes(search.toLowerCase()) ||
-          i.category.toLowerCase().includes(search.toLowerCase()),
+          i.productName.toLowerCase().includes(externalSearch.toLowerCase()) ||
+          i.supplierName.toLowerCase().includes(externalSearch.toLowerCase()) ||
+          i.category.toLowerCase().includes(externalSearch.toLowerCase()),
       ),
-    [items, search],
+    [items, externalSearch],
   );
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
@@ -114,28 +120,28 @@ export function PurchaseTable({
   return (
     <div className="space-y-1">
       {/* Section header */}
-      <div className="flex items-baseline gap-2">
-        <h2 className="text-base font-bold text-foreground">{title}</h2>
+      <div className="flex items-baseline gap-2 mb-2">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
         {subtitle && <span className="text-xs text-secondary">{subtitle}</span>}
       </div>
 
       {/* Table card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)] overflow-hidden">
+      <div className="bg-white rounded-2xl p-5 shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[700px]">
+          <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="bg-[#EBF5FF]">
                 {COLS.map((col) => (
                   <th
                     key={col}
-                    className="px-4 py-3.5 text-left text-sm font-semibold text-[#3B82F6] whitespace-nowrap first:pl-6 last:pr-6"
+                    className="px-4 py-3.5 text-left text-sm font-semibold whitespace-nowrap first:pl-6"
                   >
                     {col}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-100">
               {paged.length === 0 ? (
                 <tr>
                   <td
@@ -153,19 +159,25 @@ export function PurchaseTable({
                   >
                     {/* Checkbox + Product Name */}
                     <td className="px-4 py-3.5 pl-6">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={selected.has(item.id)}
-                          onChange={() => toggleSelect(item.id)}
-                          className={cn(
-                            "w-4 h-4 rounded border-gray-300 accent-red-500 cursor-pointer",
-                          )}
-                        />
+                      <div className="flex items-center gap-2">
+                        {item.hasProblem ? (
+                          <div className="w-4 h-4 rounded border border-red-500 bg-white flex items-center justify-center shrink-0">
+                            <span className="text-red-500 text-xs font-black">
+                              ✕
+                            </span>
+                          </div>
+                        ) : (
+                          <input
+                            type="checkbox"
+                            checked={selected.has(item.id)}
+                            onChange={() => toggleSelect(item.id)}
+                            className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer shrink-0"
+                          />
+                        )}
                         <span className="font-medium text-foreground">
                           {item.productName}
                         </span>
-                      </label>
+                      </div>
                     </td>
                     <td className="px-4 py-3.5 text-secondary">{item.price}</td>
                     <td className="px-4 py-3.5 text-secondary">{item.unit}</td>
@@ -182,25 +194,25 @@ export function PurchaseTable({
                       {item.purchaseDate}
                     </td>
                     {/* Actions */}
-                    <td className="px-4 py-3.5 pr-6">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-3.5">
+                      <div className="w-full flex items-center gap-3">
                         <button
                           onClick={() => setEditTarget(item)}
-                          className="text-gray-400 hover:text-primary transition-colors cursor-pointer"
+                          className="text-secondary hover:text-primary transition-colors cursor-pointer"
                           title="Edit"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <SquarePen className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDownload(item)}
-                          className="text-gray-400 hover:text-primary transition-colors cursor-pointer"
+                          className="text-secondary hover:text-primary transition-colors cursor-pointer"
                           title="Download"
                         >
                           <Download className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setDeleteTarget(item)}
-                          className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                          className="text-red-400 hover:text-red-500 transition-colors cursor-pointer"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />

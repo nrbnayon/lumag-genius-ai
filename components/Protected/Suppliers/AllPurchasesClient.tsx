@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { PurchaseTable } from "./PurchaseTable";
@@ -8,9 +8,17 @@ import { PurchaseModal } from "./PurchaseModal";
 import { purchasesData, otherProductsData } from "@/data/purchaseData";
 import type { Purchase } from "@/types/supplier";
 import { toast } from "sonner";
+import { PurchaseSkeleton } from "@/components/Skeleton/PurchaseSkeleton";
 
 export default function AllPurchasesClient() {
   const [search, setSearch] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Global add-purchase modal (from header button)
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -51,6 +59,18 @@ export default function AllPurchasesClient() {
     setIsAddOtherOpen(false);
     toast.success("Other product added!");
   };
+
+  if (isLoading) {
+    return (
+      <div className="pb-10">
+        <DashboardHeader
+          title="Purchasing & Suppliers"
+          description="Manage suppliers and track price changes"
+        />
+        <PurchaseSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-10">
@@ -102,26 +122,18 @@ export default function AllPurchasesClient() {
         {/* All Purchased List table */}
         <PurchaseTable
           title=""
-          initialData={purchases.filter((p) =>
-            search
-              ? p.productName.toLowerCase().includes(search.toLowerCase()) ||
-                p.supplierName.toLowerCase().includes(search.toLowerCase())
-              : true,
-          )}
+          initialData={purchases}
           modalType="purchase"
+          externalSearch={search}
         />
 
         {/* Other Product table */}
         <PurchaseTable
           title="Other Product"
           subtitle="(These products are special and for special events)"
-          initialData={others.filter((p) =>
-            search
-              ? p.productName.toLowerCase().includes(search.toLowerCase()) ||
-                p.supplierName.toLowerCase().includes(search.toLowerCase())
-              : true,
-          )}
+          initialData={others}
           modalType="other"
+          externalSearch={search}
         />
       </main>
 

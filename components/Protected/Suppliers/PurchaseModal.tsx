@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, Calendar, ChevronDown } from "lucide-react";
+import { X, ChevronDown, ImageUp, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -122,9 +122,28 @@ export function PurchaseModal({
   const handleReportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file.");
+      return;
+    }
+
     setReportFileName(file.name);
-    toast.success(`Report "${file.name}" attached.`);
-    setForm((prev) => ({ ...prev, reportUrl: file.name }));
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target?.result as string;
+      setForm((prev) => ({ ...prev, reportUrl: dataUrl }));
+      toast.success(`Report "${file.name}" attached.`);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveReport = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setReportFileName("");
+    setForm((prev) => ({ ...prev, reportUrl: "" }));
+    if (reportRef.current) reportRef.current.value = "";
+    toast.success("Report removed.");
   };
 
   if (!isOpen) return null;
@@ -137,9 +156,9 @@ export function PurchaseModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-xl bg-white rounded-2xl shadow-xl animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto custom-scrollbar">
+      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto custom-scrollbar">
         {/* Header */}
-        <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="sticky top-0 bg-white z-10 flex items-center justify-between p-5 border-b border-gray-100">
           <h2 className="text-xl font-bold text-foreground">
             {mode === "add"
               ? type === "other"
@@ -155,7 +174,7 @@ export function PurchaseModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Product Name */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
@@ -293,7 +312,6 @@ export function PurchaseModal({
                   errors.purchaseDate && "border-red-400",
                 )}
               />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
           </div>
 
@@ -345,59 +363,51 @@ export function PurchaseModal({
           {/* Report Upload */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Report(If find any problem with the product)
+              Report{" "}
+              <span className="text-secondary">
+                (If find any problem with the product)
+              </span>
             </label>
             <div
               onClick={() => reportRef.current?.click()}
-              className="border-2 border-dashed border-blue-200 bg-[#F0F8FF] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-blue-50/60 transition-all cursor-pointer group"
+              className="border-2 border-dashed border-blue-200 bg-[#F0F8FF] rounded-2xl p-6 flex flex-col items-center justify-center gap-2 hover:bg-blue-50/60 transition-all cursor-pointer group min-h-[160px] relative overflow-hidden"
             >
               <input
                 ref={reportRef}
                 type="file"
                 className="hidden"
-                accept="image/*,.pdf"
+                accept="image/*"
                 onChange={handleReportUpload}
               />
-              <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform text-gray-400">
-                {/* image icon */}
-                <svg
-                  width="36"
-                  height="36"
-                  viewBox="0 0 36 36"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <rect
-                    x="2"
-                    y="6"
-                    width="32"
-                    height="24"
-                    rx="3"
-                    stroke="#94A3B8"
-                    strokeWidth="2"
-                    fill="none"
+              {form.reportUrl ? (
+                <div className="absolute inset-0 w-full h-full group/preview">
+                  <Image
+                    src={form.reportUrl}
+                    alt="Report Preview"
+                    fill
+                    className="object-cover"
                   />
-                  <circle
-                    cx="12"
-                    cy="14"
-                    r="3"
-                    stroke="#94A3B8"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                  <path
-                    d="M2 26l8-8 6 6 4-4 6 6"
-                    stroke="#94A3B8"
-                    strokeWidth="2"
-                    strokeLinejoin="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-              <p className="text-sm font-semibold text-foreground text-center">
-                {reportFileName || "Click to upload or drag and drop"}
-              </p>
-              <p className="text-xs text-secondary">Max. File Size: 50MB</p>
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/preview:opacity-100 transition-opacity flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={handleRemoveReport}
+                      className="p-3 bg-red-500 text-white rounded-full hover:bg-red-600 transition-all transform scale-90 group-hover/preview:scale-100"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform text-gray-400">
+                    <ImageUp className="w-10 h-10 text-blue-500" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground text-center">
+                    {reportFileName || "Click to upload or drag and drop"}
+                  </p>
+                  <p className="text-xs text-secondary">Max. File Size: 50MB</p>
+                </>
+              )}
             </div>
           </div>
 

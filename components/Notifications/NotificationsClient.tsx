@@ -149,13 +149,13 @@ export default function NotificationsClient() {
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() => handleViewDetails(notification)}
-                      className="px-4 py-1.5 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-wider rounded border border-green-100 hover:bg-green-100 transition-all cursor-pointer"
+                      className="px-4 py-1.5 bg-green-50 text-green-600 text-xs font-black uppercase tracking-wider rounded border border-green-100 hover:bg-green-100 transition-all cursor-pointer"
                     >
                       View
                     </button>
                     <button
                       onClick={() => handleRejectInitiate(notification.id)}
-                      className="px-4 py-1.5 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-wider rounded border border-red-100 hover:bg-red-100 transition-all cursor-pointer"
+                      className="px-4 py-1.5 bg-red-50 text-red-600 text-xs font-black uppercase tracking-wider rounded border border-red-100 hover:bg-red-100 transition-all cursor-pointer"
                     >
                       Reject
                     </button>
@@ -163,7 +163,7 @@ export default function NotificationsClient() {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] font-bold text-secondary">
+                <span className="text-xs font-bold text-secondary">
                   {notification.timestamp}
                 </span>
               </div>

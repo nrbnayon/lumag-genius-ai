@@ -22,9 +22,15 @@ import { SupplierOverview } from "./tabs/SupplierOverview";
 import { PriceComparison } from "./tabs/PriceComparison";
 import { PriceHistory } from "./tabs/PriceHistory";
 import { PriceAlerts } from "./tabs/PriceAlerts";
+import { ShoppingList } from "./tabs/ShoppingList";
 import Link from "next/link";
 
-type SupplierTab = "Overview" | "Comparison" | "History" | "Alerts";
+type SupplierTab =
+  | "Overview"
+  | "Comparison"
+  | "History"
+  | "Alerts"
+  | "ShoppingList";
 
 export default function SuppliersClient() {
   const [activeTab, setActiveTab] = useState<SupplierTab>("Overview");
@@ -102,6 +108,7 @@ export default function SuppliersClient() {
     { id: "Comparison", label: "Price Comparison" },
     { id: "History", label: "Price History (30 Days)" },
     { id: "Alerts", label: "Price Alerts" },
+    { id: "ShoppingList", label: "Shopping List" },
   ];
 
   return (
@@ -194,6 +201,8 @@ export default function SuppliersClient() {
           )}
 
           {activeTab === "Alerts" && <PriceAlerts alerts={priceAlertsData} />}
+
+          {activeTab === "ShoppingList" && <ShoppingList />}
         </div>
       </main>
 
