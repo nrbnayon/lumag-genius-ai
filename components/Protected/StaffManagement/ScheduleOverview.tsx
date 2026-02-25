@@ -4,7 +4,7 @@ import { weeklySchedule } from "@/data/staffData";
 
 export function ScheduleOverview() {
   return (
-    <div className="bg-white rounded-lg shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden md:p-6 p-4">
+    <div className="bg-white rounded-lg shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden md:p-6 p-3">
       <div className="pb-4 border-b border-gray-100">
         <h3 className="text-xl font-bold text-foreground">
           Weekly Schedule Overview

@@ -42,7 +42,7 @@ export function HolidayNotifications({
   };
 
   return (
-    <div className="space-y-4 shadow-[0px_4px_16px_0px_#A9A9A940] md:p-6 p-4 rounded-lg">
+    <div className="space-y-4 shadow-[0px_4px_16px_0px_#A9A9A940] md:p-6 p-3 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF8904] to-[#FB2C36] flex items-center justify-center text-white shadow-sm border border-orange-100/50">
