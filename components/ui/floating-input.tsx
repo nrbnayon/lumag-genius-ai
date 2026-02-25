@@ -18,6 +18,7 @@ interface FloatingInputProps extends React.InputHTMLAttributes<HTMLInputElement>
    * Optional: control input height (default 56px / h-14)
    */
   inputHeight?: string;
+  children?: React.ReactNode;
 }
 
 const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
@@ -30,12 +31,15 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
       error,
       type = "text",
       inputHeight = "h-14",
+      children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isFocused, setIsFocused] = React.useState(false);
-    const [hasValue, setHasValue] = React.useState(!!props.value || !!props.defaultValue);
+    const [hasValue, setHasValue] = React.useState(
+      !!props.value || !!props.defaultValue,
+    );
 
     // Update hasValue when controlled or uncontrolled value changes
     React.useEffect(() => {
@@ -58,74 +62,79 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
     const isActive = isFocused || hasValue;
 
     return (
-      <div className="relative w-full">
-        <input
-          ref={ref}
-          type={type}
-          className={cn(
-            // Core layout – centered text vertically
-            "peer w-full bg-transparent outline-none transition-all duration-200",
-            inputHeight,
-            "px-4 text-base leading-none",
-            "py-0",
+      <div className="w-full">
+        <div className="relative">
+          <input
+            ref={ref}
+            type={type}
+            className={cn(
+              // Core layout – centered text vertically
+              "peer w-full bg-transparent outline-none transition-all duration-200",
+              inputHeight,
+              "px-4 text-base leading-none",
+              "py-0",
 
-            // Border styles
-            isLabelBorder
-              ? cn(
-                  "rounded-lg border border-input",
-                  "focus:border-primary focus:ring-4 focus:ring-primary/10"
-                )
-              : cn(
-                  "border-b-2 border-x-0 border-t-0 border-input",
-                  "focus:border-primary"
-                ),
-
-            // Error states override
-            error &&
-              (isLabelBorder
-                ? "border-destructive focus:border-destructive focus:ring-4 focus:ring-destructive/10"
-                : "border-destructive focus:border-destructive"),
-
-            // Disabled state
-            "disabled:pointer-events-none disabled:opacity-50",
-
-            className
-          )}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          placeholder=" "
-          aria-invalid={!!error}
-          {...props}
-        />
-
-        {/* Floating Label */}
-        <label
-          className={cn(
-            "absolute left-4 pointer-events-none transition-all duration-200 ease-out",
-            "text-muted-foreground select-none",
-
-            // Inactive (placeholder-like) state
-            !isActive && cn("top-1/2 -translate-y-1/2 text-base"),
-
-            // Active (floating) state
-            isActive &&
-              (isLabelBorder
+              // Border styles
+              isLabelBorder
                 ? cn(
-                    "top-0 -translate-y-1/2 text-xs font-medium px-1.5 bg-background",
-                    isLabelBorder && "peer-focus:text-primary"
+                    "rounded-lg border border-input",
+                    "focus:border-primary focus:ring-4 focus:ring-primary/10",
                   )
-                : cn("top-2 text-xs font-medium")),
+                : cn(
+                    "border-b-2 border-x-0 border-t-0 border-input",
+                    "focus:border-primary",
+                  ),
 
-            // Color overrides (only apply if no error)
-            isFocused && !error && "text-primary",
-            error && "text-destructive",
-            
-            // Allow custom label classes to override default colors when inactive
-            !isActive && !error && labelClassName
-          )}
-        >
-          {label}
-        </label>
+              // Error states override
+              error &&
+                (isLabelBorder
+                  ? "border-destructive focus:border-destructive focus:ring-4 focus:ring-destructive/10"
+                  : "border-destructive focus:border-destructive"),
+
+              // Disabled state
+              "disabled:pointer-events-none disabled:opacity-50",
+
+              className,
+            )}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            placeholder=" "
+            aria-invalid={!!error}
+            {...props}
+          />
+
+          {/* Floating Label */}
+          <label
+            className={cn(
+              "absolute left-4 pointer-events-none transition-all duration-200 ease-out",
+              "text-muted-foreground select-none",
+
+              // Inactive (placeholder-like) state
+              !isActive && cn("top-1/2 -translate-y-1/2 text-base"),
+
+              // Active (floating) state
+              isActive &&
+                (isLabelBorder
+                  ? cn(
+                      "top-0 -translate-y-1/2 text-xs font-medium px-1.5 bg-background",
+                      isLabelBorder && "peer-focus:text-primary",
+                    )
+                  : cn("top-2 text-xs font-medium")),
+
+              // Color overrides (only apply if no error)
+              isFocused && !error && "text-primary",
+              error && "text-destructive",
+
+              // Allow custom label classes to override default colors when inactive
+              !isActive && !error && labelClassName,
+            )}
+          >
+            {label}
+          </label>
+
+          {/* Eye button toggle or other absolute elements */}
+          {children}
+        </div>
 
         {/* Error message */}
         {error && (
@@ -135,7 +144,7 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 FloatingInput.displayName = "FloatingInput";

@@ -137,7 +137,7 @@ const VerifyOtp = () => {
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
           {/* Logo + Title */}
           <div className="text-center space-y-3">
-            <div className="flex justify-center mb-6 md:mb-8">
+            {/* <div className="flex justify-center mb-6 md:mb-8">
               <Image
                 src="/icons/logo.png"
                 alt="Xandra Logo"
@@ -146,7 +146,7 @@ const VerifyOtp = () => {
                 className="w-28 sm:w-36 h-auto"
                 priority
               />
-            </div>
+            </div> */}
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
               Verify OTP
             </h1>

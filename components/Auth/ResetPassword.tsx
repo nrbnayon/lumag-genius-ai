@@ -88,35 +88,36 @@ const ResetPassword = () => {
 
   return (
     <div className="relative h-screen w-full flex flex-col lg:flex-row">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="hidden lg:block lg:flex-1 h-screen bg-[#E6F4FF]"
-            >
-              <div className="w-full h-full flex items-center justify-center p-20">
-                <div className="relative w-full h-full max-w-2xl transition-transform duration-700 hover:scale-105">
-                  <Image
-                    src="/auth/reset-password.png"
-                    alt="Reset Password Illustration"
-                    fill
-                    className="object-contain"
-                    priority
-                  />
-                </div>
-              </div>
-            </motion.div>
-      
-            {/* Right - Form */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-              className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white">
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="hidden lg:block lg:flex-1 h-screen bg-[#E6F4FF]"
+      >
+        <div className="w-full h-full flex items-center justify-center p-20">
+          <div className="relative w-full h-full max-w-2xl transition-transform duration-700 hover:scale-105">
+            <Image
+              src="/auth/reset-password.png"
+              alt="Reset Password Illustration"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Right - Form */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6 }}
+        className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white"
+      >
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
           {/* Logo + Title */}
           <div className="text-center space-y-3">
-            <div className="flex justify-center mb-6 md:mb-8">
+            {/* <div className="flex justify-center mb-6 md:mb-8">
               <Image
                 src="/icons/logo.png"
                 alt="Xandra Logo"
@@ -125,7 +126,7 @@ const ResetPassword = () => {
                 className="w-28 sm:w-36 h-auto"
                 priority
               />
-            </div>
+            </div> */}
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
               Reset password
             </h1>
@@ -137,20 +138,19 @@ const ResetPassword = () => {
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Password */}
-            <div className="relative">
-              <FloatingInput
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                error={errors.newPassword?.message}
-                labelClassName="text-secondary"
-                className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
-                {...register("newPassword")}
-                onChange={handleTrimChange("newPassword")}
-              />
+            <FloatingInput
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              error={errors.newPassword?.message}
+              labelClassName="text-secondary"
+              className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
+              {...register("newPassword")}
+              onChange={handleTrimChange("newPassword")}
+            >
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors z-10 p-1"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1"
               >
                 {showPassword ? (
                   <Eye className="h-5 w-5" />
@@ -158,23 +158,22 @@ const ResetPassword = () => {
                   <EyeOff className="h-5 w-5" />
                 )}
               </button>
-            </div>
+            </FloatingInput>
 
             {/* Rewrite Password */}
-            <div className="relative">
-              <FloatingInput
-                label="Rewrite Password"
-                type={showConfirmPassword ? "text" : "password"}
-                error={errors.confirmPassword?.message}
-                labelClassName="text-secondary"
-                className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
-                {...register("confirmPassword")}
-                onChange={handleTrimChange("confirmPassword")}
-              />
+            <FloatingInput
+              label="Rewrite Password"
+              type={showConfirmPassword ? "text" : "password"}
+              error={errors.confirmPassword?.message}
+              labelClassName="text-secondary"
+              className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
+              {...register("confirmPassword")}
+              onChange={handleTrimChange("confirmPassword")}
+            >
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors z-10 p-1 cursor-pointer"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1"
               >
                 {showConfirmPassword ? (
                   <Eye className="h-5 w-5" />
@@ -182,7 +181,7 @@ const ResetPassword = () => {
                   <EyeOff className="h-5 w-5" />
                 )}
               </button>
-            </div>
+            </FloatingInput>
 
             <Button
               type="submit"

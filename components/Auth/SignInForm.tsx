@@ -156,21 +156,20 @@ export const SignInForm = () => {
             />
 
             {/* Password with eye toggle */}
-            <div className="relative">
-              <FloatingInput
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                error={errors.password?.message}
-                labelClassName="text-secondary"
-                className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
-                {...register("password")}
-                onChange={handleTrimChange("password")}
-              />
+            <FloatingInput
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              error={errors.password?.message}
+              labelClassName="text-secondary"
+              className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
+              {...register("password")}
+              onChange={handleTrimChange("password")}
+            >
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors z-10 p-1 cursor-pointer"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -179,7 +178,7 @@ export const SignInForm = () => {
                   <EyeOff className="h-5 w-5" />
                 )}
               </button>
-            </div>
+            </FloatingInput>
 
             {/* Remember me */}
             <Controller
