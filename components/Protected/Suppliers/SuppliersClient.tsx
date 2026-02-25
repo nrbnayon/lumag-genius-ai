@@ -22,6 +22,7 @@ import { SupplierOverview } from "./tabs/SupplierOverview";
 import { PriceComparison } from "./tabs/PriceComparison";
 import { PriceHistory } from "./tabs/PriceHistory";
 import { PriceAlerts } from "./tabs/PriceAlerts";
+import Link from "next/link";
 
 type SupplierTab = "Overview" | "Comparison" | "History" | "Alerts";
 
@@ -120,13 +121,21 @@ export default function SuppliersClient() {
               Purchased Product
             </span>
           </div>
-          <button
-            onClick={handleAddClick}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition-all cursor-pointer text-sm shadow-sm active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            Add Supplier
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/suppliers/all-purchase"
+              className="border border-border px-4 py-2 rounded-lg hover:bg-gray-100 transition-all cursor-pointer hover:border-primary"
+            >
+              All Purchases
+            </Link>
+            <button
+              onClick={handleAddClick}
+              className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition-all cursor-pointer text-sm shadow-sm active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              Add Supplier
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}
