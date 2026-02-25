@@ -400,7 +400,7 @@ export function PurchaseModal({
               ) : (
                 <>
                   <div className="w-10 h-10 flex items-center justify-center group-hover:scale-110 transition-transform text-gray-400">
-                    <ImageUp className="w-10 h-10 text-blue-500" />
+                    <ImageUp className="w-10 h-10" />
                   </div>
                   <p className="text-sm font-semibold text-foreground text-center">
                     {reportFileName || "Click to upload or drag and drop"}
