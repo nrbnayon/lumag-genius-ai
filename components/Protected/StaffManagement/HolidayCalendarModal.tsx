@@ -181,34 +181,34 @@ export function HolidayCalendarModal({
           {/* Navigation */}
 
           <div className="flex items-center justify-between gap-4 mb-5">
+            <button
+              onClick={prevMonth}
+              className="p-3 hover:bg-gray-50 rounded-xl border border-gray-100 transition-colors cursor-pointer shadow-sm active:scale-95 text-secondary"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-4 bg-gray-50/50 px-6 py-2 rounded-2xl border border-gray-100">
+              <h3 className="text-2xl font-black text-foreground">
+                {monthName} {viewYear}
+              </h3>
               <button
-                onClick={prevMonth}
-                className="p-3 hover:bg-gray-50 rounded-xl border border-gray-100 transition-colors cursor-pointer shadow-sm active:scale-95 text-secondary"
+                onClick={goToToday}
+                className="px-4 py-1.5 bg-emerald-500 text-white text-xs font-black rounded-full uppercase tracking-widest shadow-md hover:bg-emerald-600 transition-all active:scale-95 cursor-pointer"
               >
-                <ChevronLeft className="w-5 h-5" />
+                Today
               </button>
-              <div className="flex items-center gap-4 bg-gray-50/50 px-6 py-2 rounded-2xl border border-gray-100">
-                <h3 className="text-2xl font-black text-foreground">
-                  {monthName} {viewYear}
-                </h3>
-                <button
-                  onClick={goToToday}
-                  className="px-4 py-1.5 bg-emerald-500 text-white text-[10px] font-black rounded-full uppercase tracking-widest shadow-md hover:bg-emerald-600 transition-all active:scale-95 cursor-pointer"
-                >
-                  Today
-                </button>
-              </div>
-              <button
-                onClick={nextMonth}
-                className="p-3 hover:bg-gray-50 rounded-xl border border-gray-100 transition-colors cursor-pointer shadow-sm active:scale-95 text-secondary"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
+            </div>
+            <button
+              onClick={nextMonth}
+              className="p-3 hover:bg-gray-50 rounded-xl border border-gray-100 transition-colors cursor-pointer shadow-sm active:scale-95 text-secondary"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Legend */}
           <div className="mb-8 p-4 bg-gray-50/30 rounded-2xl border border-gray-100/50 flex flex-wrap gap-8 items-center">
-            <span className="text-[10px] font-black text-secondary uppercase tracking-[0.2em]">
+            <span className="text-xs font-black text-secondary uppercase tracking-[0.2em]">
               Holiday Types:
             </span>
             <div className="flex items-center gap-2">
@@ -240,7 +240,7 @@ export function HolidayCalendarModal({
             {WEEKDAYS.map((day) => (
               <div
                 key={day}
-                className="bg-white p-4 text-center text-[10px] font-black text-secondary uppercase tracking-widest border-b border-gray-50"
+                className="bg-white p-4 text-center text-xs font-black text-secondary uppercase tracking-widest border-b border-gray-50"
               >
                 {day}
               </div>
@@ -272,7 +272,7 @@ export function HolidayCalendarModal({
                           <div
                             key={holiday.id}
                             className={cn(
-                              "text-[10px] font-bold text-white px-2.5 py-1.5 rounded-lg truncate shadow-sm hover:scale-[1.02] transition-transform",
+                              "text-xs font-bold text-white px-2.5 py-1.5 rounded-lg truncate shadow-sm hover:scale-[1.02] transition-transform",
                               holiday.color,
                             )}
                             title={`${holiday.employeeName} - ${holiday.type}`}
@@ -293,7 +293,7 @@ export function HolidayCalendarModal({
           {/* Footer Stats */}
           <div className="mt-8 flex gap-12 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
             <div>
-              <p className="text-[10px] font-black text-secondary uppercase tracking-wider mb-2">
+              <p className="text-xs font-black text-secondary uppercase tracking-wider mb-2">
                 Total Holidays This Month
               </p>
               <div className="flex items-baseline gap-2">
@@ -307,7 +307,7 @@ export function HolidayCalendarModal({
             </div>
             <div className="w-px bg-gray-100" />
             <div>
-              <p className="text-[10px] font-black text-secondary uppercase tracking-wider mb-2">
+              <p className="text-xs font-black text-secondary uppercase tracking-wider mb-2">
                 Employees Affected
               </p>
               <div className="flex items-baseline gap-2">

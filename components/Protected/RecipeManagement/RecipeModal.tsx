@@ -245,7 +245,7 @@ export function RecipeModal({
               </div>
 
               <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-secondary px-1">
+                <div className="grid grid-cols-12 gap-2 text-xs uppercase font-bold text-secondary px-1">
                   <div className="col-span-4">Name</div>
                   <div className="col-span-2 text-center">Quantity</div>
                   <div className="col-span-3 text-center">Unit</div>
@@ -381,9 +381,7 @@ export function RecipeModal({
                   <p className="text-sm font-medium text-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-[10px] text-secondary">
-                    Max. File Size: 50MB
-                  </p>
+                  <p className="text-xs text-secondary">Max. File Size: 50MB</p>
                 </>
               )}
             </div>

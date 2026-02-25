@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import {  TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { ProductPriceComparison } from "@/types/supplier";
 
 interface PriceComparisonProps {
@@ -70,7 +70,7 @@ export function PriceComparison({ data }: PriceComparisonProps) {
                     ${comp.price.toFixed(2)}
                   </div>
                   {comp.isBestPrice && (
-                    <span className="mt-2 inline-block px-3 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-full uppercase tracking-wider">
+                    <span className="mt-2 inline-block px-3 py-1 bg-emerald-500 text-white text-xs font-bold rounded-full uppercase tracking-wider">
                       Best Price
                     </span>
                   )}

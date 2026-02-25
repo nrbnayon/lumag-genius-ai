@@ -88,7 +88,7 @@ export function RecipeExportModal({
                     Ingredients
                   </th>
                 </tr>
-                <tr className="border-t border-gray-100 text-[10px] text-gray-400">
+                <tr className="border-t border-gray-100 text-xs text-gray-400">
                   <th colSpan={4}></th>
                   <th className="p-2 border-r border-gray-50">Name</th>
                   <th className="p-2 border-r border-gray-50">Quantity</th>

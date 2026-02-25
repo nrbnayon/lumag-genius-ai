@@ -288,7 +288,7 @@ export function StaffModal({
               <p className="text-sm font-bold text-foreground">
                 Click to upload or drag and drop
               </p>
-              <p className="text-[10px] font-medium text-secondary mt-1 uppercase tracking-wider">
+              <p className="text-xs font-medium text-secondary mt-1 uppercase tracking-wider">
                 Supports: XLSX, XLS, CSV (Max. 50MB)
               </p>
             </div>

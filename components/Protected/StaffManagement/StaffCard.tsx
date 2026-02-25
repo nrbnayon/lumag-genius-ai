@@ -33,7 +33,7 @@ export function StaffCard({
           </div>
           <div>
             <h3 className="text-sm font-bold text-foreground">{staff.name}</h3>
-            <p className="text-[10px] text-secondary font-medium uppercase tracking-wider">
+            <p className="text-xs text-secondary font-medium uppercase tracking-wider">
               {staff.position}
             </p>
           </div>

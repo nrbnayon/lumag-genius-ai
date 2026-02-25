@@ -93,7 +93,7 @@ export function HolidayNotifications({
                 <p className="text-xs text-secondary font-medium lowercase tracking-wide">
                   {item.position}
                 </p>
-                <div className="flex items-center gap-1 text-[10px] text-gray-400 font-bold">
+                <div className="flex items-center gap-1 text-xs text-gray-400 font-bold">
                   <Calendar className="w-3 h-3" />
                   {item.date}
                 </div>

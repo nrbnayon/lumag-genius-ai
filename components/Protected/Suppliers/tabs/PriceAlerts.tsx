@@ -53,7 +53,7 @@ export function PriceAlerts({ alerts: initialAlerts }: PriceAlertsProps) {
         >
           <div className="space-y-2">
             {alert.isSuddenChange && (
-              <span className="px-3 py-1 bg-red-50 text-red-500 text-[10px] font-bold rounded-lg uppercase tracking-wider">
+              <span className="px-3 py-1 bg-red-50 text-red-500 text-xs font-bold rounded-lg uppercase tracking-wider">
                 Sudden Change is visible
               </span>
             )}

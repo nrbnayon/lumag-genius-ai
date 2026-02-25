@@ -157,7 +157,7 @@ export function StaffReportModal({
                   </div>
                   <div
                     className={cn(
-                      "px-4 py-1.5 rounded-full text-[10px] font-bold",
+                      "px-4 py-1.5 rounded-full text-xs font-bold",
                       item.color,
                     )}
                   >

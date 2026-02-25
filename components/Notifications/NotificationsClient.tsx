@@ -240,7 +240,7 @@ export default function NotificationsClient() {
                         </span>
                       )}
                     </h3>
-                    <span className="text-[10px] md:text-xs font-bold text-secondary uppercase tracking-wider">
+                    <span className="text-xs md:text-xs font-bold text-secondary uppercase tracking-wider">
                       {formatTimestamp(notification.timestamp)}
                     </span>
                   </div>

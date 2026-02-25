@@ -70,7 +70,7 @@ export function NegotiateAlertModal({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white p-3 rounded-xl border border-blue-100 shadow-sm">
-                <p className="text-[10px] font-bold text-secondary uppercase tracking-wider mb-1">
+                <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Current Price
                 </p>
                 <div className="text-lg font-bold text-foreground">
@@ -78,7 +78,7 @@ export function NegotiateAlertModal({
                 </div>
               </div>
               <div className="bg-white p-3 rounded-xl border-2 border-red-100 shadow-sm focus-within:border-primary transition-colors">
-                <p className="text-[10px] font-bold text-secondary uppercase tracking-wider mb-1">
+                <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
                   Proposed Price
                 </p>
                 <input
@@ -131,9 +131,7 @@ export function NegotiateAlertModal({
                 />
                 <div className="text-center">
                   <p className="text-sm font-bold text-foreground">Email</p>
-                  <p className="text-[10px] font-medium text-secondary">
-                    Send now
-                  </p>
+                  <p className="text-xs font-medium text-secondary">Send now</p>
                 </div>
               </button>
               <button
@@ -157,7 +155,7 @@ export function NegotiateAlertModal({
                   <p className="text-sm font-bold text-foreground">
                     Phone Call
                   </p>
-                  <p className="text-[10px] font-medium text-secondary">
+                  <p className="text-xs font-medium text-secondary">
                     Call supplier
                   </p>
                 </div>

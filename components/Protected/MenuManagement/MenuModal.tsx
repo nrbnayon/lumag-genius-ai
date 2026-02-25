@@ -320,9 +320,7 @@ export function MenuModal({
                   <p className="text-sm font-medium text-foreground">
                     Click to upload or drag and drop
                   </p>
-                  <p className="text-[10px] text-secondary">
-                    Max. File Size: 50MB
-                  </p>
+                  <p className="text-xs text-secondary">Max. File Size: 50MB</p>
                 </>
               )}
             </div>
