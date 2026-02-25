@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, Info } from "lucide-react";
+import { Bell, Calendar, Info, PlaneIcon } from "lucide-react";
 import { holidayNotifications } from "@/data/staffData";
 import { cn } from "@/lib/utils";
 
@@ -11,24 +11,42 @@ interface HolidayNotificationsProps {
 export function HolidayNotifications({
   onViewCalendar,
 }: HolidayNotificationsProps) {
+  const getNoticeStyles = (type: string) => {
+    switch (type) {
+      case "1 Week Notice":
+        return "bg-[#FFE2E2] text-[#C10007] border-[#FFC9C9]";
+      case "2 Week Notice":
+        return "bg-[#F0B10033] text-[#CC6D00] border-[#FFD6A8]";
+      case "3 Week Notice":
+        return "bg-[#F47DFF33] text-[#8200DB] border-[#ECA3FE]";
+      case "1 Month Notice":
+        return "bg-[#B0DDFF] text-[#155DFC] border-[#77A1FF]";
+      default:
+        return "bg-gray-50 text-gray-600 border-gray-100";
+    }
+  };
+
+  const getCardBg = (type: string) => {
+    switch (type) {
+      case "1 Week Notice":
+        return "bg-[#FEF2F2]";
+      case "2 Week Notice":
+        return "bg-[#FFF7ED]";
+      case "3 Week Notice":
+        return "bg-[#FBEDFF]";
+      case "1 Month Notice":
+        return "bg-[#E6F4FF]";
+      default:
+        return "bg-white";
+    }
+  };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 shadow-[0px_4px_16px_0px_#A9A9A940] md:p-6 p-4 rounded-lg">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#FF8904] to-[#FB2C36] flex items-center justify-center text-white shadow-sm border border-orange-100/50">
+            <Bell className="w-5 h-5" />
           </div>
           <div>
             <h3 className="text-base font-bold text-foreground">
@@ -41,7 +59,7 @@ export function HolidayNotifications({
         </div>
         <button
           onClick={onViewCalendar}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-blue-100 rounded-lg text-primary text-xs font-bold hover:bg-blue-50 transition-all cursor-pointer shadow-sm"
+          className="flex items-center gap-2 px-4 py-3 bg-white border border-border rounded-sm text-primary text-xs font-bold hover:bg-blue-50 transition-all cursor-pointer shadow-none active:scale-95"
         >
           <Calendar className="w-4 h-4" />
           View Full Calender
@@ -52,32 +70,30 @@ export function HolidayNotifications({
         {holidayNotifications.map((item) => (
           <div
             key={item.id}
-            className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group"
+            className={cn(
+              "flex items-center justify-between p-5 rounded-lg border transition-all group",
+              getCardBg(item.noticeType),
+              item.noticeType === "1 Week Notice"
+                ? "border-red-100"
+                : item.noticeType === "2 Week Notice"
+                  ? "border-amber-100"
+                  : item.noticeType === "3 Week Notice"
+                    ? "border-purple-100"
+                    : "border-blue-100",
+            )}
           >
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                  />
-                </svg>
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-red-500 shadow-none">
+                <PlaneIcon className="w-4 h-4" />
               </div>
               <div className="space-y-1">
                 <h4 className="text-sm font-bold text-foreground">
                   {item.name}
                 </h4>
-                <p className="text-xs text-secondary font-medium">
+                <p className="text-xs text-secondary font-medium lowercase tracking-wide">
                   {item.position}
                 </p>
-                <div className="flex items-center gap-1 text-[10px] text-secondary font-bold">
+                <div className="flex items-center gap-1 text-[10px] text-gray-400 font-bold">
                   <Calendar className="w-3 h-3" />
                   {item.date}
                 </div>
@@ -86,13 +102,15 @@ export function HolidayNotifications({
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  "px-4 py-1.5 rounded-full text-[10px] font-bold shadow-sm",
-                  item.color,
+                  "px-4 py-1.5 rounded-full text-xs font-bold shadow-none border-none",
+                  getNoticeStyles(item.noticeType),
                 )}
               >
                 {item.noticeType}
               </div>
-              <Info className="w-4 h-4 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="w-5 h-5 rounded-full border border-gray-100 flex items-center justify-center shadow-xs">
+                <Info className="w-3.5 h-3.5 text-red-500" />
+              </div>
             </div>
           </div>
         ))}

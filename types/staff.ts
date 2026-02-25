@@ -16,6 +16,9 @@ export interface Staff {
   email: string;
   phone: string;
   avatar?: string;
+  cvUrl?: string;
+  presentDays?: number;
+  offDays?: number;
 }
 
 export interface HolidayNotification {
@@ -28,7 +31,6 @@ export interface HolidayNotification {
     | "2 Week Notice"
     | "3 Week Notice"
     | "1 Month Notice";
-  color: string;
 }
 
 export interface DailySchedule {

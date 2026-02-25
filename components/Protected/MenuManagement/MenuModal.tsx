@@ -332,13 +332,13 @@ export function MenuModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-xl text-foreground font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 transition-colors"
+              className="flex-1 px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer"
             >
               {mode === "add" ? "+ Add" : "Save"}
             </button>

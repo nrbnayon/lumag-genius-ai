@@ -4,8 +4,8 @@ import { weeklySchedule } from "@/data/staffData";
 
 export function ScheduleOverview() {
   return (
-    <div className="bg-white rounded-2xl shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden">
-      <div className="p-6 border-b border-gray-100">
+    <div className="bg-white rounded-lg shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden md:p-6 p-4">
+      <div className="pb-4 border-b border-gray-100">
         <h3 className="text-xl font-bold text-foreground">
           Weekly Schedule Overview
         </h3>
@@ -13,7 +13,7 @@ export function ScheduleOverview() {
       <div className="overflow-x-auto no-scrollbar">
         <table className="w-full">
           <thead>
-            <tr className="bg-blue-50/50">
+            <tr className="bg-[#E6F4FF]">
               <th className="px-6 py-4 text-left text-xs font-bold text-secondary uppercase tracking-wider">
                 Day
               </th>
@@ -31,9 +31,9 @@ export function ScheduleOverview() {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-[#E9E9E9]">
             {weeklySchedule.map((item, idx) => (
-              <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+              <tr key={idx} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <p className="text-sm font-bold text-foreground">
                     {item.day}

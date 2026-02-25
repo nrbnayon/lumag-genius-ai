@@ -110,13 +110,15 @@ export function StaffReportModal({
               >
                 View CV
               </button>
-              <button
-                onClick={onExport}
+              <a
+                href={staff.cvUrl?.replace("/view", "/download") || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-500 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 Download CV
-              </button>
+              </a>
             </div>
           </div>
 

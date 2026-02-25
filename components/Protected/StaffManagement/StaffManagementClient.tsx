@@ -14,11 +14,14 @@ import { toast } from "sonner";
 import { StaffCard } from "./StaffCard";
 import { StaffModal } from "./StaffModal";
 import { StaffReportModal } from "./StaffReportModal";
+import { EmployeeReportModal } from "./EmployeeReportModal";
 import { StaffCVModal } from "./StaffCVModal";
 import { HolidayCalendarModal } from "./HolidayCalendarModal";
 import { HolidayNotifications } from "./HolidayNotifications";
 import { ScheduleOverview } from "./ScheduleOverview";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
+
+import { utils, writeFile } from "xlsx";
 
 export default function StaffManagementClient() {
   const [staffList, setStaffList] = useState<Staff[]>(staffData);
@@ -32,6 +35,7 @@ export default function StaffManagementClient() {
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isEmployeeReportOpen, setIsEmployeeReportOpen] = useState(false);
   const [isCVModalOpen, setIsCVModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -69,6 +73,11 @@ export default function StaffManagementClient() {
     setIsReportModalOpen(true);
   };
 
+  const handleGenerateReport = (staff: Staff) => {
+    setSelectedStaff(staff);
+    setIsEmployeeReportOpen(true);
+  };
+
   const handleDeleteStaff = (staff: Staff) => {
     setSelectedStaff(staff);
     setIsDeleteModalOpen(true);
@@ -94,6 +103,10 @@ export default function StaffManagementClient() {
         email: data.email!,
         phone: data.phone!,
         avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
+        cvUrl:
+          "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+        presentDays: 28,
+        offDays: 2,
       };
       setStaffList([newStaff, ...staffList]);
       toast.success("Staff member added successfully");
@@ -109,7 +122,54 @@ export default function StaffManagementClient() {
   };
 
   const handleExportReport = () => {
-    toast.success("Exporting employee report to Excel...");
+    toast.info("Preparing Full Staff Report...");
+
+    // Prepare data for export
+    const exportData = staffList.map((item) => ({
+      "Full Name": item.name,
+      Position: item.position,
+      Shift: item.shift,
+      Email: item.email,
+      Phone: item.phone,
+      "Present Days": item.presentDays || 0,
+      "Off Days": item.offDays || 0,
+    }));
+
+    // Create Worksheet and Workbook
+    const ws = utils.json_to_sheet(exportData);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, "Staff Members");
+
+    // Export to XLSX
+    writeFile(wb, "Staff_Management_Report.xlsx");
+    toast.success("Full Staff Report exported to Excel!");
+  };
+
+  const handleDownloadReport = (staff: Staff) => {
+    toast.info(`Generating Excel report for ${staff.name}...`);
+
+    // Prepare single staff data
+    const exportData = [
+      {
+        "Full Name": staff.name,
+        Position: staff.position,
+        Shift: staff.shift,
+        Email: staff.email,
+        Phone: staff.phone,
+        "Present Days": staff.presentDays || 0,
+        "Off Days": staff.offDays || 0,
+      },
+    ];
+
+    // Create Worksheet and Workbook
+    const ws = utils.json_to_sheet(exportData);
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, ws, "Employee Report");
+
+    // Export to XLSX
+    writeFile(wb, `${staff.name.replace(/\s+/g, "_")}_Report.xlsx`);
+    toast.success(`Excel report for ${staff.name} downloaded!`);
+    setIsEmployeeReportOpen(false);
   };
 
   const handleViewCV = () => {
@@ -165,7 +225,7 @@ export default function StaffManagementClient() {
           />
           <button
             onClick={handleAddStaff}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition-all cursor-pointer text-sm shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xs font-bold hover:bg-blue-600 transition-all cursor-pointer text-sm shadow-sm active:scale-95"
           >
             <Plus className="w-4 h-4" />
             Add Staff
@@ -184,10 +244,11 @@ export default function StaffManagementClient() {
                     onEdit={handleEditStaff}
                     onView={handleViewStaff}
                     onDelete={handleDeleteStaff}
+                    onGenerateReport={handleGenerateReport}
                   />
                 ))}
               </div>
-              <div className="flex justify-center pt-8">
+              <div className="flex justify-center pt-3">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -235,10 +296,20 @@ export default function StaffManagementClient() {
         onExport={handleExportReport}
       />
 
+      <EmployeeReportModal
+        isOpen={isEmployeeReportOpen}
+        onClose={() => setIsEmployeeReportOpen(false)}
+        staff={selectedStaff}
+        onDownload={handleDownloadReport}
+      />
+
       <StaffCVModal
         isOpen={isCVModalOpen}
         onClose={() => setIsCVModalOpen(false)}
-        cvUrl="https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link"
+        cvUrl={
+          selectedStaff?.cvUrl ||
+          "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link"
+        }
         staffName={selectedStaff?.name}
       />
 

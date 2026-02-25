@@ -9,6 +9,10 @@ export const staffData: Staff[] = [
     email: "mark@gmail.com",
     phone: "+88017572",
     avatar: "https://i.pravatar.cc/150?u=1",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 28,
+    offDays: 2,
   },
   {
     id: "2",
@@ -18,6 +22,10 @@ export const staffData: Staff[] = [
     email: "john@gmail.com",
     phone: "+88017573",
     avatar: "https://i.pravatar.cc/150?u=2",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 26,
+    offDays: 4,
   },
   {
     id: "3",
@@ -27,6 +35,10 @@ export const staffData: Staff[] = [
     email: "sara@gmail.com",
     phone: "+88017574",
     avatar: "https://i.pravatar.cc/150?u=3",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 27,
+    offDays: 3,
   },
   {
     id: "4",
@@ -36,6 +48,10 @@ export const staffData: Staff[] = [
     email: "david@gmail.com",
     phone: "+88017575",
     avatar: "https://i.pravatar.cc/150?u=4",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 25,
+    offDays: 5,
   },
   {
     id: "5",
@@ -45,6 +61,10 @@ export const staffData: Staff[] = [
     email: "emma@gmail.com",
     phone: "+88017576",
     avatar: "https://i.pravatar.cc/150?u=5",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 30,
+    offDays: 0,
   },
   {
     id: "6",
@@ -54,6 +74,10 @@ export const staffData: Staff[] = [
     email: "michael@gmail.com",
     phone: "+88017577",
     avatar: "https://i.pravatar.cc/150?u=6",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 29,
+    offDays: 1,
   },
   {
     id: "7",
@@ -63,6 +87,10 @@ export const staffData: Staff[] = [
     email: "lisa@gmail.com",
     phone: "+88017578",
     avatar: "https://i.pravatar.cc/150?u=7",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 24,
+    offDays: 6,
   },
   {
     id: "8",
@@ -72,6 +100,10 @@ export const staffData: Staff[] = [
     email: "james@gmail.com",
     phone: "+88017579",
     avatar: "https://i.pravatar.cc/150?u=8",
+    cvUrl:
+      "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
+    presentDays: 28,
+    offDays: 2,
   },
 ];
 
@@ -82,7 +114,6 @@ export const holidayNotifications: HolidayNotification[] = [
     position: "Bar Chef",
     date: "Feb 20, 2026",
     noticeType: "1 Week Notice",
-    color: "bg-red-50 text-red-600",
   },
   {
     id: "2",
@@ -90,7 +121,6 @@ export const holidayNotifications: HolidayNotification[] = [
     position: "Restaurant Chef",
     date: "Feb 21 - Feb 23, 2026",
     noticeType: "1 Week Notice",
-    color: "bg-red-50 text-red-600",
   },
   {
     id: "3",
@@ -98,7 +128,6 @@ export const holidayNotifications: HolidayNotification[] = [
     position: "Restaurant Chef",
     date: "Feb 21 - Feb 23, 2026",
     noticeType: "2 Week Notice",
-    color: "bg-amber-50 text-amber-600",
   },
   {
     id: "4",
@@ -106,7 +135,6 @@ export const holidayNotifications: HolidayNotification[] = [
     position: "Restaurant Chef",
     date: "Feb 21 - Feb 23, 2026",
     noticeType: "3 Week Notice",
-    color: "bg-purple-50 text-purple-600",
   },
   {
     id: "5",
@@ -114,7 +142,6 @@ export const holidayNotifications: HolidayNotification[] = [
     position: "Restaurant Chef",
     date: "Feb 21 - Feb 23, 2026",
     noticeType: "1 Month Notice",
-    color: "bg-blue-50 text-blue-600",
   },
 ];
 
