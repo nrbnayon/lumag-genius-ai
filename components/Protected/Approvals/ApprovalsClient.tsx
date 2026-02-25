@@ -25,6 +25,7 @@ import { StatsCard } from "@/components/Shared/StatsCard";
 import { Pagination } from "@/components/Shared/Pagination";
 import { useEffect } from "react";
 import { ApprovalListSkeleton } from "@/components/Skeleton/ApprovalSkeleton";
+import { ConfirmationModal } from "@/components/Shared/ConfirmationModal";
 
 export default function ApprovalsClient() {
   const [isLoading, setIsLoading] = useState(true);
@@ -36,10 +37,14 @@ export default function ApprovalsClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  // Confirmation Modal State
+  const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
+  const [requestToReject, setRequestToReject] = useState<string | null>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1500);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -63,13 +68,24 @@ export default function ApprovalsClient() {
     toast.success("Request approved successfully");
   };
 
-  const handleReject = (id: string) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: "Rejected" as ApprovalStatus } : r,
-      ),
-    );
-    toast.error("Request rejected successfully");
+  const handleRejectInitiate = (id: string) => {
+    setRequestToReject(id);
+    setIsRejectConfirmOpen(true);
+  };
+
+  const handleRejectConfirm = () => {
+    if (requestToReject) {
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === requestToReject
+            ? { ...r, status: "Rejected" as ApprovalStatus }
+            : r,
+        ),
+      );
+      toast.error("Request rejected successfully");
+      setIsRejectConfirmOpen(false);
+      setRequestToReject(null);
+    }
   };
 
   const getIcon = (type: string) => {
@@ -256,7 +272,7 @@ export default function ApprovalsClient() {
                     {request.status === "Pending" ? (
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => handleReject(request.id)}
+                          onClick={() => handleRejectInitiate(request.id)}
                           className="px-6 py-2 bg-red-50 text-red-600 text-sm font-black rounded-lg hover:bg-red-100 transition-all cursor-pointer active:scale-95 border"
                         >
                           Reject
@@ -317,7 +333,17 @@ export default function ApprovalsClient() {
         onClose={() => setIsDetailModalOpen(false)}
         request={selectedRequest}
         onApprove={handleApprove}
-        onReject={handleReject}
+        onReject={handleRejectInitiate}
+      />
+
+      <ConfirmationModal
+        isOpen={isRejectConfirmOpen}
+        onClose={() => setIsRejectConfirmOpen(false)}
+        onConfirm={handleRejectConfirm}
+        title="Reject Request"
+        message="Are you sure you want to reject this request? This action will set the status to Rejected."
+        confirmText="Yes, Reject"
+        isDestructive={true}
       />
     </div>
   );

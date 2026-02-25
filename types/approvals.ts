@@ -1,5 +1,11 @@
 export type ApprovalStatus = "Pending" | "Approved" | "Rejected";
-export type ApprovalType = "Ingredient" | "Recipe" | "Leave" | "Menu";
+export type ApprovalType =
+  | "Ingredient"
+  | "Recipe"
+  | "Leave"
+  | "Menu"
+  | "Supplier"
+  | "Report";
 
 export interface IngredientRequest {
   id: string;
@@ -41,11 +47,43 @@ export interface MenuRequest {
   description: string;
 }
 
+export interface SupplierRequest {
+  id: string;
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  contractStart: string;
+  contractEnd: string;
+  notes: string;
+}
+
+export interface ReportRequest {
+  id: string;
+  productName: string;
+  price: string;
+  quantity: number;
+  unit: string;
+  supplierName: string;
+  reportImage?: string;
+  purchaseDate: string;
+}
+
 export interface ApprovalRequest {
   id: string;
   type: ApprovalType;
   status: ApprovalStatus;
+  readStatus: "read" | "unread";
   addedBy: string;
+  avatar?: string;
   timestamp: string;
-  data: IngredientRequest | RecipeRequest | LeaveRequest | MenuRequest;
+  title: string;
+  description: string;
+  data:
+    | IngredientRequest
+    | RecipeRequest
+    | LeaveRequest
+    | MenuRequest
+    | SupplierRequest
+    | ReportRequest;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   X,
   Calendar,
@@ -13,6 +14,8 @@ import {
   IngredientRequest,
   RecipeRequest,
   LeaveRequest,
+  SupplierRequest,
+  ReportRequest,
 } from "@/types/approvals";
 import { cn } from "@/lib/utils";
 
@@ -192,6 +195,88 @@ export function ApprovalDetailModal({
               <div className="px-4 py-3 bg-gray-50 rounded-xl text-foreground font-medium border border-gray-100 min-h-[100px] text-xs leading-relaxed">
                 {data.reason}
               </div>
+            </div>
+          </div>
+        );
+      }
+      case "Supplier": {
+        const data = request.data as SupplierRequest;
+        return (
+          <div className="space-y-3">
+            <div className="overflow-x-auto border border-gray-100 rounded-xl">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-secondary font-medium">
+                    <th className="px-4 py-3 text-left">Supplier name</th>
+                    <th className="px-4 py-3 text-left">Phone</th>
+                    <th className="px-4 py-3 text-left">Email</th>
+                    <th className="px-4 py-3 text-left">Address</th>
+                    <th className="px-4 py-3 text-left">Contract Start</th>
+                    <th className="px-4 py-3 text-left">Contract End</th>
+                    <th className="px-4 py-3 text-left">Notes & Comments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="text-foreground">
+                    <td className="px-4 py-4">{data.name}</td>
+                    <td className="px-4 py-4">{data.phone}</td>
+                    <td className="px-4 py-4">{data.email}</td>
+                    <td className="px-4 py-4">{data.address}</td>
+                    <td className="px-4 py-4">{data.contractStart}</td>
+                    <td className="px-4 py-4">{data.contractEnd}</td>
+                    <td className="px-4 py-4 max-w-[200px] truncate">
+                      {data.notes}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+      case "Report": {
+        const data = request.data as ReportRequest;
+        return (
+          <div className="space-y-3">
+            <div className="overflow-x-auto border border-gray-100 rounded-xl">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-secondary font-medium">
+                    <th className="px-4 py-3 text-left">Product Name</th>
+                    <th className="px-4 py-3 text-left">Price</th>
+                    <th className="px-4 py-3 text-left">Quantity</th>
+                    <th className="px-4 py-3 text-left">Unit</th>
+                    <th className="px-4 py-3 text-left">Supplier Name</th>
+                    <th className="px-4 py-3 text-left">Report(If any)</th>
+                    <th className="px-4 py-3 text-left">Purchase Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="text-foreground">
+                    <td className="px-4 py-4">{data.productName}</td>
+                    <td className="px-4 py-4">{data.price}</td>
+                    <td className="px-4 py-4">{data.quantity}</td>
+                    <td className="px-4 py-4">{data.unit}</td>
+                    <td className="px-4 py-4">{data.supplierName}</td>
+                    <td className="px-4 py-4">
+                      {data.reportImage ? (
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 relative">
+                          <Image
+                            src={data.reportImage}
+                            alt="Report"
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <span className="text-gray-300">No Image</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4">{data.purchaseDate}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         );
