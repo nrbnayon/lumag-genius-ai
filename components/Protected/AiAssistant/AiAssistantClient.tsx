@@ -38,25 +38,25 @@ const INITIAL_MESSAGES: Message[] = [
     id: "2",
     role: "assistant",
     content:
-      ": lacus ullamcorper Sed hendrerit ullamcorper elit adipiscing urna. Ut ipsum orci libero, consectetur at.",
+      "Lorem ipsum dolor sit amet consectetur. Sed hendrerit ullamcorper elit adipiscing urna. Ut ipsum orci libero, consectetur at.",
     type: "text",
     timestamp: new Date(Date.now() - 90000),
   },
-  {
-    id: "3",
-    role: "user",
-    content: "Give me the ingredient List for this recipe",
-    type: "text",
-    timestamp: new Date(Date.now() - 80000),
-  },
-  {
-    id: "4",
-    role: "assistant",
-    content: "",
-    type: "file",
-    fileName: "ingredient.xlsx",
-    timestamp: new Date(Date.now() - 70000),
-  },
+//   {
+//     id: "3",
+//     role: "user",
+//     content: "Give me the ingredient List for this recipe",
+//     type: "text",
+//     timestamp: new Date(Date.now() - 80000),
+//   },
+//   {
+//     id: "4",
+//     role: "assistant",
+//     content: "",
+//     type: "file",
+//     fileName: "ingredient.xlsx",
+//     timestamp: new Date(Date.now() - 70000),
+//   },
 ];
 
 export default function AiAssistantClient() {
@@ -151,20 +151,18 @@ export default function AiAssistantClient() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-180px)] bg-white rounded-3xl overflow-hidden w-2/3 mx-auto">
+    <div className="flex flex-col h-[calc(100vh-100px)] bg-white rounded-3xl overflow-hidden w-2/3 mx-auto">
       {/* Chat Area */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth"
+        className="flex-1 overflow-y-auto px-6 md:px-16 py-8 space-y-6 scroll-smooth"
       >
         {messages.map((message) => (
           <div
             key={message.id}
             className={cn(
               "flex flex-col w-full",
-              message.role === "user"
-                ? "items-end"
-                : "items-start pl-10 md:pl-12",
+              message.role === "user" ? "items-end" : "items-start",
             )}
           >
             <div className="relative group max-w-[85%] md:max-w-[70%] mb-2">
@@ -173,7 +171,7 @@ export default function AiAssistantClient() {
                 className={cn(
                   "p-3.5 px-6 rounded-[24px] text-xs font-medium leading-relaxed shadow-sm",
                   message.role === "user"
-                    ? "bg-[#0090FF] text-white rounded-tr-none"
+                    ? "bg-primary text-white rounded-tr-none"
                     : "bg-white border border-gray-100 text-[#4B5563] rounded-tl-none",
                 )}
               >
@@ -184,23 +182,22 @@ export default function AiAssistantClient() {
                     <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-gray-100">
                       <FileSpreadsheet className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-[#4B5563] font-bold text-xs">
+                    <span className="text-current font-bold text-xs">
                       {message.fileName}
                     </span>
                   </div>
                 )}
               </div>
-
-              {/* Context Menu  */}
+              {/* Context Menu */}
               {activeMenuId === message.id && message.role === "assistant" && (
                 <div
-                  className="absolute left-[-10px] md:left-[-150px] top-0 w-[140px] bg-[#E8F4FF] rounded-2xl shadow-[0px_4px_24px_rgba(0,0,0,0.08)] border border-white/50 z-20 overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300 z-50"
+                  className="absolute left-[-10px] top-full mt-2 w-[140px] bg-[#E8F4FF] rounded-2xl shadow-[0px_4px_24px_rgba(0,0,0,0.08)] border border-white/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="flex flex-col p-1.5 gap-0.5">
                     {[
                       { icon: Copy, label: "Copy" },
-                      { icon: Edit2, label: "Edit" },
+                    //   { icon: Edit2, label: "Edit" },
                       { icon: Share2, label: "Share" },
                       { icon: Download, label: "Download" },
                     ].map((item) => (
@@ -215,7 +212,6 @@ export default function AiAssistantClient() {
                   </div>
                 </div>
               )}
-
               {/* Menu Trigger */}
               {message.role === "assistant" && (
                 <button
@@ -267,12 +263,12 @@ export default function AiAssistantClient() {
               >
                 <Plus className="w-5 h-5" />
               </button>
-              <button
+              {/* <button
                 className="p-2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
                 title="Voice input"
               >
                 <Mic className="w-5 h-5" />
-              </button>
+              </button> */}
             </div>
             <input
               type="file"
@@ -285,7 +281,7 @@ export default function AiAssistantClient() {
           <button
             onClick={handleSendMessage}
             disabled={isLoading || !inputValue.trim()}
-            className="w-12 h-12 rounded-full bg-white border border-gray-100 flex items-center justify-center text-primary shadow-[0px_2px_8px_rgba(0,0,0,0.05)] hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+            className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-primary shadow-[0px_2px_8px_rgba(0,0,0,0.05)] hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
           >
             <Send className="w-5 h-5" />
           </button>

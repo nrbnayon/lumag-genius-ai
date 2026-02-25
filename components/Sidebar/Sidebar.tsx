@@ -523,7 +523,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <div className="flex items-center gap-3 px-3">
                   <Link
-                    href="/profile"
+                    href="/settings"
                     onClick={() => {
                       if (window.innerWidth < 768) {
                         setOpen(false);
