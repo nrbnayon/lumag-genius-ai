@@ -22,12 +22,22 @@ import { ScheduleOverview } from "./ScheduleOverview";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 
 import { utils, writeFile } from "xlsx";
+import { useEffect } from "react";
+import { StaffGridSkeleton } from "@/components/Skeleton/StaffSkeleton";
 
 export default function StaffManagementClient() {
+  const [isLoading, setIsLoading] = useState(true);
   const [staffList, setStaffList] = useState<Staff[]>(staffData);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Modal states
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
@@ -234,7 +244,9 @@ export default function StaffManagementClient() {
 
         {/* Staff Grid */}
         <div className="space-y-6">
-          {paginatedStaff.length > 0 ? (
+          {isLoading ? (
+            <StaffGridSkeleton />
+          ) : paginatedStaff.length > 0 ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 2xl:gap-6">
                 {paginatedStaff.map((staff) => (
