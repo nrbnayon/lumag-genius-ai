@@ -105,7 +105,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
         subLinks: [
           {
             label: "All Purchase",
-            href: "/all-purchase",
+            href: "/suppliers/all-purchase",
             roles: ["admin"],
           },
         ],
@@ -457,7 +457,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                               }}
                               className={cn(
                                 "p-1 rounded transition-all duration-200 hover:bg-gray-200",
-                                isActive && "text-white"
+                                isActive && "text-current"
                               )}
                             >
                               {isExpanded ? (
@@ -508,7 +508,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                                 className={cn(
                                   "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-sm",
                                   isSubLinkActive
-                                    ? "bg-gradient-purple text-white font-bold"
+                                    ? "bg-primary/50 text-current font-semibold"
                                     : "text-secondary hover:text-primary hover:bg-gray-50"
                                 )}
                               >
