@@ -1,5 +1,6 @@
 import { topBudgetMenus } from "@/data/analyticsData";
 import type { TopBudgetMenu } from "@/types/analytics";
+import { cn } from "@/lib/utils";
 
 export function TopBudgetMenusPanel() {
   return (
@@ -26,7 +27,12 @@ export function TopBudgetMenusPanel() {
               <p className="text-sm font-semibold text-foreground">
                 {menu.amount}
               </p>
-              <p className="text-xs font-medium text-secondary">
+              <p
+                className={cn(
+                  "text-xs font-medium",
+                  menu.change.startsWith("-") ? "text-red-500" : "text-primary",
+                )}
+              >
                 {menu.change}
               </p>
             </div>

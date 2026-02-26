@@ -53,10 +53,10 @@ export const topBudgetRecipes: TopBudgetRecipe[] = [
 
 export const topBudgetMenus: TopBudgetMenu[] = [
   { id: 1, name: "Grilled Salmon Fillet", amount: "$6,125", change: "+12%" },
-  { id: 2, name: "Grilled Salmon Fillet", amount: "$6,125", change: "+12%" },
-  { id: 3, name: "Grilled Salmon Fillet", amount: "$6,125", change: "+12%" },
-  { id: 4, name: "Grilled Salmon Fillet", amount: "$6,125", change: "+12%" },
-  { id: 5, name: "Grilled Salmon Fillet", amount: "$6,125", change: "+12%" },
+  { id: 2, name: "Truffle Mushroom Risotto", amount: "$5,420", change: "+12%" },
+  { id: 3, name: "Wagyu Beef Burger", amount: "$4,850", change: "-8%" },
+  { id: 4, name: "Seafood Paella", amount: "$3,920", change: "+5%" },
+  { id: 5, name: "Vegetable Stir Fry", amount: "$2,750", change: "-3%" },
 ];
 
 export const monthlyFinancialSummary: MonthlyFinancialSummary[] = [
