@@ -81,7 +81,9 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
       {
         label: "Ingredients",
         href: "/ingredients",
-        icon: <Leaf className="w-6 h-6 p-1 rounded-full border border-current" />,
+        icon: (
+          <Leaf className="w-6 h-6 p-1 rounded-full border border-current" />
+        ),
         roles: ["admin"],
       },
       {
@@ -100,6 +102,13 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
         label: "Suppliers",
         href: "/suppliers",
         icon: <Truck />,
+        subLinks: [
+          {
+            label: "All Purchase",
+            href: "/all-purchase",
+            roles: ["admin"],
+          },
+        ],
         roles: ["admin"],
       },
       {
@@ -133,7 +142,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
         roles: ["admin"],
       },
     ],
-    []
+    [],
   );
 
   // Filter links based on user role
