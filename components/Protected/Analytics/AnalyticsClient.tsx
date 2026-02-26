@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { DashboardStatsCard } from "@/components/Protected/Dashboard/DashboardStatsCard";
-import { BarChart3, CookingPot, TrendingUp } from "lucide-react";
+import { BarChart3, Salad, TrendingUp } from "lucide-react";
 import { analyticsStats } from "@/data/analyticsData";
 import { AnalyticsRevenueCostTrendChart } from "./AnalyticsRevenueCostTrendChart";
 import { StaffAttendanceTrendChart } from "./StaffAttendanceTrendChart";
@@ -49,7 +49,7 @@ export default function AnalyticsClient() {
             <DashboardStatsCard
               title="Food cost"
               value={analyticsStats.foodCost.value}
-              icon={CookingPot}
+              icon={Salad}
               iconColor="#3B82F6"
               iconBgColor="#DBEAFE"
               percentage={analyticsStats.foodCost.percentage}

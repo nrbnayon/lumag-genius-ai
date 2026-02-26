@@ -4,9 +4,9 @@ import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { DashboardStatsCard } from "./DashboardStatsCard";
 import { 
   BarChart3, 
-  CookingPot, 
   ChefHat, 
-  Users 
+  Users, 
+  Salad
 } from "lucide-react";
 import { RevenueCostTrendChart } from "./RevenueCostTrendChart";
 import { FoodCostDistributionChart } from "./FoodCostDistributionChart";
@@ -17,9 +17,9 @@ import { dashboardStats } from "@/data/dashboardData";
 export default function DashboardClient() {
   return (
     <div className="pb-10">
-      <DashboardHeader 
-        title="Dashboard Overview" 
-        description="Monitor your F&B operations and financial performance in real-time" 
+      <DashboardHeader
+        title="Dashboard Overview"
+        description="Monitor your F&B operations and financial performance in real-time"
       />
 
       <main className="p-4 md:p-8 space-y-8">
@@ -37,7 +37,7 @@ export default function DashboardClient() {
           <DashboardStatsCard
             title="Food cost"
             value={dashboardStats.foodCost.value}
-            icon={CookingPot}
+            icon={Salad}
             iconColor="#3B82F6"
             iconBgColor="#DBEAFE"
             percentage={dashboardStats.foodCost.percentage}
