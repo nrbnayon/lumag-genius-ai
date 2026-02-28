@@ -169,7 +169,7 @@ export default function AiAssistantClient() {
               {/* Message Bubble */}
               <div
                 className={cn(
-                  "p-3.5 px-6 rounded-[24px] text-xs font-medium leading-relaxed shadow-sm",
+                  "p-3.5 px-6 rounded-3xl font-medium leading-relaxed shadow-sm",
                   message.role === "user"
                     ? "bg-primary text-white rounded-tr-none"
                     : "bg-white border border-gray-100 text-[#4B5563] rounded-tl-none",
@@ -253,7 +253,7 @@ export default function AiAssistantClient() {
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               disabled={isLoading}
-              className="w-full bg-[#F3F4F6] border-none rounded-full py-4 px-8 pr-16 text-sm font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 transition-all disabled:opacity-50"
+              className="w-full bg-[#F3F4F6] border-none rounded-full py-4 px-8 pr-16 font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 transition-all disabled:opacity-50"
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <button
@@ -281,9 +281,9 @@ export default function AiAssistantClient() {
           <button
             onClick={handleSendMessage}
             disabled={isLoading || !inputValue.trim()}
-            className="w-12 h-12 rounded-full bg-white border border-border flex items-center justify-center text-primary shadow-[0px_2px_8px_rgba(0,0,0,0.05)] hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+            className="w-14 h-14 rounded-full bg-white border border-border flex items-center justify-center text-primary shadow-[0px_2px_8px_rgba(0,0,0,0.05)] hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-6 h-6" />
           </button>
         </div>
       </div>

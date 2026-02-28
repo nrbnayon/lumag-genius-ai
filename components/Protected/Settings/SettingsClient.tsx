@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import TranslatedText from "@/components/Shared/TranslatedText";
 
 export default function SettingsClient() {
   const { language, setLanguage } = useLanguage();
@@ -99,10 +100,10 @@ export default function SettingsClient() {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold text-[#1F2937] mb-1">
-                  Account Information
+                  <TranslatedText text="Account Information" />
                 </h2>
                 <p className="text-sm text-[#4B5563] font-medium">
-                  Update your account details
+                  <TranslatedText text="Update your account details" />
                 </p>
               </div>
               {!isEditingAccount && (
@@ -138,7 +139,7 @@ export default function SettingsClient() {
 
                   <div className="space-y-3">
                     <h3 className="text-sm font-bold text-[#1F2937]">
-                      Profile Image
+                      <TranslatedText text="Profile Image" />
                     </h3>
                     <div className="flex gap-2">
                       <input
@@ -154,7 +155,7 @@ export default function SettingsClient() {
                         className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold hover:bg-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         <Camera className="w-4 h-4" />
-                        Change Image
+                        <TranslatedText text="Change Image" />
                       </button>
                       <button
                         onClick={handleRemoveImage}
@@ -165,7 +166,7 @@ export default function SettingsClient() {
                         className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
-                        Remove
+                        <TranslatedText text="Remove" />
                       </button>
                     </div>
                     <p className="text-[10px] text-[#4B5563] font-medium uppercase tracking-wider">
@@ -179,7 +180,7 @@ export default function SettingsClient() {
                 <div className="grid gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
-                      Full Name
+                      <TranslatedText text="Full Name" />
                     </label>
                     <input
                       type="text"
@@ -195,7 +196,7 @@ export default function SettingsClient() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
-                      Email Address
+                      <TranslatedText text="Email Address" />
                     </label>
                     <input
                       type="email"
@@ -206,7 +207,7 @@ export default function SettingsClient() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
-                      Phone Number
+                      <TranslatedText text="Phone Number" />
                     </label>
                     <input
                       type="text"
@@ -222,7 +223,7 @@ export default function SettingsClient() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
-                      Address
+                      <TranslatedText text="Address" />
                     </label>
                     <input
                       type="text"
@@ -241,7 +242,7 @@ export default function SettingsClient() {
                       onClick={handleSaveAccount}
                       className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer"
                     >
-                      Save Changes
+                      <TranslatedText text="Save Changes" />
                     </button>
                   </div>
                 </div>
@@ -249,7 +250,7 @@ export default function SettingsClient() {
                 <div className="grid gap-6">
                   <div className="space-y-1">
                     <p className="text-sm font-bold text-[#1F2937]">
-                      Full Name
+                      <TranslatedText text="Full Name" />
                     </p>
                     <p className="text-sm text-[#4B5563] font-medium">
                       {accountInfo.name}
@@ -257,7 +258,7 @@ export default function SettingsClient() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-bold text-[#1F2937]">
-                      Email Address
+                      <TranslatedText text="Email Address" />
                     </p>
                     <p className="text-sm text-[#4B5563] font-medium">
                       {accountInfo.email}
@@ -265,16 +266,18 @@ export default function SettingsClient() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-bold text-[#1F2937]">
-                      Phone Number
+                      <TranslatedText text="Phone Number" />
                     </p>
                     <p className="text-sm text-[#4B5563] font-medium">
                       {accountInfo.phone}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-[#1F2937]">Address</p>
+                    <p className="text-sm font-bold text-[#1F2937]">
+                      <TranslatedText text="Address" />
+                    </p>
                     <p className="text-sm text-[#4B5563] font-medium">
-                      {accountInfo.address}
+                      <TranslatedText text={accountInfo.address} />
                     </p>
                   </div>
                 </div>
@@ -289,10 +292,10 @@ export default function SettingsClient() {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold text-[#1F2937] mb-1">
-                  Security
+                  <TranslatedText text="Security" />
                 </h2>
                 <p className="text-sm text-[#4B5563] font-medium">
-                  Manage password and security settings
+                  <TranslatedText text="Manage password and security settings" />
                 </p>
               </div>
               {!isEditingSecurity && (
@@ -310,7 +313,7 @@ export default function SettingsClient() {
                 <div className="grid gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
-                      Current Password
+                      <TranslatedText text="Current Password" />
                     </label>
                     <div className="relative">
                       <input
@@ -342,7 +345,7 @@ export default function SettingsClient() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-[#1F2937]">
-                        New Password
+                        <TranslatedText text="New Password" />
                       </label>
                       <div className="relative">
                         <input
@@ -371,7 +374,7 @@ export default function SettingsClient() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-[#1F2937]">
-                        Confirm New Password
+                        <TranslatedText text="Confirm New Password" />
                       </label>
                       <div className="relative">
                         <input
@@ -406,14 +409,14 @@ export default function SettingsClient() {
                       onClick={handleUpdatePassword}
                       className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer"
                     >
-                      Update Password
+                      <TranslatedText text="Update Password" />
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <p className="text-sm font-bold text-[#1F2937]">
-                    Current Password
+                    <TranslatedText text="Current Password" />
                   </p>
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-[#4B5563] font-medium tracking-widest">
@@ -435,10 +438,10 @@ export default function SettingsClient() {
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h2 className="text-xl font-bold text-[#1F2937] mb-1">
-                  Language
+                  <TranslatedText text="Language" />
                 </h2>
                 <p className="text-sm text-[#4B5563] font-medium">
-                  Manage your language settings
+                  <TranslatedText text="Manage your language settings" />
                 </p>
               </div>
               {!isEditingLanguage && (
@@ -456,7 +459,7 @@ export default function SettingsClient() {
                 <div className="grid gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
-                      Selected Language
+                      <TranslatedText text="Selected Language" />
                     </label>
                     <div className="relative">
                       <select
@@ -477,14 +480,14 @@ export default function SettingsClient() {
                       onClick={handleSaveLanguage}
                       className="bg-primary text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95 cursor-pointer"
                     >
-                      Save Changes
+                      <TranslatedText text="Save Changes" />
                     </button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <p className="text-sm font-bold text-[#1F2937]">
-                    Selected Language
+                    <TranslatedText text="Selected Language" />
                   </p>
                   <p className="text-sm text-[#4B5563] font-medium">
                     {language === "en" ? "English" : "Portuguese"}
