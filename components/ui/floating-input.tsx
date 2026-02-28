@@ -107,25 +107,36 @@ const FloatingInput = React.forwardRef<HTMLInputElement, FloatingInputProps>(
           <label
             className={cn(
               "absolute left-4 pointer-events-none transition-all duration-200 ease-out",
-              "text-muted-foreground select-none",
+              "text-muted-foreground select-none z-10",
 
-              // Inactive (placeholder-like) state
-              !isActive && cn("top-1/2 -translate-y-1/2 text-base"),
+              // 1. Base / Inactive state
+              "top-1/2 -translate-y-1/2 text-base",
 
-              // Active (floating) state
+              // 2. JS Active state (typing, explicit values)
               isActive &&
                 (isLabelBorder
-                  ? cn(
-                      "top-0 -translate-y-1/2 text-xs font-medium px-1.5 bg-background",
-                      isLabelBorder && "peer-focus:text-primary",
-                    )
-                  : cn("top-2 text-xs font-medium")),
+                  ? "top-0 -translate-y-1/2 text-xs font-medium px-1.5 bg-background"
+                  : "top-2 text-xs font-medium"),
 
-              // Color overrides (only apply if no error)
+              // 3. CSS Active states (catches browser autofill and focus when JS misses it)
+              isLabelBorder
+                ? cn(
+                    "peer-focus:top-0 peer-focus:-translate-y-1/2 peer-focus:text-xs peer-focus:font-medium peer-focus:px-1.5 peer-focus:bg-background peer-focus:text-primary",
+                    "peer-[:not(:placeholder-shown)]:top-0 peer-[:not(:placeholder-shown)]:-translate-y-1/2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium peer-[:not(:placeholder-shown)]:px-1.5 peer-[:not(:placeholder-shown)]:bg-background",
+                    "peer-autofill:top-0 peer-autofill:-translate-y-1/2 peer-autofill:text-xs peer-autofill:font-medium peer-autofill:px-1.5 peer-autofill:bg-background",
+                  )
+                : cn(
+                    "peer-focus:top-2 peer-focus:text-xs peer-focus:font-medium peer-focus:text-primary",
+                    "peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium",
+                    "peer-autofill:top-2 peer-autofill:text-xs peer-autofill:font-medium",
+                  ),
+
+              // 4. Color overrides
               isFocused && !error && "text-primary",
-              error && "text-destructive",
+              error &&
+                "text-destructive peer-focus:text-destructive peer-[:not(:placeholder-shown)]:text-destructive peer-autofill:text-destructive",
 
-              // Allow custom label classes to override default colors when inactive
+              // 5. Custom label class (only apply if JS considers it inactive to match previous behavior)
               !isActive && !error && labelClassName,
             )}
           >
