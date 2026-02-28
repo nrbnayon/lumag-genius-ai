@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { Eye, EyeOff, ChevronDown, PencilLine } from "lucide-react";
+import React, { useState, useRef } from "react";
+import {
+  Eye,
+  EyeOff,
+  ChevronDown,
+  PencilLine,
+  Camera,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
+import Image from "next/image";
 
 export default function SettingsClient() {
   // Section Edit Modes
@@ -13,10 +21,31 @@ export default function SettingsClient() {
 
   // Form States
   const [accountInfo, setAccountInfo] = useState({
+    image: "/images/avatar.png",
+    name: "Nayon II",
     email: "example@gmail.com",
     phone: "000-0000-000",
     address: "123 Admin Street, Dhaka",
   });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAccountInfo({ ...accountInfo, image: reader.result as string });
+        toast.success("Profile image updated");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setAccountInfo({ ...accountInfo, image: "/images/avatar.png" });
+    toast.info("Profile image removed");
+  };
 
   const [securityInfo, setSecurityInfo] = useState({
     currentPassword: "",
@@ -84,8 +113,83 @@ export default function SettingsClient() {
             </div>
 
             <div className="space-y-6 pt-6 border-t border-gray-100">
+              {/* Profile Image Section */}
+              <div className="pb-6 border-b border-gray-100">
+                <div className="flex items-center gap-6">
+                  <div className="relative group">
+                    <div className="w-24 h-24 rounded-full bg-gray-100 overflow-hidden border-2 border-primary/20 p-1 flex items-center justify-center shrink-0">
+                      <Image
+                        src={accountInfo.image}
+                        alt="Profile"
+                        width={96}
+                        height={96}
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
+                    {isEditingAccount && (
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Camera className="w-6 h-6 text-white" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-bold text-[#1F2937]">
+                      Profile Image
+                    </h3>
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                      />
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={!isEditingAccount}
+                        className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl text-xs font-bold hover:bg-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <Camera className="w-4 h-4" />
+                        Change Image
+                      </button>
+                      <button
+                        onClick={handleRemoveImage}
+                        disabled={
+                          !isEditingAccount ||
+                          accountInfo.image === "/images/avatar.png"
+                        }
+                        className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Remove
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-[#4B5563] font-medium uppercase tracking-wider">
+                      JPG, PNG, WEBP (MAX 2MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {isEditingAccount ? (
                 <div className="grid gap-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-[#1F2937]">
+                      Full Name
+                    </label>
+                    <input
+                      type="text"
+                      value={accountInfo.name}
+                      onChange={(e) =>
+                        setAccountInfo({
+                          ...accountInfo,
+                          name: e.target.value,
+                        })
+                      }
+                      className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1F2937]">
                       Email Address
@@ -93,13 +197,8 @@ export default function SettingsClient() {
                     <input
                       type="email"
                       value={accountInfo.email}
-                      onChange={(e) =>
-                        setAccountInfo({
-                          ...accountInfo,
-                          email: e.target.value,
-                        })
-                      }
-                      className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                      disabled
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-500 cursor-not-allowed transition-all outline-none"
                     />
                   </div>
                   <div className="space-y-2">
@@ -145,6 +244,14 @@ export default function SettingsClient() {
                 </div>
               ) : (
                 <div className="grid gap-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-[#1F2937]">
+                      Full Name
+                    </p>
+                    <p className="text-sm text-[#4B5563] font-medium">
+                      {accountInfo.name}
+                    </p>
+                  </div>
                   <div className="space-y-1">
                     <p className="text-sm font-bold text-[#1F2937]">
                       Email Address
