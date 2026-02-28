@@ -6,7 +6,7 @@ import { Ingredient, IngredientFormData } from "@/types/ingredient";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
-import { read, utils as xlsxUtils } from "xlsx";
+import { readExcel } from "@/lib/excel";
 
 interface IngredientModalProps {
   isOpen: boolean;
@@ -64,52 +64,46 @@ export function IngredientModal({
     setErrors({});
   }, [ingredient, isOpen]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setExcelFileName(file.name);
       toast.info(`Extracting data from ${file.name}...`);
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const bstr = evt.target?.result;
-          const wb = read(bstr, { type: "binary" });
-          const wsname = wb.SheetNames[0];
-          const ws = wb.Sheets[wsname];
-          const data = xlsxUtils.sheet_to_json(ws) as any[];
+      try {
+        const data = await readExcel(file);
 
-          if (data && data.length > 0) {
-            const row = data[0];
-            const find = (...keys: string[]) => {
-              const k = Object.keys(row).find((k) =>
-                keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-              );
-              return k ? String(row[k]) : "";
-            };
+        if (data && data.length > 0) {
+          const row = data[0];
+          const find = (...keys: string[]) => {
+            const k = Object.keys(row).find((k) =>
+              keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+            );
+            return k ? String(row[k]) : "";
+          };
 
-            setFormData((prev) => ({
-              ...prev,
-              name: find("name", "ingredient", "item") || prev.name,
-              price: find("price", "cost", "rate") || prev.price,
-              unit: find("unit", "measurement") || prev.unit,
-              category: (find("category", "type") as any) || prev.category,
-              currentStock:
-                find("stock", "current", "qty", "quantity") ||
-                prev.currentStock,
-              minimumStock:
-                find("min", "threshold", "alert") || prev.minimumStock,
-            }));
+          setFormData((prev) => ({
+            ...prev,
+            name: find("name", "ingredient", "item") || prev.name,
+            price: find("price", "cost", "rate") || prev.price,
+            unit: find("unit", "measurement") || prev.unit,
+            category: (find("category", "type") as any) || prev.category,
+            currentStock:
+              find("stock", "current", "qty", "quantity") || prev.currentStock,
+            minimumStock:
+              find("min", "threshold", "alert") || prev.minimumStock,
+          }));
 
-            toast.success("Form auto-filled from file successfully!");
-          } else {
-            toast.error("No data found in the file.");
-          }
-        } catch (error) {
-          toast.error("Failed to process file.");
+          toast.success("Form auto-filled from file successfully!");
+        } else {
+          toast.error("No data found in the file.");
         }
-      };
-      reader.readAsBinaryString(file);
+      } catch (error) {
+        console.error("Excel Read Error:", error);
+        toast.error("Failed to process file.");
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 

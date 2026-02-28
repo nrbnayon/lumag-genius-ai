@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Purchase, PurchaseCategory } from "@/types/supplier";
 import { SUPPLIER_NAMES, PURCHASE_CATEGORIES } from "@/data/purchaseData";
-import { read, utils as xlsxUtils } from "xlsx";
+import { readExcel } from "@/lib/excel";
 
 interface PurchaseModalProps {
   isOpen: boolean;
@@ -78,44 +78,41 @@ export function PurchaseModal({
   };
 
   // Excel upload → auto-fill form
-  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setExcelFileName(file.name);
     toast.info(`Reading ${file.name}…`);
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      try {
-        const wb = read(evt.target?.result, { type: "binary" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const data = xlsxUtils.sheet_to_json(ws) as Record<string, unknown>[];
-        if (!data.length) {
-          toast.error("No data found.");
-          return;
-        }
-        const row = data[0];
-        const find = (...keys: string[]) => {
-          const k = Object.keys(row).find((k) =>
-            keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-          );
-          return k ? String(row[k]) : "";
-        };
-        setForm((prev) => ({
-          ...prev,
-          productName: find("product", "name", "item") || prev.productName,
-          price: find("price", "cost") || prev.price,
-          unit: find("unit") || prev.unit,
-          quantity: Number(find("quantity", "qty")) || prev.quantity,
-          supplierName: find("supplier") || prev.supplierName,
-          category: (find("category") as PurchaseCategory) || prev.category,
-          purchaseDate: find("date", "purchase") || prev.purchaseDate,
-        }));
-        toast.success("Form auto-filled from Excel!");
-      } catch {
-        toast.error("Failed to read file.");
+
+    try {
+      const data = await readExcel(file);
+      if (!data.length) {
+        toast.error("No data found.");
+        return;
       }
-    };
-    reader.readAsBinaryString(file);
+      const row = data[0];
+      const find = (...keys: string[]) => {
+        const k = Object.keys(row).find((k) =>
+          keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+        );
+        return k ? String(row[k]) : "";
+      };
+      setForm((prev) => ({
+        ...prev,
+        productName: find("product", "name", "item") || prev.productName,
+        price: find("price", "cost") || prev.price,
+        unit: find("unit") || prev.unit,
+        quantity: Number(find("quantity", "qty")) || prev.quantity,
+        supplierName: find("supplier") || prev.supplierName,
+        category: (find("category") as PurchaseCategory) || prev.category,
+        purchaseDate: find("date", "purchase") || prev.purchaseDate,
+      }));
+      toast.success("Form auto-filled from Excel!");
+    } catch {
+      toast.error("Failed to read file.");
+    } finally {
+      if (excelRef.current) excelRef.current.value = "";
+    }
   };
 
   // Report image upload

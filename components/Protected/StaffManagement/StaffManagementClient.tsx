@@ -21,7 +21,7 @@ import { HolidayNotifications } from "./HolidayNotifications";
 import { ScheduleOverview } from "./ScheduleOverview";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 
-import { utils, writeFile } from "xlsx";
+import { exportToExcel } from "@/lib/excel";
 import { useEffect } from "react";
 import { StaffGridSkeleton } from "@/components/Skeleton/StaffSkeleton";
 
@@ -131,7 +131,7 @@ export default function StaffManagementClient() {
     setIsStaffModalOpen(false);
   };
 
-  const handleExportReport = () => {
+  const handleExportReport = async () => {
     toast.info("Preparing Full Staff Report...");
 
     // Prepare data for export
@@ -145,17 +145,15 @@ export default function StaffManagementClient() {
       "Off Days": item.offDays || 0,
     }));
 
-    // Create Worksheet and Workbook
-    const ws = utils.json_to_sheet(exportData);
-    const wb = utils.book_new();
-    utils.book_append_sheet(wb, ws, "Staff Members");
-
-    // Export to XLSX
-    writeFile(wb, "Staff_Management_Report.xlsx");
+    await exportToExcel(
+      exportData,
+      "Staff_Management_Report.xlsx",
+      "Staff Members",
+    );
     toast.success("Full Staff Report exported to Excel!");
   };
 
-  const handleDownloadReport = (staff: Staff) => {
+  const handleDownloadReport = async (staff: Staff) => {
     toast.info(`Generating Excel report for ${staff.name}...`);
 
     // Prepare single staff data
@@ -171,13 +169,11 @@ export default function StaffManagementClient() {
       },
     ];
 
-    // Create Worksheet and Workbook
-    const ws = utils.json_to_sheet(exportData);
-    const wb = utils.book_new();
-    utils.book_append_sheet(wb, ws, "Employee Report");
-
-    // Export to XLSX
-    writeFile(wb, `${staff.name.replace(/\s+/g, "_")}_Report.xlsx`);
+    await exportToExcel(
+      exportData,
+      `${staff.name.replace(/\s+/g, "_")}_Report.xlsx`,
+      "Employee Report",
+    );
     toast.success(`Excel report for ${staff.name} downloaded!`);
     setIsEmployeeReportOpen(false);
   };

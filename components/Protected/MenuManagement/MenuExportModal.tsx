@@ -2,7 +2,7 @@
 
 import { X, Download } from "lucide-react";
 import { Menu } from "@/types/menu";
-import * as XLSX from "xlsx";
+import { exportToExcel } from "@/lib/excel";
 
 interface MenuExportModalProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ export function MenuExportModal({
 }: MenuExportModalProps) {
   if (!isOpen) return null;
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = Array.isArray(data) ? data : [data];
 
     // Transform data for Excel
@@ -31,15 +31,11 @@ export function MenuExportModal({
       Status: menu.status,
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Menus");
-
     const fileName = Array.isArray(data)
       ? "all_menus.xlsx"
       : `${data.name.toLowerCase().replace(/\s+/g, "_")}_details.xlsx`;
 
-    XLSX.writeFile(workbook, fileName);
+    await exportToExcel(worksheetData, fileName, "Menus");
     onExport(data);
   };
 

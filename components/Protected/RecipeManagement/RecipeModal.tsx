@@ -6,7 +6,7 @@ import { Recipe, RecipeFormData, RecipeIngredient } from "@/types/recipe";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
-import { read, utils as xlsxUtils } from "xlsx";
+import { readExcel } from "@/lib/excel";
 
 interface RecipeModalProps {
   isOpen: boolean;
@@ -65,78 +65,72 @@ export function RecipeModal({
     setErrors({});
   }, [recipe, isOpen]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setExcelFileName(file.name);
       toast.info(`Extracting data from ${file.name}...`);
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const bstr = evt.target?.result;
-          const wb = read(bstr, { type: "binary" });
-          const wsname = wb.SheetNames[0];
-          const ws = wb.Sheets[wsname];
-          const data = xlsxUtils.sheet_to_json(ws) as any[];
+      try {
+        const data = await readExcel(file);
 
-          if (data && data.length > 0) {
-            const firstRow = data[0];
-            const find = (row: any, ...keys: string[]) => {
-              if (!row) return "";
-              const k = Object.keys(row).find((k) =>
-                keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-              );
-              return k ? String(row[k]) : "";
-            };
+        if (data && data.length > 0) {
+          const firstRow = data[0];
+          const find = (row: any, ...keys: string[]) => {
+            if (!row) return "";
+            const k = Object.keys(row).find((k) =>
+              keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+            );
+            return k ? String(row[k]) : "";
+          };
 
-            // Main recipe details from first row
-            const newName =
-              find(firstRow, "recipe", "name", "dish") || formData.name;
-            const newTime =
-              find(firstRow, "time", "duration") || formData.cookingTime;
-            const newPrice =
-              find(firstRow, "price", "selling", "cost") ||
-              formData.sellingPrice;
-            const newInstruction =
-              find(firstRow, "instruction", "method", "steps") ||
-              formData.instruction;
+          // Main recipe details from first row
+          const newName =
+            find(firstRow, "recipe", "name", "dish") || formData.name;
+          const newTime =
+            find(firstRow, "time", "duration") || formData.cookingTime;
+          const newPrice =
+            find(firstRow, "price", "selling", "cost") || formData.sellingPrice;
+          const newInstruction =
+            find(firstRow, "instruction", "method", "steps") ||
+            formData.instruction;
 
-            // Ingredients could be multiple rows
-            const extractedIngredients: RecipeIngredient[] = [];
-            data.forEach((row) => {
-              const ingName = find(row, "ingredient", "item");
-              if (ingName) {
-                extractedIngredients.push({
-                  name: ingName,
-                  quantity: find(row, "quantity", "qty", "amt"),
-                  unit: find(row, "unit", "meas"),
-                  cost: find(row, "ingredient cost", "cost", "price"),
-                });
-              }
-            });
+          // Ingredients could be multiple rows
+          const extractedIngredients: RecipeIngredient[] = [];
+          data.forEach((row) => {
+            const ingName = find(row, "ingredient", "item");
+            if (ingName) {
+              extractedIngredients.push({
+                name: ingName,
+                quantity: find(row, "quantity", "qty", "amt"),
+                unit: find(row, "unit", "meas"),
+                cost: find(row, "ingredient cost", "cost", "price"),
+              });
+            }
+          });
 
-            setFormData((prev) => ({
-              ...prev,
-              name: newName,
-              cookingTime: newTime,
-              sellingPrice: newPrice,
-              instruction: newInstruction,
-              ingredients:
-                extractedIngredients.length > 0
-                  ? extractedIngredients
-                  : prev.ingredients,
-            }));
+          setFormData((prev) => ({
+            ...prev,
+            name: newName,
+            cookingTime: newTime,
+            sellingPrice: newPrice,
+            instruction: newInstruction,
+            ingredients:
+              extractedIngredients.length > 0
+                ? extractedIngredients
+                : prev.ingredients,
+          }));
 
-            toast.success("Recipe auto-filled successfully!");
-          } else {
-            toast.error("No data found in the file.");
-          }
-        } catch (error) {
-          toast.error("Failed to process file.");
+          toast.success("Recipe auto-filled successfully!");
+        } else {
+          toast.error("No data found in the file.");
         }
-      };
-      reader.readAsBinaryString(file);
+      } catch (error) {
+        console.error("Excel Read Error:", error);
+        toast.error("Failed to process file.");
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 

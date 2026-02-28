@@ -27,7 +27,7 @@ const SHIFTS: StaffShift[] = [
   "11.00PM-7.00AM (Night)",
 ];
 
-import { read, utils as xlsxUtils } from "xlsx";
+import { readExcel } from "@/lib/excel";
 
 export function StaffModal({
   isOpen,
@@ -79,56 +79,49 @@ export function StaffModal({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       toast.info(`Extracting data from ${file.name}...`);
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const bstr = evt.target?.result;
-          const wb = read(bstr, { type: "binary" });
-          const wsname = wb.SheetNames[0];
-          const ws = wb.Sheets[wsname];
-          const data = xlsxUtils.sheet_to_json(ws) as any[];
+      try {
+        const data = await readExcel(file);
 
-          if (data && data.length > 0) {
-            const firstRow = data[0];
-            // Intelligent mapping: try to find keys that match or start with field names
-            const findValue = (possibleKeys: string[]) => {
-              const key = Object.keys(firstRow).find((k) =>
-                possibleKeys.some((pk) =>
-                  k.toLowerCase().includes(pk.toLowerCase()),
-                ),
-              );
-              return key ? String(firstRow[key]) : "";
-            };
+        if (data && data.length > 0) {
+          const firstRow = data[0];
+          // Intelligent mapping: try to find keys that match or start with field names
+          const findValue = (possibleKeys: string[]) => {
+            const key = Object.keys(firstRow).find((k) =>
+              possibleKeys.some((pk) =>
+                k.toLowerCase().includes(pk.toLowerCase()),
+              ),
+            );
+            return key ? String(firstRow[key]) : "";
+          };
 
-            setFormData((prev) => ({
-              ...prev,
-              name: findValue(["name", "full name", "stuff name", "employee"]),
-              phone: findValue(["phone", "tel", "contact", "mobile"]),
-              email: findValue(["email", "mail"]),
-              position:
-                (findValue(["position", "role", "job"]) as StaffPosition) ||
-                prev.position,
-              shift:
-                (findValue(["shift", "timing"]) as StaffShift) || prev.shift,
-            }));
+          setFormData((prev) => ({
+            ...prev,
+            name: findValue(["name", "full name", "stuff name", "employee"]),
+            phone: findValue(["phone", "tel", "contact", "mobile"]),
+            email: findValue(["email", "mail"]),
+            position:
+              (findValue(["position", "role", "job"]) as StaffPosition) ||
+              prev.position,
+            shift: (findValue(["shift", "timing"]) as StaffShift) || prev.shift,
+          }));
 
-            toast.success("Form auto-filled from file successfully!");
-          } else {
-            toast.error("No data found in the file.");
-          }
-        } catch (error) {
-          console.error("File processing error:", error);
-          toast.error(
-            "Failed to process file. Please ensure it's a valid Excel or CSV.",
-          );
+          toast.success("Form auto-filled from file successfully!");
+        } else {
+          toast.error("No data found in the file.");
         }
-      };
-      reader.readAsBinaryString(file);
+      } catch (error) {
+        console.error("File processing error:", error);
+        toast.error(
+          "Failed to process file. Please ensure it's a valid Excel or CSV.",
+        );
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 

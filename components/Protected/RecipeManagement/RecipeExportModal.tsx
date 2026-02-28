@@ -2,7 +2,7 @@
 
 import { X, Download } from "lucide-react";
 import { Recipe } from "@/types/recipe";
-import * as XLSX from "xlsx";
+import { exportToExcel } from "@/lib/excel";
 
 interface RecipeExportModalProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ export function RecipeExportModal({
 }: RecipeExportModalProps) {
   if (!isOpen) return null;
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = Array.isArray(data) ? data : [data];
 
     // Transform data for Excel - expanding ingredients into rows
@@ -44,15 +44,11 @@ export function RecipeExportModal({
       }
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Recipes");
-
     const fileName = Array.isArray(data)
       ? "all_recipes_technical_sheets.xlsx"
       : `${data.name.toLowerCase().replace(/\s+/g, "_")}_technical_sheet.xlsx`;
 
-    XLSX.writeFile(workbook, fileName);
+    await exportToExcel(worksheetData, fileName, "Recipes");
     onExport(data);
   };
 

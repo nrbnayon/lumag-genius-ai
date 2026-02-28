@@ -6,7 +6,7 @@ import { Menu, MenuFormData, MenuType } from "@/types/menu";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
-import { read, utils as xlsxUtils } from "xlsx";
+import { readExcel } from "@/lib/excel";
 
 interface MenuModalProps {
   isOpen: boolean;
@@ -78,53 +78,47 @@ export function MenuModal({
     setErrors({});
   }, [menu, isOpen]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setExcelFileName(file.name);
       toast.info(`Extracting data from ${file.name}...`);
 
-      const reader = new FileReader();
-      reader.onload = (evt) => {
-        try {
-          const bstr = evt.target?.result;
-          const wb = read(bstr, { type: "binary" });
-          const wsname = wb.SheetNames[0];
-          const ws = wb.Sheets[wsname];
-          const data = xlsxUtils.sheet_to_json(ws) as any[];
+      try {
+        const data = await readExcel(file);
 
-          if (data && data.length > 0) {
-            const row = data[0];
-            const find = (...keys: string[]) => {
-              const k = Object.keys(row).find((k) =>
-                keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-              );
-              return k ? String(row[k]) : "";
-            };
+        if (data && data.length > 0) {
+          const row = data[0];
+          const find = (...keys: string[]) => {
+            const k = Object.keys(row).find((k) =>
+              keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+            );
+            return k ? String(row[k]) : "";
+          };
 
-            const dishesStr = find("dishes", "items", "food");
-            const extractedDishes = dishesStr
-              ? dishesStr.split(",").map((d) => d.trim())
-              : [];
+          const dishesStr = find("dishes", "items", "food");
+          const extractedDishes = dishesStr
+            ? dishesStr.split(",").map((d) => d.trim())
+            : [];
 
-            setFormData((prev) => ({
-              ...prev,
-              name: find("name", "menu", "title") || prev.name,
-              type: (find("type", "category") as MenuType) || prev.type,
-              cost: find("cost", "price", "total") || prev.cost,
-              dishes:
-                extractedDishes.length > 0 ? extractedDishes : prev.dishes,
-            }));
+          setFormData((prev) => ({
+            ...prev,
+            name: find("name", "menu", "title") || prev.name,
+            type: (find("type", "category") as MenuType) || prev.type,
+            cost: find("cost", "price", "total") || prev.cost,
+            dishes: extractedDishes.length > 0 ? extractedDishes : prev.dishes,
+          }));
 
-            toast.success("Menu auto-filled successfully!");
-          } else {
-            toast.error("No data found in the file.");
-          }
-        } catch (error) {
-          toast.error("Failed to process file.");
+          toast.success("Menu auto-filled successfully!");
+        } else {
+          toast.error("No data found in the file.");
         }
-      };
-      reader.readAsBinaryString(file);
+      } catch (error) {
+        console.error("Excel Read Error:", error);
+        toast.error("Failed to process file.");
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
     }
   };
 

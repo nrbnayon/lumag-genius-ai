@@ -2,7 +2,7 @@
 
 import { X, Download } from "lucide-react";
 import { Ingredient } from "@/types/ingredient";
-import * as XLSX from "xlsx";
+import { exportToExcel } from "@/lib/excel";
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -19,7 +19,7 @@ export function ExportModal({
 }: ExportModalProps) {
   if (!isOpen) return null;
 
-  const handleExport = () => {
+  const handleExport = async () => {
     const exportData = Array.isArray(data) ? data : [data];
 
     // Transform data for Excel
@@ -33,16 +33,12 @@ export function ExportModal({
       Status: item.status,
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Ingredients");
-
     // Generate file name
     const fileName = Array.isArray(data)
       ? "all_ingredients.xlsx"
       : `${data.name.toLowerCase().replace(/\s+/g, "_")}_details.xlsx`;
 
-    XLSX.writeFile(workbook, fileName);
+    await exportToExcel(worksheetData, fileName, "Ingredients");
     onExport(data);
   };
 
@@ -67,28 +63,29 @@ export function ExportModal({
 
         <div className="p-10">
           <div className="grid grid-cols-6 gap-0 border border-gray-100 rounded-lg overflow-hidden text-center text-sm font-medium mb-8">
-            <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-secondary mb-2">Ingredient name</p>
+            <div className="bg-gray-50/50 p-2 border-r border-gray-100">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Ingredient name</p>
+
               <p className="text-foreground">{sample?.name || "Chicken"}</p>
             </div>
-            <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-secondary mb-2">Unit</p>
+            <div className="bg-gray-50/50 p-2 border-r border-gray-100">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Unit</p>
               <p className="text-foreground">{sample?.unit || "Kg"}</p>
             </div>
-            <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-secondary mb-2">Price</p>
+            <div className="bg-gray-50/50 p-2 border-r border-gray-100">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Price</p>
               <p className="text-foreground">${sample?.price || "20"}</p>
             </div>
-            <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-secondary mb-2">Current Stock</p>
+            <div className="bg-gray-50/50 p-2 border-r border-gray-100">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Current Stock</p>
               <p className="text-foreground">{sample?.currentStock || "20"}</p>
             </div>
-            <div className="bg-gray-50/50 p-4 border-r border-gray-100">
-              <p className="text-secondary mb-2">Minimum Stock</p>
+            <div className="bg-gray-50/50 p-2 border-r border-gray-100">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Minimum Stock</p>
               <p className="text-foreground">{sample?.minimumStock || "12"}</p>
             </div>
-            <div className="bg-gray-50/50 p-4">
-              <p className="text-secondary mb-2">Category</p>
+            <div className="bg-gray-50/50 p-2">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Category</p>
               <p className="text-foreground">{sample?.category || "Others"}</p>
             </div>
           </div>
