@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { Toaster } from "sonner";
 import StoreProvider from "@/redux/StoreProvider";
+import { LanguageProvider } from "@/context/LanguageContext";
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
@@ -121,18 +122,20 @@ export default function RootLayout({
         className={`${inter.variable} ${geistMono.variable} antialiased bg-background font-sans`}
         suppressHydrationWarning
       >
+        <LanguageProvider>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
-          // forcedTheme="light"
+          forcedTheme="light"
         >
           <StoreProvider>
             {children}
             <Toaster richColors position="top-center" />
           </StoreProvider>
         </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

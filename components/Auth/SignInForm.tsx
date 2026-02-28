@@ -76,7 +76,7 @@ export const SignInForm = () => {
         name: "Nayon II", // or from real response
         email: cleanData.email,
         role: "admin",
-        image: "/images/avatar.png",
+        image: "/images/user.webp",
       };
       const mockToken = `mock_access_token_${Date.now()}`;
 

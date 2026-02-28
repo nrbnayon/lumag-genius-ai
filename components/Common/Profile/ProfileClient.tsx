@@ -1,7 +1,7 @@
 // components\Dashboard\Profile\ProfileClient.tsx
 "use client";
 
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -188,7 +188,7 @@ export default function ProfileClient() {
   const handleGlobalCancel = () => {
     if (hasChanges) {
       const confirm = window.confirm(
-        "You have unsaved changes. Are you sure you want to cancel?"
+        "You have unsaved changes. Are you sure you want to cancel?",
       );
       if (!confirm) return;
     }
@@ -268,7 +268,7 @@ export default function ProfileClient() {
         <div className="flex items-center gap-5 mb-10">
           <div className="relative w-18 h-18 rounded-full overflow-hidden shrink-0 bg-gray-200">
             <Image
-              src={user.avatar || "/images/avatar.png"}
+              src={user.avatar || "/images/user.webp"}
               alt="Profile"
               width={72}
               height={72}
@@ -276,7 +276,7 @@ export default function ProfileClient() {
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                  user.name
+                  user.name,
                 )}&background=random&size=72`;
               }}
             />
@@ -294,19 +294,21 @@ export default function ProfileClient() {
           <div className="w-full md:w-48 shrink-0 space-y-3">
             <button
               onClick={() => setActiveSection("account")}
-              className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all ${activeSection === "account"
-                ? "bg-green-50 text-primary border-l-4 border-primary"
-                : "text-secondary hover:bg-blue-50"
-                }`}
+              className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all ${
+                activeSection === "account"
+                  ? "bg-green-50 text-primary border-l-4 border-primary"
+                  : "text-secondary hover:bg-blue-50"
+              }`}
             >
               Account Settings
             </button>
             <button
               onClick={() => setActiveSection("notifications")}
-              className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all ${activeSection === "notifications"
-                ? "bg-green-50 text-primary border-l-4 border-primary"
-                : "text-secondary hover:bg-blue-50"
-                }`}
+              className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition-all ${
+                activeSection === "notifications"
+                  ? "bg-green-50 text-primary border-l-4 border-primary"
+                  : "text-secondary hover:bg-blue-50"
+              }`}
             >
               Notifications
             </button>
@@ -343,8 +345,7 @@ export default function ProfileClient() {
                               maxLength={32}
                             />
                             <div className="text-right text-xs text-gray-400">
-                              text limit{" "}
-                              {editNameValue.length}/32
+                              text limit {editNameValue.length}/32
                             </div>
                           </div>
 
@@ -397,7 +398,9 @@ export default function ProfileClient() {
                           <div className="space-y-2">
                             <Input
                               value={editPhoneValue}
-                              onChange={(e) => setEditPhoneValue(e.target.value)}
+                              onChange={(e) =>
+                                setEditPhoneValue(e.target.value)
+                              }
                               className="w-full bg-white border-gray-300 text-foreground"
                               placeholder="000-0000-000"
                             />
@@ -421,9 +424,7 @@ export default function ProfileClient() {
                           </div>
                         </div>
                       ) : (
-                        <div className="text-foreground mt-1">
-                          {user.phone}
-                        </div>
+                        <div className="text-foreground mt-1">{user.phone}</div>
                       )}
                     </div>
 
@@ -451,7 +452,9 @@ export default function ProfileClient() {
                           <div className="space-y-2">
                             <Input
                               value={editAddressValue}
-                              onChange={(e) => setEditAddressValue(e.target.value)}
+                              onChange={(e) =>
+                                setEditAddressValue(e.target.value)
+                              }
                               className="w-full bg-white border-gray-300 text-foreground"
                               placeholder="123 Admin Street, Dhaka"
                             />

@@ -4,6 +4,42 @@ import { useUser } from "@/hooks/useUser";
 import Image from "next/image";
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
+import TranslatedText from "./TranslatedText";
+
+function LanguageSwitcher() {
+  const { language, setLanguage } = useLanguage();
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <div className="hidden md:flex items-center justify-between px-3 py-2 border rounded-md min-w-30 cursor-pointer hover:bg-gray-50 bg-white transition-colors">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">
+              {language === "en" ? "English" : "Portuguese"}
+            </span>
+          </div>
+          <ChevronDown className="h-4 w-4 text-gray-500" />
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setLanguage("en")}>
+          English
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setLanguage("pt")}>
+          Portuguese
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function DashboardHeader({
   title,
@@ -18,16 +54,17 @@ export default function DashboardHeader({
     <div className="bg-white flex flex-row justify-between items-center py-2 px-4 md:px-8 border-b border-border gap-4">
       <div className="flex flex-col items-start justify-center">
         <h1 className="text-base md:text-2xl lg:text-3xl font-bold text-foreground">
-          {title}
+          <TranslatedText text={title} />
         </h1>
         {description && (
           <p className="text-xs md:text-base text-secondary mt-1">
-            {description}
+            <TranslatedText text={description} />
           </p>
         )}
       </div>
 
       <div className="hidden md:flex items-center gap-6">
+        <LanguageSwitcher />
         {/* Notification Icon */}
         <Link
           href="/notifications"
@@ -46,7 +83,7 @@ export default function DashboardHeader({
         >
           <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden shrink-0 border border-border">
             <Image
-              src={image || "/images/avatar.png"}
+              src={image || "/images/user.webp"}
               alt={name || "User"}
               width={40}
               height={40}

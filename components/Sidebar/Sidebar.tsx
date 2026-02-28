@@ -171,7 +171,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
 
       return false;
     },
-    [pathname]
+    [pathname],
   );
 
   // Toggle expanded state
@@ -179,7 +179,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
     setExpandedItems((prev) =>
       prev.includes(label)
         ? prev.filter((item) => item !== label)
-        : [...prev, label]
+        : [...prev, label],
     );
   }, []);
 
@@ -190,7 +190,8 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
         link.subLinks &&
         link.subLinks.some(
           (subLink) =>
-            pathname === subLink.href || pathname.startsWith(subLink.href + "/")
+            pathname === subLink.href ||
+            pathname.startsWith(subLink.href + "/"),
         )
       ) {
         if (!expandedItems.includes(link.label)) {
@@ -216,7 +217,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
       const deltaX = e.clientX - startX;
       const newWidth = Math.min(
         Math.max(startWidth + deltaX, minWidth),
-        maxWidth
+        maxWidth,
       );
 
       setSidebarWidth(newWidth);
@@ -288,17 +289,17 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
 
   const renderIcon = useCallback((Icon: any, isActive: boolean) => {
     const iconClasses = cn(
-        "h-6 w-6 shrink-0 transition-colors duration-200",
-        isActive
-          ? "text-white font-bold"
-          : "text-foreground group-hover:text-foreground font-bold"
+      "h-6 w-6 shrink-0 transition-colors duration-200",
+      isActive
+        ? "text-white font-bold"
+        : "text-foreground group-hover:text-foreground font-bold",
     );
 
     // 1. If it's a valid React Element (pre-rendered JSX like <Bell />), clone it to inject classes if needed or just return
     if (React.isValidElement(Icon)) {
-        return React.cloneElement(Icon as React.ReactElement<any>, {
-            className: cn((Icon.props as any).className, iconClasses)
-        });
+      return React.cloneElement(Icon as React.ReactElement<any>, {
+        className: cn((Icon.props as any).className, iconClasses),
+      });
     }
 
     // 2. If it's a Hugeicon object (legacy check from @hugeicons/core-free-icons)
@@ -306,14 +307,10 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
     // However, the original code used HugeiconsIcon component which specifically takes `icon={icon}` data.
     // Let's heuristics: if passed icon is likely not a component (function) but an object, try HugeiconsIcon.
     // DashboardSquare02Icon is an object usually.
-    if (typeof Icon === 'object' && !React.isValidElement(Icon)) {
-         return (
-          <HugeiconsIcon
-            icon={Icon}
-            strokeWidth={2}
-            className={iconClasses}
-          />
-        );
+    if (typeof Icon === "object" && !React.isValidElement(Icon)) {
+      return (
+        <HugeiconsIcon icon={Icon} strokeWidth={2} className={iconClasses} />
+      );
     }
 
     // 3. Assume it's a Component (Lucide, React-Icon, or FontAwesome component)
@@ -347,9 +344,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   if (!isAuthenticated) {
     return (
       <div className="w-full min-h-screen bg-gray">
-        <div className="p-0 flex flex-col gap-2 flex-1 w-full">
-          {children}
-        </div>
+        <div className="p-0 flex flex-col gap-2 flex-1 w-full">{children}</div>
       </div>
     );
   }
@@ -358,7 +353,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
     <div
       className={cn(
         "rounded-md flex flex-col md:flex-row bg-gray w-full flex-1 mx-auto",
-        "min-h-screen md:h-screen md:overflow-hidden relative"
+        "min-h-screen md:h-screen md:overflow-hidden relative",
       )}
     >
       <div className="relative overflow-visible flex">
@@ -371,7 +366,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
           <SidebarBody
             className={cn(
               "justify-between gap-10 border-0.5",
-              "bg-white text-foreground"
+              "bg-white text-foreground",
             )}
           >
             <div className="flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
@@ -389,7 +384,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
 
                   const filteredSubLinks = link.subLinks?.filter(
                     (subLink) =>
-                      !subLink.roles || (role && subLink.roles.includes(role))
+                      !subLink.roles || (role && subLink.roles.includes(role)),
                   );
 
                   const shouldShowSublinks =
@@ -412,7 +407,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                         if (hasSubLinks && !isExpanded) {
                           setTimeout(() => {
                             setHoveredItem((prev) =>
-                              prev === link.label ? null : prev
+                              prev === link.label ? null : prev,
                             );
                           }, 200);
                         }
@@ -431,7 +426,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                             "flex items-center gap-3 p-3 rounded-md transition-all duration-200 group flex-1 relative",
                             isActive
                               ? "bg-primary text-white font-bold"
-                              : "hover:text-foreground hover:bg-primary/30"
+                              : "hover:text-foreground hover:bg-primary/30",
                           )}
                         >
                           <span className="shrink-0">
@@ -457,7 +452,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                               }}
                               className={cn(
                                 "p-1 rounded transition-all duration-200 hover:bg-gray-200",
-                                isActive && "text-current"
+                                isActive && "text-current",
                               )}
                             >
                               {isExpanded ? (
@@ -485,7 +480,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                             if (!isExpanded) {
                               setTimeout(() => {
                                 setHoveredItem((prev) =>
-                                  prev === link.label ? null : prev
+                                  prev === link.label ? null : prev,
                                 );
                               }, 200);
                             }
@@ -509,7 +504,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                                   "flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 text-sm",
                                   isSubLinkActive
                                     ? "bg-primary/50 text-current font-semibold"
-                                    : "text-secondary hover:text-primary hover:bg-gray-50"
+                                    : "text-secondary hover:text-primary hover:bg-gray-50",
                                 )}
                               >
                                 <span className="text-sm whitespace-pre">
@@ -542,7 +537,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                   >
                     <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center shrink-0">
                       <Image
-                        src="/images/avatar.png"
+                        src="/images/user.webp"
                         alt="User"
                         width={40}
                         height={40}
@@ -561,7 +556,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                       <p
                         className={cn(
                           "text-sm truncate",
-                          getRoleBadgeColor(role || "admin")
+                          getRoleBadgeColor(role || "admin"),
                         )}
                       >
                         {getRoleDisplayName(role || "admin")}
@@ -598,7 +593,7 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
           onClick={handleToggleClick}
           className={cn(
             "absolute hidden md:flex top-4 z-20 cursor-pointer p-2 rounded-full bg-gray border border-gray-300 shadow-none hover:bg-gray-50 transition-all duration-200",
-            open ? "-right-4" : "-right-4"
+            open ? "-right-4" : "-right-4",
           )}
         >
           {open ? (

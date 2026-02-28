@@ -1,14 +1,34 @@
 import { User, Order } from "@/types/users";
 
 const mockOrders: Order[] = [
-  { id: "1", productName: "Match Fever Lipstick", variant: "Peachy Blush", image: "/images/product.png" },
-  { id: "2", productName: "Match Fever Lipstick", variant: "Peachy Blush", image: "/images/product.png" },
-  { id: "3", productName: "Match Fever Lipstick", variant: "Peachy Blush", image: "/images/product.png" },
-  { id: "4", productName: "Match Fever Lipstick", variant: "Peachy Blush", image: "/images/product.png" },
+  {
+    id: "1",
+    productName: "Match Fever Lipstick",
+    variant: "Peachy Blush",
+    image: "/images/product.png",
+  },
+  {
+    id: "2",
+    productName: "Match Fever Lipstick",
+    variant: "Peachy Blush",
+    image: "/images/product.png",
+  },
+  {
+    id: "3",
+    productName: "Match Fever Lipstick",
+    variant: "Peachy Blush",
+    image: "/images/product.png",
+  },
+  {
+    id: "4",
+    productName: "Match Fever Lipstick",
+    variant: "Peachy Blush",
+    image: "/images/product.png",
+  },
 ];
 
 export const usersData: User[] = [
-    {
+  {
     id: "1",
     name: "Nayon II",
     email: "admin@gmail.com",
@@ -16,7 +36,7 @@ export const usersData: User[] = [
     status: "Active",
     location: "New York, USA",
     date: "2024-01-15",
-    image: "/images/avatar.png",
+    image: "/images/user.webp",
     phone: "+123 456 7890",
     totalSpending: 0,
     totalOrders: 0,
@@ -222,5 +242,5 @@ export const usersData: User[] = [
     totalOrders: 250,
     activeOrders: mockOrders,
     previousOrders: mockOrders,
-  }
+  },
 ];

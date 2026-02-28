@@ -12,8 +12,10 @@ import {
 import { toast } from "sonner";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import Image from "next/image";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function SettingsClient() {
+  const { language, setLanguage } = useLanguage();
   // Section Edit Modes
   const [isEditingAccount, setIsEditingAccount] = useState(false);
   const [isEditingSecurity, setIsEditingSecurity] = useState(false);
@@ -21,7 +23,7 @@ export default function SettingsClient() {
 
   // Form States
   const [accountInfo, setAccountInfo] = useState({
-    image: "/images/avatar.png",
+    image: "/images/user.webp",
     name: "Nayon II",
     email: "example@gmail.com",
     phone: "000-0000-000",
@@ -43,7 +45,7 @@ export default function SettingsClient() {
   };
 
   const handleRemoveImage = () => {
-    setAccountInfo({ ...accountInfo, image: "/images/avatar.png" });
+    setAccountInfo({ ...accountInfo, image: "/images/user.webp" });
     toast.info("Profile image removed");
   };
 
@@ -53,7 +55,6 @@ export default function SettingsClient() {
     confirmPassword: "",
   });
 
-  const [language, setLanguage] = useState("English");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -79,7 +80,9 @@ export default function SettingsClient() {
 
   const handleSaveLanguage = () => {
     setIsEditingLanguage(false);
-    toast.success(`Language set to ${language}`);
+    toast.success(
+      `Language set to ${language === "en" ? "English" : "Portuguese"}`,
+    );
   };
 
   return (
@@ -157,7 +160,7 @@ export default function SettingsClient() {
                         onClick={handleRemoveImage}
                         disabled={
                           !isEditingAccount ||
-                          accountInfo.image === "/images/avatar.png"
+                          accountInfo.image === "/images/user.webp"
                         }
                         className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-xl text-xs font-bold hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
@@ -458,11 +461,13 @@ export default function SettingsClient() {
                     <div className="relative">
                       <select
                         value={language}
-                        onChange={(e) => setLanguage(e.target.value)}
+                        onChange={(e) =>
+                          setLanguage(e.target.value as "en" | "pt")
+                        }
                         className="w-full bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all outline-none appearance-none cursor-pointer"
                       >
-                        <option value="English">English</option>
-                        <option value="Portuguese">Portuguese</option>
+                        <option value="en">English</option>
+                        <option value="pt">Portuguese</option>
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                     </div>
@@ -482,7 +487,7 @@ export default function SettingsClient() {
                     Selected Language
                   </p>
                   <p className="text-sm text-[#4B5563] font-medium">
-                    {language}
+                    {language === "en" ? "English" : "Portuguese"}
                   </p>
                 </div>
               )}
