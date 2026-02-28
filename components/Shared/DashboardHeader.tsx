@@ -64,7 +64,7 @@ export default function DashboardHeader({
       </div>
 
       <div className="hidden md:flex items-center gap-6">
-        <LanguageSwitcher />
+        {/* <LanguageSwitcher /> */}
         {/* Notification Icon */}
         <Link
           href="/notifications"
