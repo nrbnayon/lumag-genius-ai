@@ -68,7 +68,7 @@ export function useUser() {
         // Dispatch to Redux to sync state
         dispatch(
           setCredentials({
-            user: { name: userName, email, role, image: userImage },
+            user: { name: userName, email_address: email, role, image: userImage },
             token: accessToken,
           }),
         );

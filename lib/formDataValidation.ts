@@ -5,7 +5,7 @@ export const loginValidationSchema = z.object({
   email_address: z
     .string()
     .min(1, "Email is required")
-    .email_address("Please enter a valid email address")
+    .email("Please enter a valid email address")
     .max(100, "Email must be less than 100 characters")
     .trim(),
   password: z
@@ -36,7 +36,7 @@ export const signupValidationSchema = z
     email_address: z
       .string()
       .min(1, "Email is required")
-      .email_address("Please enter a valid email address")
+      .email("Please enter a valid email address")
       .max(100, "Email must be less than 100 characters")
       .trim(),
     password: z
@@ -70,7 +70,7 @@ export const resetPasswordValidationSchema = z
     email_address: z
       .string()
       .min(1, "Email is required")
-      .email_address("Please enter a valid email address")
+      .email("Please enter a valid email address")
       .max(100, "Email must be less than 100 characters")
       .trim(),
     newPassword: z
@@ -97,7 +97,7 @@ export const emailValidationSchema = z.object({
   email_address: z
     .string()
     .min(1, "Email is required")
-    .email_address("Please enter a valid email address")
+    .email("Please enter a valid email address")
     .max(100, "Email must be less than 100 characters")
     .trim(),
 });

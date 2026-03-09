@@ -47,7 +47,7 @@ export const SignInForm = () => {
 
   // Trim spaces in real-time for email & password
   const handleTrimChange =
-    (field: "email" | "password") =>
+    (field: "email_address" | "password") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const trimmed = e.target.value.trim();
       setValue(field, trimmed, { shouldValidate: true });
@@ -147,12 +147,12 @@ export const SignInForm = () => {
             <FloatingInput
               label="Email"
               type="email"
-              autoComplete="email"
+              autoComplete="email_address"
               error={errors.email_address?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 text-base"
-              {...register("email")}
-              onChange={handleTrimChange("email")}
+              {...register("email_address")}
+              onChange={handleTrimChange("email_address")}
             />
 
             {/* Password with eye toggle */}
