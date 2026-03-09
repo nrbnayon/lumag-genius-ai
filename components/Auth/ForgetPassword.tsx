@@ -43,7 +43,7 @@ const ForgetPassword = () => {
   }, [countdown]);
 
   const handleTrimChange =
-    (field: "email") => (e: React.ChangeEvent<HTMLInputElement>) => {
+    (field: "email_address") => (e: React.ChangeEvent<HTMLInputElement>) => {
       const trimmed = e.target.value.trim();
       setValue(field, trimmed, { shouldValidate: true });
     };
@@ -131,8 +131,8 @@ const ForgetPassword = () => {
               error={errors.email_address?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 text-base"
-              {...register("email")}
-              onChange={handleTrimChange("email")}
+              {...register("email_address")}
+              onChange={handleTrimChange("email_address")}
             />
 
             <Button
