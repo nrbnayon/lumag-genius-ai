@@ -42,7 +42,7 @@ export function StaffModal({
     position: "Bar Chef",
     shift: "7.00AM-3.00PM (Morning)",
     phone: "",
-    email: "",
+    email_address: "",
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof Staff, string>>>(
@@ -58,7 +58,7 @@ export function StaffModal({
         position: "Bar Chef",
         shift: "7.00AM-3.00PM (Morning)",
         phone: "",
-        email: "",
+        email_address: "",
       });
     }
   }, [staff, isOpen]);
@@ -67,7 +67,7 @@ export function StaffModal({
     const newErrors: any = {};
     if (!formData.name) newErrors.name = "Required";
     if (!formData.phone) newErrors.phone = "Required";
-    if (!formData.email) newErrors.email = "Required";
+    if (!formData.email_address) newErrors.email_address = "Required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -103,7 +103,7 @@ export function StaffModal({
             ...prev,
             name: findValue(["name", "full name", "stuff name", "employee"]),
             phone: findValue(["phone", "tel", "contact", "mobile"]),
-            email: findValue(["email", "mail"]),
+            email_address: findValue(["email", "mail"]),
             position:
               (findValue(["position", "role", "job"]) as StaffPosition) ||
               prev.position,
@@ -233,13 +233,13 @@ export function StaffModal({
             </label>
             <input
               type="email"
-              value={formData.email}
+              value={formData.email_address}
               onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
+                setFormData({ ...formData, email_address: e.target.value })
               }
               className={cn(
                 "w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                errors.email && "border-red-500",
+                errors.email_address && "border-red-500",
               )}
               placeholder="Email"
             />

@@ -99,7 +99,7 @@ export function StaffReportModal({
                   {staff.position}
                 </p>
                 <p className="md:text-sm text-xs font-medium text-secondary">
-                  {staff.email}
+                  {staff.email_address}
                 </p>
               </div>
             </div>

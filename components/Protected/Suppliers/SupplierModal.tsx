@@ -31,7 +31,7 @@ export function SupplierModal({
   const [formData, setFormData] = useState<Partial<Supplier>>({
     name: "",
     phone: "",
-    email: "",
+    email_address: "",
     address: "",
     contractStart: "",
     contractEnd: "",
@@ -51,7 +51,7 @@ export function SupplierModal({
       setFormData({
         name: "",
         phone: "",
-        email: "",
+        email_address: "",
         address: "",
         contractStart: "",
         contractEnd: "",
@@ -65,7 +65,7 @@ export function SupplierModal({
     const newErrors: any = {};
     if (!formData.name) newErrors.name = "Required";
     if (!formData.phone) newErrors.phone = "Required";
-    if (!formData.email) newErrors.email = "Required";
+    if (!formData.email_address) newErrors.email_address = "Required";
     if (!formData.address) newErrors.address = "Required";
 
     setErrors(newErrors);
@@ -163,13 +163,16 @@ export function SupplierModal({
                   </div>
                   <input
                     type="email"
-                    value={formData.email}
+                    value={formData.email_address}
                     onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
+                      setFormData({
+                        ...formData,
+                        email_address: e.target.value,
+                      })
                     }
                     className={cn(
                       "w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium",
-                      errors.email && "border-red-500 bg-red-50/10",
+                      errors.email_address && "border-red-500 bg-red-50/10",
                     )}
                     placeholder="orders@oceanfresh.com"
                   />

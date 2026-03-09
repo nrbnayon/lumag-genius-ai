@@ -70,7 +70,7 @@ export function StaffCard({
         <div className="flex justify-between items-center text-xs">
           <span className="text-secondary font-medium">Email</span>
           <span className="text-foreground font-bold truncate max-w-[140px]">
-            {staff.email}
+            {staff.email_address}
           </span>
         </div>
       </div>

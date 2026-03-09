@@ -32,7 +32,7 @@ export function SupplierCard({ supplier, onViewDetails }: SupplierCardProps) {
         </div>
         <div className="flex items-center gap-3 text-sm text-secondary">
           <Mail className="w-4 h-4" />
-          <span className="truncate">{supplier.email}</span>
+          <span className="truncate">{supplier.email_address}</span>
         </div>
         <div className="flex items-start gap-3 text-sm text-secondary">
           <MapPin className="w-4 h-4 mt-0.5 shrink-0" />

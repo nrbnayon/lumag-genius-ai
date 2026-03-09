@@ -84,7 +84,7 @@ export function EmployeeReportModal({
                     {staff.phone}
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.email}
+                    {staff.email_address}
                   </td>
                 </tr>
               </tbody>

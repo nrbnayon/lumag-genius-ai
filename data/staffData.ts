@@ -6,7 +6,7 @@ export const staffData: Staff[] = [
     name: "Mark Ethan",
     position: "Bar Chef",
     shift: "7.00AM-3.00PM (Morning)",
-    email: "mark@gmail.com",
+    email_address: "mark@gmail.com",
     phone: "+88017572",
     avatar: "https://i.pravatar.cc/150?u=1",
     cvUrl:
@@ -19,7 +19,7 @@ export const staffData: Staff[] = [
     name: "John Smith",
     position: "Restaurant Chef",
     shift: "3.00PM-11.00PM (Evening)",
-    email: "john@gmail.com",
+    email_address: "john@gmail.com",
     phone: "+88017573",
     avatar: "https://i.pravatar.cc/150?u=2",
     cvUrl:
@@ -32,7 +32,7 @@ export const staffData: Staff[] = [
     name: "Sarah Chen",
     position: "Restaurant Chef",
     shift: "7.00AM-3.00PM (Morning)",
-    email: "sara@gmail.com",
+    email_address: "sara@gmail.com",
     phone: "+88017574",
     avatar: "https://i.pravatar.cc/150?u=3",
     cvUrl:
@@ -45,7 +45,7 @@ export const staffData: Staff[] = [
     name: "David Miller",
     position: "Junior Chef",
     shift: "11.00PM-7.00AM (Night)",
-    email: "david@gmail.com",
+    email_address: "david@gmail.com",
     phone: "+88017575",
     avatar: "https://i.pravatar.cc/150?u=4",
     cvUrl:
@@ -58,7 +58,7 @@ export const staffData: Staff[] = [
     name: "Emma Wilson",
     position: "Bar Chef",
     shift: "3.00PM-11.00PM (Evening)",
-    email: "emma@gmail.com",
+    email_address: "emma@gmail.com",
     phone: "+88017576",
     avatar: "https://i.pravatar.cc/150?u=5",
     cvUrl:
@@ -71,7 +71,7 @@ export const staffData: Staff[] = [
     name: "Michael Brown",
     position: "Head Chef",
     shift: "7.00AM-3.00PM (Morning)",
-    email: "michael@gmail.com",
+    email_address: "michael@gmail.com",
     phone: "+88017577",
     avatar: "https://i.pravatar.cc/150?u=6",
     cvUrl:
@@ -84,7 +84,7 @@ export const staffData: Staff[] = [
     name: "Lisa Anderson",
     position: "Restaurant Chef",
     shift: "11.00PM-7.00AM (Night)",
-    email: "lisa@gmail.com",
+    email_address: "lisa@gmail.com",
     phone: "+88017578",
     avatar: "https://i.pravatar.cc/150?u=7",
     cvUrl:
@@ -97,7 +97,7 @@ export const staffData: Staff[] = [
     name: "James Taylor",
     position: "Junior Chef",
     shift: "7.00AM-3.00PM (Morning)",
-    email: "james@gmail.com",
+    email_address: "james@gmail.com",
     phone: "+88017579",
     avatar: "https://i.pravatar.cc/150?u=8",
     cvUrl:

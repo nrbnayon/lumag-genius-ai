@@ -55,7 +55,7 @@ export default function StaffManagementClient() {
     (s) =>
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      s.email_address.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const paginatedStaff = filteredStaff.slice(
@@ -110,7 +110,7 @@ export default function StaffManagementClient() {
         name: data.name!,
         position: data.position!,
         shift: data.shift!,
-        email: data.email!,
+        email_address: data.email_address!,
         phone: data.phone!,
         avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
         cvUrl:
@@ -139,7 +139,7 @@ export default function StaffManagementClient() {
       "Full Name": item.name,
       Position: item.position,
       Shift: item.shift,
-      Email: item.email,
+      email_address: item.email_address,
       Phone: item.phone,
       "Present Days": item.presentDays || 0,
       "Off Days": item.offDays || 0,
@@ -162,7 +162,7 @@ export default function StaffManagementClient() {
         "Full Name": staff.name,
         Position: staff.position,
         Shift: staff.shift,
-        Email: staff.email,
+        email_address: staff.email_address,
         Phone: staff.phone,
         "Present Days": staff.presentDays || 0,
         "Off Days": staff.offDays || 0,

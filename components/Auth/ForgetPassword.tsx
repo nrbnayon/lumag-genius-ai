@@ -30,7 +30,7 @@ const ForgetPassword = () => {
   } = useForm<FormValues>({
     resolver: zodResolver(emailValidationSchema),
     defaultValues: {
-      email: "",
+      email_address: "",
     },
   });
 
@@ -53,11 +53,11 @@ const ForgetPassword = () => {
     try {
       // Simulation
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Email for reset:", data.email);
+      console.log("Email for reset:", data.email_address);
 
       toast.success("OTP sent to your email.");
       router.push(
-        `/verify-otp?flow=reset&email=${encodeURIComponent(data.email)}`,
+        `/verify-otp?flow=reset&email=${encodeURIComponent(data.email_address)}`,
       );
     } catch (error) {
       console.error("Failed to send OTP:", error);
@@ -75,8 +75,7 @@ const ForgetPassword = () => {
 
   return (
     <div className="relative h-screen w-full flex flex-col lg:flex-row">
-
-       <motion.div
+      <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -129,7 +128,7 @@ const ForgetPassword = () => {
               label="Email"
               type="email"
               autoComplete="email"
-              error={errors.email?.message}
+              error={errors.email_address?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 text-base"
               {...register("email")}
@@ -170,7 +169,6 @@ const ForgetPassword = () => {
           </form>
         </div>
       </motion.div>
-
     </div>
   );
 };

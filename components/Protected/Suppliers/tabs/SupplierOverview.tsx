@@ -25,7 +25,7 @@ export function SupplierOverview({
   const filteredSuppliers = suppliers.filter(
     (item) =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      item.email_address.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const start = (currentPage - 1) * itemsPerPage;

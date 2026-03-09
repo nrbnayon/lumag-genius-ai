@@ -1,9 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import {
-  X,
-} from "lucide-react";
+import { X } from "lucide-react";
 import {
   ApprovalRequest,
   IngredientRequest,
@@ -215,7 +213,7 @@ export function ApprovalDetailModal({
                   <tr className="text-foreground">
                     <td className="px-4 py-4">{data.name}</td>
                     <td className="px-4 py-4">{data.phone}</td>
-                    <td className="px-4 py-4">{data.email}</td>
+                    <td className="px-4 py-4">{data.email_address}</td>
                     <td className="px-4 py-4">{data.address}</td>
                     <td className="px-4 py-4">{data.contractStart}</td>
                     <td className="px-4 py-4">{data.contractEnd}</td>

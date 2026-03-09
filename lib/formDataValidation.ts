@@ -2,10 +2,10 @@ import { z } from "zod";
 
 // Login Validation schema
 export const loginValidationSchema = z.object({
-  email: z
+  email_address: z
     .string()
     .min(1, "Email is required")
-    .email("Please enter a valid email address")
+    .email_address("Please enter a valid email address")
     .max(100, "Email must be less than 100 characters")
     .trim(),
   password: z
@@ -30,13 +30,13 @@ export const signupValidationSchema = z
       .max(50, "Name must be less than 50 characters")
       .regex(
         /^[a-zA-Z\s'-]+$/,
-        "Name can only contain letters, spaces, hyphens, and apostrophes"
+        "Name can only contain letters, spaces, hyphens, and apostrophes",
       )
       .trim(),
-    email: z
+    email_address: z
       .string()
       .min(1, "Email is required")
-      .email("Please enter a valid email address")
+      .email_address("Please enter a valid email address")
       .max(100, "Email must be less than 100 characters")
       .trim(),
     password: z
@@ -46,7 +46,7 @@ export const signupValidationSchema = z
       .max(100, "Password must be less than 100 characters")
       .regex(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
       )
       .refine((val) => !/\s/.test(val), {
         message: "Password cannot contain spaces",
@@ -56,7 +56,7 @@ export const signupValidationSchema = z
       .boolean()
       .refine(
         (val) => val === true,
-        "You must agree to the Terms and Conditions to continue"
+        "You must agree to the Terms and Conditions to continue",
       ),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -67,10 +67,10 @@ export const signupValidationSchema = z
 // Reset Password Validation schema
 export const resetPasswordValidationSchema = z
   .object({
-    email: z
+    email_address: z
       .string()
       .min(1, "Email is required")
-      .email("Please enter a valid email address")
+      .email_address("Please enter a valid email address")
       .max(100, "Email must be less than 100 characters")
       .trim(),
     newPassword: z
@@ -80,7 +80,7 @@ export const resetPasswordValidationSchema = z
       .max(100, "Password must be less than 100 characters")
       .regex(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
       )
       .refine((val) => !/\s/.test(val), {
         message: "New password cannot contain spaces",
@@ -94,10 +94,10 @@ export const resetPasswordValidationSchema = z
 
 // Email Validation schema
 export const emailValidationSchema = z.object({
-  email: z
+  email_address: z
     .string()
     .min(1, "Email is required")
-    .email("Please enter a valid email address")
+    .email_address("Please enter a valid email address")
     .max(100, "Email must be less than 100 characters")
     .trim(),
 });
@@ -113,7 +113,7 @@ export const passwordValidationSchema = z
       .max(100, "Password must be less than 100 characters")
       .regex(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number",
       )
       .refine((val) => !/\s/.test(val), {
         message: "New password cannot contain spaces",
