@@ -8,7 +8,7 @@ import { JWTPayload, jwtVerify } from "jose";
 
 // Define Roles
 const ROLES = {
-  ADMIN: "admin"
+  ADMIN: "admin",
 } as const;
 
 type Role = (typeof ROLES)[keyof typeof ROLES];
@@ -30,7 +30,12 @@ const PUBLIC_ROUTES = [
 ];
 
 // Auth routes (redirect to dashboard if already logged in)
-const AUTH_ROUTES = ["/signin", "/signup", "/forgot-password", "/reset-password"];
+const AUTH_ROUTES = [
+  "/signin",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+];
 
 // Protected routes accessible by ALL authenticated users
 // (Merges previous COMMON_PROTECTED_ROUTES and SHARED_ROUTES)
@@ -38,7 +43,7 @@ const UNIVERSAL_PROTECTED_ROUTES = [
   "/notifications",
   "/settings",
   "/profile",
-  "/privacy-policy", 
+  "/privacy-policy",
   "/terms",
   "/about-us",
 ];
@@ -56,7 +61,7 @@ const ROLE_DEFAULT_PATHS: Record<Role, string> = {
 
 // JWT Secret - Use environment variable in production
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-secret-key-change-in-production"
+  process.env.JWT_SECRET || "your-secret-key-change-in-production",
 );
 
 // ============================================
@@ -155,8 +160,11 @@ export async function proxy(request: NextRequest) {
 
   if (accessToken) {
     // Development Bypass Tokens
-    if (accessToken === "dev-admin-token" || accessToken.startsWith("mock_access_token_")) {
-      user = { email: "admin@gmail.com", role: ROLES.ADMIN };
+    if (
+      accessToken === "dev-admin-token" ||
+      accessToken.startsWith("mock_access_token_")
+    ) {
+      user = { email_address: "admin@gmail.com", role: ROLES.ADMIN };
       isAuthenticated = true;
       userRole = userRole || ROLES.ADMIN;
     } else {
@@ -192,13 +200,13 @@ export async function proxy(request: NextRequest) {
   // ============================================
   // STEP 4: Handle Protected Routes
   // ============================================
-  
+
   // If we are here, the route is NOT public.
-  // We assume specific deny-list implies everything else is protected? 
+  // We assume specific deny-list implies everything else is protected?
   // OR we check if it matches a known protected path.
-  // NOTE: Original logic had a "Step 5" for unknown routes handling. 
+  // NOTE: Original logic had a "Step 5" for unknown routes handling.
   // To be safe and "secure", we treat non-public routes as protected by default.
-  
+
   if (!isAuthenticated) {
     const loginUrl = new URL("/signin", request.url);
     loginUrl.searchParams.set("redirect", pathname);
@@ -209,7 +217,7 @@ export async function proxy(request: NextRequest) {
   // Verify Role Access
   if (!hasRoleAccess(pathname, userRole || "")) {
     console.log("❌ Forbidden - User role does not have access to:", pathname);
-    // Determine if it's a valid route at all? 
+    // Determine if it's a valid route at all?
     // Ideally we should 404 if it doesn't exist, but middleware doesn't know filesystem.
     // For security, redirecting to default path is safe.
     const defaultPath = getRoleDefaultPath(userRole || ROLES.ADMIN);

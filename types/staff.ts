@@ -13,7 +13,7 @@ export interface Staff {
   name: string;
   position: StaffPosition;
   shift: StaffShift;
-  email: string;
+  email_address: string;
   phone: string;
   avatar?: string;
   cvUrl?: string;

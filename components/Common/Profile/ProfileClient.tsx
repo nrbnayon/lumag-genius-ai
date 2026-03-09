@@ -13,7 +13,7 @@ import NotificationsClient from "@/components/Notifications/NotificationsClient"
 interface UserProfile {
   name: string;
   fullName: string;
-  email: string;
+  email_address: string;
   role: string;
   phone: string;
   address: string;
@@ -23,7 +23,7 @@ interface UserProfile {
 const MOCK_USER: UserProfile = {
   name: "Nayon",
   fullName: "Nrb Nayon",
-  email: "nrbnayon@gmail.com",
+  email_address: "nrbnayon@gmail.com",
   role: "Admin",
   phone: "000-0000-000",
   address: "123 Admin Street, Dhaka",
@@ -504,8 +504,11 @@ export default function ProfileClient() {
                       </label>
                       <div className="text-foreground">
                         {showEmail
-                          ? user.email
-                          : user.email.replace(/(.{3})(.*)(@.*)/, "$1***$3")}
+                          ? user.email_address
+                          : user.email_address.replace(
+                              /(.{3})(.*)(@.*)/,
+                              "$1***$3",
+                            )}
                       </div>
                     </div>
                     <button

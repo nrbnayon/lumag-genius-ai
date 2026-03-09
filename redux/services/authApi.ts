@@ -1,15 +1,15 @@
 // redux/services/authApi.ts
-import { apiSlice } from '../features/apiSlice';
+import { apiSlice } from "../features/apiSlice";
 
 interface LoginRequest {
-  email: string;
+  email_address: string;
   password: string;
   rememberMe?: boolean;
 }
 
 interface LoginResponse {
   user: {
-    email: string;
+    email_address: string;
     role: string;
   };
   accessToken: string;
@@ -17,7 +17,7 @@ interface LoginResponse {
 }
 
 interface VerifyOtpRequest {
-  email: string;
+  email_address: string;
   otp: string;
 }
 
@@ -32,35 +32,35 @@ export const authApi = apiSlice.injectEndpoints({
     // Login endpoint
     login: builder.mutation<LoginResponse, LoginRequest>({
       query: (credentials) => ({
-        url: '/auth/login',
-        method: 'POST',
+        url: "/auth/login",
+        method: "POST",
         body: credentials,
       }),
-      invalidatesTags: ['Auth'],
+      invalidatesTags: ["Auth"],
     }),
-    
+
     // Verify OTP endpoint
     verifyOtp: builder.mutation<VerifyOtpResponse, VerifyOtpRequest>({
       query: (otpData) => ({
-        url: '/auth/verify-otp',
-        method: 'POST',
+        url: "/auth/verify-otp",
+        method: "POST",
         body: otpData,
       }),
     }),
-    
+
     // Logout endpoint
     logout: builder.mutation<{ message: string }, void>({
       query: () => ({
-        url: '/auth/logout',
-        method: 'POST',
+        url: "/auth/logout",
+        method: "POST",
       }),
-      invalidatesTags: ['Auth'],
+      invalidatesTags: ["Auth"],
     }),
-    
+
     // Get current user
-    getCurrentUser: builder.query<LoginResponse['user'], void>({
-      query: () => '/auth/me',
-      providesTags: ['Auth'],
+    getCurrentUser: builder.query<LoginResponse["user"], void>({
+      query: () => "/auth/me",
+      providesTags: ["Auth"],
     }),
   }),
 });

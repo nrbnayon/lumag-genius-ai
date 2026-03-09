@@ -26,7 +26,7 @@ export default function SettingsClient() {
   const [accountInfo, setAccountInfo] = useState({
     image: "/images/user.webp",
     name: "Nayon II",
-    email: "example@gmail.com",
+    email_address: "example@gmail.com",
     phone: "000-0000-000",
     address: "123 Admin Street, Dhaka",
   });
@@ -200,7 +200,7 @@ export default function SettingsClient() {
                     </label>
                     <input
                       type="email"
-                      value={accountInfo.email}
+                      value={accountInfo.email_address}
                       disabled
                       className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 px-4 text-sm font-medium text-gray-500 cursor-not-allowed transition-all outline-none"
                     />
@@ -261,7 +261,7 @@ export default function SettingsClient() {
                       <TranslatedText text="Email Address" />
                     </p>
                     <p className="text-sm text-[#4B5563] font-medium">
-                      {accountInfo.email}
+                      {accountInfo.email_address}
                     </p>
                   </div>
                   <div className="space-y-1">

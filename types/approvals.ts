@@ -51,7 +51,7 @@ export interface SupplierRequest {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  email_address: string;
   address: string;
   contractStart: string;
   contractEnd: string;

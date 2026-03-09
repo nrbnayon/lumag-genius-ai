@@ -123,18 +123,18 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <LanguageProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem={false}
-          disableTransitionOnChange
-          forcedTheme="light"
-        >
-          <StoreProvider>
-            {children}
-            <Toaster richColors position="top-center" />
-          </StoreProvider>
-        </ThemeProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem={false}
+            disableTransitionOnChange
+            forcedTheme="light"
+          >
+            <StoreProvider>
+              {children}
+              <Toaster richColors position="top-center" />
+            </StoreProvider>
+          </ThemeProvider>
         </LanguageProvider>
       </body>
     </html>

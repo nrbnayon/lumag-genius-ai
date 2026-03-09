@@ -31,7 +31,7 @@ export const usersData: User[] = [
   {
     id: "1",
     name: "Nayon II",
-    email: "admin@gmail.com",
+    email_address: "admin@gmail.com",
     role: "admin",
     status: "Active",
     location: "New York, USA",
@@ -46,7 +46,7 @@ export const usersData: User[] = [
   {
     id: "2",
     name: "Olivia Rhye",
-    email: "phoenix@untitledui.com",
+    email_address: "phoenix@untitledui.com",
     role: "creator",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -66,7 +66,7 @@ export const usersData: User[] = [
   {
     id: "3",
     name: "Phoenix Baker",
-    email: "phoenix@untitledui.com",
+    email_address: "phoenix@untitledui.com",
     role: "creator",
     status: "Inactive",
     location: "775 Rolling Green Rd.",
@@ -86,7 +86,7 @@ export const usersData: User[] = [
   {
     id: "4",
     name: "Candice Wu",
-    email: "candice@untitledui.com",
+    email_address: "candice@untitledui.com",
     role: "creator",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -106,7 +106,7 @@ export const usersData: User[] = [
   {
     id: "5",
     name: "Drew Cano",
-    email: "drew@untitledui.com",
+    email_address: "drew@untitledui.com",
     role: "creator",
     status: "Inactive",
     location: "775 Rolling Green Rd.",
@@ -126,7 +126,7 @@ export const usersData: User[] = [
   {
     id: "6",
     name: "Natali Craig",
-    email: "natali@untitledui.com",
+    email_address: "natali@untitledui.com",
     role: "user",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -141,7 +141,7 @@ export const usersData: User[] = [
   {
     id: "7",
     name: "Orlando Diggs",
-    email: "orlando@untitledui.com",
+    email_address: "orlando@untitledui.com",
     role: "user",
     status: "Inactive",
     location: "775 Rolling Green Rd.",
@@ -156,7 +156,7 @@ export const usersData: User[] = [
   {
     id: "8",
     name: "Andi Lane",
-    email: "andi@untitledui.com",
+    email_address: "andi@untitledui.com",
     role: "user",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -171,7 +171,7 @@ export const usersData: User[] = [
   {
     id: "9",
     name: "Kate Morrison",
-    email: "kate@untitledui.com",
+    email_address: "kate@untitledui.com",
     role: "user",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -186,7 +186,7 @@ export const usersData: User[] = [
   {
     id: "10",
     name: "Koray Okumus",
-    email: "koray@untitledui.com",
+    email_address: "koray@untitledui.com",
     role: "user",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -201,7 +201,7 @@ export const usersData: User[] = [
   {
     id: "11",
     name: "Lana Steiner",
-    email: "lana@untitledui.com",
+    email_address: "lana@untitledui.com",
     role: "user",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -216,7 +216,7 @@ export const usersData: User[] = [
   {
     id: "12",
     name: "Demi Wilkinson",
-    email: "demi@untitledui.com",
+    email_address: "demi@untitledui.com",
     role: "user",
     status: "Active",
     location: "775 Rolling Green Rd.",
@@ -231,7 +231,7 @@ export const usersData: User[] = [
   {
     id: "13",
     name: "Candice Wu",
-    email: "candice2@untitledui.com",
+    email_address: "candice2@untitledui.com",
     role: "user",
     status: "Active",
     location: "London, UK",

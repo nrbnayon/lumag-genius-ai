@@ -84,7 +84,7 @@ export default function SuppliersClient() {
         id: Math.random().toString(36).substr(2, 9),
         name: formData.name!,
         phone: formData.phone!,
-        email: formData.email!,
+        email_address: formData.email_address!,
         address: formData.address!,
         rating: 4.5,
         itemsCount: 0,

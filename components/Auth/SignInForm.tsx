@@ -39,7 +39,7 @@ export const SignInForm = () => {
   } = useForm<FormValues>({
     resolver: zodResolver(loginValidationSchema),
     defaultValues: {
-      email: "",
+      email_address: "",
       password: "",
       rememberMe: false,
     },
@@ -57,7 +57,7 @@ export const SignInForm = () => {
     // Final trim just in case (though already trimmed)
     const cleanData = {
       ...data,
-      email: data.email.trim(),
+      email_address: data.email_address.trim(),
       password: data.password.trim(),
     };
 
@@ -74,7 +74,7 @@ export const SignInForm = () => {
 
       const mockUser = {
         name: "Nayon II", // or from real response
-        email: cleanData.email,
+        email_address: cleanData.email_address,
         role: "admin",
         image: "/images/user.webp",
       };
@@ -91,7 +91,7 @@ export const SignInForm = () => {
       const maxAge = cleanData.rememberMe ? 86400 : undefined; // 1 day or session
       document.cookie = `accessToken=${mockToken}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
       document.cookie = `userRole=${mockUser.role}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
-      document.cookie = `userEmail=${encodeURIComponent(mockUser.email)}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
+      document.cookie = `userEmail=${encodeURIComponent(mockUser.email_address)}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
 
       toast.success("Logged in successfully!");
       router.push("/");
@@ -148,7 +148,7 @@ export const SignInForm = () => {
               label="Email"
               type="email"
               autoComplete="email"
-              error={errors.email?.message}
+              error={errors.email_address?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 text-base"
               {...register("email")}

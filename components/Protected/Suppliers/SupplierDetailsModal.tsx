@@ -57,7 +57,9 @@ export function SupplierDetailsModal({
               <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-2">
                 Email
               </p>
-              <p className="text-foreground font-bold">{supplier.email}</p>
+              <p className="text-foreground font-bold">
+                {supplier.email_address}
+              </p>
             </div>
           </div>
 

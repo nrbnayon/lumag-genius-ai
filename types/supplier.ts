@@ -2,7 +2,7 @@ export interface Supplier {
   id: string;
   name: string;
   phone: string;
-  email: string;
+  email_address: string;
   address: string;
   rating?: number;
   itemsCount?: number;
