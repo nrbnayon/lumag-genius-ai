@@ -26,6 +26,8 @@ import {
   BbqGrillIcon,
   CheckmarkCircle03Icon,
   DashboardSquare02Icon,
+  Tag02FreeIcons,
+  Tag02Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
@@ -76,6 +78,12 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
         label: "Dashboard Overview",
         href: "/dashboard",
         icon: DashboardSquare02Icon,
+        roles: ["admin"],
+      },
+      {
+        label: "Categories",
+        href: "/categories",
+        icon: Tag02FreeIcons,
         roles: ["admin"],
       },
       {
