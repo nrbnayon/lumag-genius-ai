@@ -1,118 +1,86 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import {
-  setCredentials,
-  logout as logoutAction,
-  selectCurrentUser,
-  selectIsAuthenticated,
-} from "@/redux/features/authSlice";
-import { usersData } from "@/data/usersData";
+import { useAppSelector } from "@/redux/hooks";
+import {  ProfileResponse } from "@/types/auth.types";
+import { useGetProfileQuery } from "@/redux/services/authApi";
+import { UserRole } from "@/types/users";
 
 export interface UserInfo {
-  name: string | null;
-  role: string | null;
-  email_address: string | null;
-  image: string | null;
+.......
+  ...
+  isVerified?: boolean | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  profile: ProfileResponse | null;
 }
 
-/**
- * Custom hook to manage user authentication state.
- * Synchronizes Redux state with Cookies for persistence.
- */
 export function useUser() {
-  const dispatch = useAppDispatch();
-  const router = useRouter();
+  const {
+    user,
+    token: accessToken,
+    isAuthenticated,
+  } = useAppSelector((state) => state.auth);
 
-  // Select from Redux Store (Single Source of Truth)
-  const redUser = useAppSelector(selectCurrentUser);
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  // Fetch profile if authenticated
+  const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery(
+    undefined,
+    {
+      skip: !isAuthenticated,
+    },
+  );
 
-  // Local loading state for initial hydration check
-  const [isChecking, setIsChecking] = useState(true);
+  const userProfile = profileData?.data || null;
 
-  useEffect(() => {
-    // Helper to read cookies safely
-    const getCookie = (name: string) => {
-      if (typeof document === "undefined") return null;
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
-      return null;
-    };
-
-    const hydrateAuth = () => {
-      // If Redux is already authenticated, we are good.
-      if (isAuthenticated) {
-        setIsChecking(false);
-        return;
-      }
-
-      // precise sync: try to restore session from cookies
-      const accessToken = getCookie("accessToken");
-      const role = getCookie("userRole");
-      const rawEmail = getCookie("userEmail");
-      const email = rawEmail ? decodeURIComponent(rawEmail) : "";
-
-      if (accessToken && role) {
-        // SIMULATE API CALL: Find user details from dummy data
-        const foundUser = usersData.find((u) => u.email_address === email);
-        const userName = foundUser ? foundUser.name : "User"; // Default if not found
-        const userImage = foundUser ? foundUser.image : undefined;
-
-        // Dispatch to Redux to sync state
-        dispatch(
-          setCredentials({
-            user: { name: userName, email_address: email, role, image: userImage },
-            token: accessToken,
-          }),
-        );
-      }
-
-      setIsChecking(false);
-    };
-
-    hydrateAuth();
-  }, [isAuthenticated, dispatch]);
-
-  const hasRole = (role: string) => redUser?.role === role;
-
-  const logout = () => {
-    // 1. Clear Redux State
-    dispatch(logoutAction());
-
-    // 2. Clear Cookies
-    document.cookie =
-      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie =
-      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie =
-      "userRole=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie =
-      "userEmail=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-
-    console.log("User logged out successfully");
-
-    // 3. Redirect
-    router.push("/signin");
-  };
+  const hasRole = (role: UserRole) => user?.role === role;
 
   return {
-    name: redUser?.name || null,
-    role: redUser?.role || null,
-    email_address: redUser?.email_address || null,
-    image: redUser?.image || null,
-    // We don't necessarily store the token string in the public `user` object in Redux if we want to be minimal,
-    // but authSlice has it.
-    accessToken: useAppSelector((state) => state.auth.token),
+
+    accessToken,
     isAuthenticated,
-    isLoading: isChecking,
+    isLoading: isProfileLoading,
     hasRole,
-    logout,
   };
 }
+
+
+import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/redux/hooks";
+import { logout as logoutAction } from "@/redux/features/authSlice";
+import { apiSlice } from "@/redux/features/apiSlice";
+
+export const useLogout = () => {
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+
+  const logout = () => {
+    // 1. Dispatch logout action to clear Redux state
+    dispatch(logoutAction());
+
+    // 2. Clear RTK Query cache
+    dispatch(apiSlice.util.resetApiState());
+
+    // 3. Clear cookies
+    const authCookies = [
+      "accessToken",
+      "refreshToken",
+      "userRole",
+      "userEmail",
+      "userId",
+    ];
+
+    authCookies.forEach((cookieName) => {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;`;
+    });
+
+    // 4. Redirect to login
+    // Using window.location.href for a hard redirect to ensure all states are clean
+    // or router.replace if we want to stay in SPA mode but force navigation
+    router.replace("/login");
+    
+    // Optional: hard reload if issues persist
+    // window.location.href = "/login";
+  };
+
+  return { logout };
+};

@@ -1,14 +1,17 @@
 // types/user.ts
+export type UserRole = "admin" | "user" | "guest" | "creator";
+
 export interface User {
   id: string;
   name: string;
   email_address: string;
-  role: "admin" | "user" | "guest" | "creator";
+  role: UserRole;
   image?: string;
   status?: "Active" | "Inactive" | "Pending";
   location?: string;
   date?: string;
   phone?: string;
+  address?: string;
 
   // Specific to Creators
   videos?: number;
@@ -33,7 +36,8 @@ export interface Order {
 }
 
 export interface UserFormData {
-  name: string;
+  full_name: string;
   email_address: string;
   role: "admin" | "user" | "guest" | "creator";
 }
+
