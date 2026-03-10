@@ -35,7 +35,8 @@ export function IngredientModal({
     image: null,
   });
 
-  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetAllCategoriesQuery();
+  const { data: categoriesResponse, isLoading: isLoadingCategories } =
+    useGetAllCategoriesQuery();
   const categories = categoriesResponse?.data || [];
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -227,7 +228,8 @@ export function IngredientModal({
                   Current Stock <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  min={0}
                   value={formData.currentStock}
                   onChange={(e) =>
                     setFormData({ ...formData, currentStock: e.target.value })
@@ -245,7 +247,8 @@ export function IngredientModal({
                   Minimum Stock <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  min={0}
                   value={formData.minimumStock}
                   onChange={(e) =>
                     setFormData({ ...formData, minimumStock: e.target.value })
@@ -260,7 +263,7 @@ export function IngredientModal({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Category came from api */} 
+              {/* Category came from api */}
               <div>
                 <label className="block text-sm font-bold text-foreground mb-1.5">
                   Category <span className="text-red-500">*</span>
@@ -268,7 +271,10 @@ export function IngredientModal({
                 <select
                   value={formData.category}
                   onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value as any })
+                    setFormData({
+                      ...formData,
+                      category: e.target.value as any,
+                    })
                   }
                   disabled={isLoadingCategories}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white font-medium disabled:opacity-50"

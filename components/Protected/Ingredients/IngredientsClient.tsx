@@ -172,18 +172,14 @@ export default function IngredientsClient() {
         ),
       },
       {
-        key: "price",
-        header: "Price",
-        render: (price: number) => `$${price}`,
-      },
-      {
-        key: "unit",
-        header: "Unit",
-      },
-      {
         key: "category",
         header: "Category",
         align: "center",
+      },
+      {
+        key: "price",
+        header: "Price",
+        render: (price: number) => `$${price}`,
       },
       {
         key: "currentStock",
@@ -198,6 +194,10 @@ export default function IngredientsClient() {
         align: "center",
         render: (stock: number, item: Ingredient) =>
           `${stock}${item.unit.toLowerCase()}`,
+      },
+      {
+        key: "unit",
+        header: "Unit",
       },
       {
         key: "status",
