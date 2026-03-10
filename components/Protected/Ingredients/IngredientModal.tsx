@@ -62,7 +62,8 @@ export function IngredientModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [excelFileName, setExcelFileName] = useState<string>("");
-  const [pendingBulkData, setPendingBulkData] = useState<CreateIngredientPayload[]>([]);
+  const [pendingCreateData, setPendingCreateData] = useState<CreateIngredientPayload[]>([]);
+  const [pendingUpdateData, setPendingUpdateData] = useState<UpdateIngredientPayload[]>([]);
 
   const [errors, setErrors] = useState<Partial<IngredientFormData>>({});
 
@@ -90,7 +91,8 @@ export function IngredientModal({
         isSpecial: false,
       });
       setExcelFileName("");
-      setPendingBulkData([]);
+      setPendingCreateData([]);
+      setPendingUpdateData([]);
     }
     setErrors({});
   }, [ingredient, isOpen, categories]);
@@ -105,8 +107,9 @@ export function IngredientModal({
         const data = await readExcel(file);
 
         if (data && data.length > 0) {
-          // Process ALL rows for bulk insert
-          const bulkPayloads: CreateIngredientPayload[] = [];
+          // Process ALL rows for bulk insert/update
+          const createPayloads: CreateIngredientPayload[] = [];
+          const updatePayloads: UpdateIngredientPayload[] = [];
           
           for (const row of data) {
              const find = (...keys: string[]) => {
@@ -116,6 +119,7 @@ export function IngredientModal({
                return k ? String(row[k]) : "";
              };
 
+             const rowId = find("id", "ID", "identifier");
              const rawCategory = find("category", "type");
              let matchedCategoryId = categories.length > 0 ? categories[0].id : 1; 
              
@@ -131,34 +135,51 @@ export function IngredientModal({
              const parsedCurrentStock = parseFloat(find("stock", "current", "qty", "quantity")) || 0;
              const parsedMinStock = parseFloat(find("min", "threshold", "alert")) || 0;
 
-             bulkPayloads.push({
-               name: find("name", "ingredient", "item") || "Unknown Item",
-               category_id: matchedCategoryId,
-               unit: find("unit", "measurement") || "unit",
-               price_per_unit: parsedPrice.toFixed(2),
-               current_stock: parsedCurrentStock,
-               minimum_stock: parsedMinStock,
-               outlet_type: outletMatch,
-               is_special: false
-             });
+             if (rowId) {
+                updatePayloads.push({
+                  id: parseInt(rowId, 10),
+                  name: find("name", "ingredient", "item") || "Updated Item",
+                  category_id: matchedCategoryId,
+                  unit: find("unit", "measurement") || "unit",
+                  price_per_unit: parsedPrice.toFixed(2),
+                  current_stock: parsedCurrentStock,
+                  minimum_stock: parsedMinStock,
+                  outlet_type: outletMatch,
+                  is_special: find("special", "featured").toLowerCase() === "yes"
+                });
+             } else {
+                createPayloads.push({
+                  name: find("name", "ingredient", "item") || "New Item",
+                  category_id: matchedCategoryId,
+                  unit: find("unit", "measurement") || "unit",
+                  price_per_unit: parsedPrice.toFixed(2),
+                  current_stock: parsedCurrentStock,
+                  minimum_stock: parsedMinStock,
+                  outlet_type: outletMatch,
+                  is_special: find("special", "featured").toLowerCase() === "yes"
+                });
+             }
           }
 
-          setPendingBulkData(bulkPayloads);
+          setPendingCreateData(createPayloads);
+          setPendingUpdateData(updatePayloads);
+
+          const totalRows = createPayloads.length + updatePayloads.length;
 
           // Populate the form with the FIRST row visually so the user can see an example
-          if (bulkPayloads.length > 0) {
-            const first = bulkPayloads[0];
+          if (totalRows > 0) {
+            const first = createPayloads[0] || updatePayloads[0];
             setFormData({
               name: first.name,
               price: first.price_per_unit,
               unit: first.unit,
-              categoryId: first.category_id.toString(),
+              categoryId: (first as any).category_id.toString(),
               outletType: first.outlet_type,
               currentStock: first.current_stock.toString(),
               minimumStock: first.minimum_stock.toString(),
               isSpecial: first.is_special,
             });
-            toast.success(`Loaded ${bulkPayloads.length} ingredients from file successfully!`);
+            toast.success(`Loaded ${totalRows} rows from file (${createPayloads.length} new, ${updatePayloads.length} updates)`);
           }
         } else {
           toast.error("No data found in the file.");
@@ -176,7 +197,7 @@ export function IngredientModal({
 
   const validate = () => {
     // If we have bulk data, skip visual form validation
-    if (pendingBulkData.length > 0) return true;
+    if (pendingCreateData.length > 0 || pendingUpdateData.length > 0) return true;
 
     const newErrors: Partial<IngredientFormData> = {};
     if (!formData.name) newErrors.name = "Name is required" as any;
@@ -203,28 +224,37 @@ export function IngredientModal({
     if (!validate()) return;
 
     try {
-      if (mode === "add") {
-        if (pendingBulkData.length > 0) {
-           // We have an excel file loaded, so we bulk insert chunks
-           await executeChunkedRequests(pendingBulkData);
-           toast.success(`Successfully uploaded ${pendingBulkData.length} ingredients!`);
-        } else {
-           // Single insert from form
-           const singlePayload: CreateIngredientPayload = {
-             name: formData.name,
-             price_per_unit: parseFloat(formData.price).toFixed(2),
-             unit: formData.unit,
-             category_id: parseInt(formData.categoryId, 10),
-             outlet_type: formData.outletType,
-             current_stock: parseFloat(formData.currentStock),
-             minimum_stock: parseFloat(formData.minimumStock),
-             is_special: formData.isSpecial
-           };
-           await createIngredients([singlePayload]).unwrap();
-           toast.success("Ingredient added successfully!");
-        }
-      } else if (mode === "edit" && ingredient) {
-         // Edit single item
+      if (pendingCreateData.length > 0 || pendingUpdateData.length > 0) {
+         // Handle Excel Upload Logic
+         if (pendingCreateData.length > 0) {
+            await executeChunkedRequests(pendingCreateData);
+         }
+         if (pendingUpdateData.length > 0) {
+            const CHUNK_SIZE = 500;
+            for (let i = 0; i < pendingUpdateData.length; i += CHUNK_SIZE) {
+               const chunk = pendingUpdateData.slice(i, i + CHUNK_SIZE);
+               await updateIngredients(chunk).unwrap();
+            }
+         }
+         toast.success(`Excel Action: ${pendingCreateData.length} Created, ${pendingUpdateData.length} Updated!`);
+      }
+      else if (mode === "add") {
+         // Single insert from form
+         const singlePayload: CreateIngredientPayload = {
+           name: formData.name,
+           price_per_unit: parseFloat(formData.price).toFixed(2),
+           unit: formData.unit,
+           category_id: parseInt(formData.categoryId, 10),
+           outlet_type: formData.outletType,
+           current_stock: parseFloat(formData.currentStock),
+           minimum_stock: parseFloat(formData.minimumStock),
+           is_special: formData.isSpecial
+         };
+         await createIngredients([singlePayload]).unwrap();
+         toast.success("Ingredient added successfully!");
+      } 
+      else if (mode === "edit" && ingredient) {
+         // Edit single item from form
          const updatePayload: UpdateIngredientPayload = {
              id: ingredient.id,
              name: formData.name,
@@ -257,7 +287,9 @@ export function IngredientModal({
       <div className="relative w-full max-w-3xl bg-white rounded-[24px] shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto custom-scrollbar">
         <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
           <h2 className="text-xl font-bold text-foreground">
-            {mode === "add" ? (pendingBulkData.length > 0 ? "Bulk Add Ingredients" : "Add Ingredient") : "Edit Ingredient"}
+            {pendingCreateData.length > 0 || pendingUpdateData.length > 0 
+               ? "Bulk Import Ingredients" 
+               : (mode === "add" ? "Add Ingredient" : "Edit Ingredient")}
           </h2>
           <button
             onClick={!isSubmitting ? onClose : undefined}
@@ -269,7 +301,7 @@ export function IngredientModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className={cn("space-y-4", pendingBulkData.length > 0 && "opacity-60 pointer-events-none")}>
+          <div className={cn("space-y-4", (pendingCreateData.length > 0 || pendingUpdateData.length > 0) && "opacity-60 pointer-events-none")}>
             {/* Name */}
             <div>
               <label className="block text-sm font-bold text-foreground mb-1.5">
@@ -422,58 +454,69 @@ export function IngredientModal({
             </div>
           </div>
 
-          {mode === "add" && (
-            <>
-              <div className="relative mt-8 mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-100"></span>
-                </div>
-                <div className="relative flex justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-                  <span className="bg-white px-4">Or</span>
-                </div>
-              </div>
+          {/* Excel Upload Area */}
+          <div className="space-y-4 mt-8 pt-8 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-bold text-foreground">
+                Excel Sync / Bulk Manage
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const templateData = [
+                    {
+                      ID: "",
+                      "Ingredient Name": "Sample Chicken",
+                      Price: "15.00",
+                      Unit: "KG",
+                      Category: "Meats",
+                      "Outlet Type": "Restaurant",
+                      "Current Stock": "100",
+                      "Minimum Stock": "20",
+                      IsFeatured: "No"
+                    }
+                  ];
+                  import("@/lib/excel").then(m => m.exportToExcel(templateData, "ingredient_template.xlsx", "Template"));
+                }}
+                className="text-[10px] text-primary font-bold bg-blue-50 px-2 py-1 rounded hover:bg-blue-100 transition-colors"
+              >
+                DOWNLOAD TEMPLATE
+              </button>
+            </div>
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleFileUpload}
+              disabled={isSubmitting}
+            />
 
-              {/* Excel Upload Area */}
-              <div className="space-y-4">
-                <label className="block text-sm font-bold text-foreground">
-                  Upload Ingredients <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={handleFileUpload}
-                  disabled={isSubmitting}
+            <div
+              onClick={() => !isSubmitting && fileInputRef.current?.click()}
+              className="border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-blue-50/10 hover:bg-blue-50/50 transition-all cursor-pointer group"
+            >
+              <div className="w-12 h-12 bg-transparent flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Image
+                  src="/icons/excel.png"
+                  alt="Excel/CSV"
+                  width={40}
+                  height={40}
+                  onError={(e) => {
+                    (e.target as any).src = "https://cdn-icons-png.flaticon.com/512/732/732220.png";
+                  }}
                 />
-
-                <div
-                  onClick={() => !isSubmitting && fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-blue-50/10 hover:bg-blue-50/50 transition-all cursor-pointer group"
-                >
-                  <div className="w-12 h-12 bg-transparent flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Image
-                      src="/icons/excel.png"
-                      alt="Excel/CSV"
-                      width={40}
-                      height={40}
-                      onError={(e) => {
-                        (e.target as any).src = "https://cdn-icons-png.flaticon.com/512/732/732220.png";
-                      }}
-                    />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-sm font-bold text-foreground">
-                      {excelFileName || "Click to upload or drag and drop"}
-                    </p>
-                    <p className="text-xs font-medium text-secondary mt-1 uppercase tracking-wider">
-                      Supports: XLSX, XLS, CSV (Max. 50MB)
-                    </p>
-                  </div>
-                </div>
               </div>
-            </>
-          )}
+              <div className="text-center">
+                <p className="text-sm font-bold text-foreground">
+                  {excelFileName || "Upload Excel for Add or Update"}
+                </p>
+                <p className="text-xs font-medium text-secondary mt-1 uppercase tracking-wider">
+                  Includes ID? System will Update. No ID? System will Create.
+                </p>
+              </div>
+            </div>
+          </div>
 
           <div className="flex gap-4 sticky bottom-0 bg-white pt-2 pb-2 mt-8">
             <button
@@ -489,10 +532,12 @@ export function IngredientModal({
               disabled={isSubmitting}
               className="flex-1 px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors shadow-sm cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {isSubmitting ? (
-                 <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</>
+             {isSubmitting ? (
+                 <><Loader2 className="w-5 h-5 animate-spin" /> Processing...</>
               ) : (
-                mode === "add" ? (pendingBulkData.length > 0 ? `Upload ${pendingBulkData.length} items` : "+ Add") : "Save"
+                pendingCreateData.length > 0 || pendingUpdateData.length > 0 
+                  ? `Sync ${pendingCreateData.length + pendingUpdateData.length} records` 
+                  : (mode === "add" ? "+ Add" : "Save")
               )}
             </button>
           </div>

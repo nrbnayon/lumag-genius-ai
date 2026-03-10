@@ -24,6 +24,7 @@ export function ExportModal({
 
     // Transform data for Excel
     const worksheetData = exportData.map((item) => ({
+      ID: item.id, // ID is crucial for bulk updates
       "Ingredient Name": item.name,
       Price: item.price_per_unit,
       Unit: item.unit.toUpperCase(),
@@ -33,6 +34,7 @@ export function ExportModal({
       "Minimum Stock": item.minimum_stock,
       Status: item.status,
       "Approval Status": item.approval_status,
+      IsFeatured: item.is_special ? "Yes" : "No",
     }));
 
     // Generate file name
@@ -64,7 +66,33 @@ export function ExportModal({
         </button>
 
         <div className="p-10">
-          <div className="grid grid-cols-6 gap-0 border border-gray-100 rounded-lg overflow-hidden text-center text-sm font-medium mb-8">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-foreground">Prepare Export</h2>
+            <div className="px-4 py-1.5 bg-gray-50 rounded-full border border-gray-100 flex items-center gap-2">
+               <span className="w-2 h-2 bg-green-500 rounded-full pulse"></span>
+               <span className="text-sm font-bold text-secondary">
+                 {Array.isArray(data) ? data.length : 1} Items Staged
+               </span>
+            </div>
+          </div>
+
+          <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3">
+            <div className="bg-blue-100 p-2 rounded-lg text-[#0EA5E9]">
+              <Download className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">Exporting for Bulk Updates?</p>
+              <p className="text-xs text-secondary mt-1">
+                The exported file will include unique **IDs**. Keep these IDs intact if you plan to re-upload this file to update existing ingredients.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-0 border border-gray-100 rounded-lg overflow-hidden text-center text-sm font-medium mb-8">
+            <div className="bg-gray-50/50 p-2 border-r border-gray-100">
+              <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">ID</p>
+              <p className="text-foreground">{sample?.id || "---"}</p>
+            </div>
             <div className="bg-gray-50/50 p-2 border-r border-gray-100">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Ingredient name</p>
               <p className="text-foreground">{sample?.name || "Chicken"}</p>

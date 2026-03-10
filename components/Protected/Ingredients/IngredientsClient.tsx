@@ -19,11 +19,9 @@ import { cn } from "@/lib/utils";
 import {
   useGetAllIngredientsQuery,
   useDeleteIngredientMutation,
-  useApproveRejectIngredientMutation,
 } from "@/redux/services/ingredientsApi";
 import type {
   Ingredient,
-  CreateIngredientPayload,
 } from "@/types/ingredients.types";
 import { DynamicTable } from "@/components/Shared/DynamicTable";
 import { TablePagination } from "@/components/Shared/TablePagination";
@@ -92,7 +90,7 @@ export default function IngredientsClient() {
       lowStock: ingredients.filter(
         (i) => i.status === "low" || i.current_stock <= i.minimum_stock,
       ).length,
-      purchaseRequest: "api not found",
+      purchaseRequest: "api not done",
       pending: ingredients.filter((i) => i.approval_status === "pending")
         .length,
     };
