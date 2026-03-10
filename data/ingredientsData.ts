@@ -3,6 +3,7 @@ import { Ingredient } from "@/types/ingredient";
 export const ingredientsData: Ingredient[] = [
   {
     id: "1",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -13,10 +14,11 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "2",
+    outletType: "Bar",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
-    category: "Vegetable",
+    category: "Moctel",
     currentStock: 23,
     minimumStock: 2,
     status: "Pending",
@@ -24,6 +26,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "3",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -35,26 +38,29 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "4",
+    outletType: "Bar",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
-    category: "Vegetable",
+    category: "Coctel",
     currentStock: 23,
     minimumStock: 2,
     status: "Approved",
   },
   {
     id: "5",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
-    category: "Vegetable",
+    category: "Fry",
     currentStock: 23,
     minimumStock: 2,
     status: "Approved",
   },
   {
     id: "6",
+    outletType: "Bar",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -65,6 +71,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "7",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -76,6 +83,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "8",
+    outletType: "Bar",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -87,6 +95,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "9",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -98,16 +107,18 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "10",
+    outletType: "Bar",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
-    category: "Vegetable",
+    category: "Meat",
     currentStock: 23,
     minimumStock: 2,
     status: "Approved",
   },
   {
     id: "11",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -118,6 +129,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "12",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -128,6 +140,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "13",
+    outletType: "Bar",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",
@@ -138,6 +151,7 @@ export const ingredientsData: Ingredient[] = [
   },
   {
     id: "14",
+    outletType: "Restaurant",
     name: "Tomatoes",
     price: 20,
     unit: "Kg",

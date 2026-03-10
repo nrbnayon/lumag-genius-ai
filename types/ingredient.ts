@@ -1,7 +1,8 @@
-export type IngredientStatus = "Approved" | "Pending";
+export type IngredientStatus = "Approved" | "Pending" | "Low Stock" | "Out of Stock" | "Rejected";
 
 export interface Ingredient {
   id: string;
+  outletType?: string; // "All" | "Restaurant" | "Bar"
   name: string;
   price: number;
   unit: string;
@@ -9,11 +10,12 @@ export interface Ingredient {
   currentStock: number;
   minimumStock: number;
   status: IngredientStatus;
-  hasWarning?: boolean;
+  hasWarning?: boolean; // Low Stock or Out of Stock
   image?: string;
 }
 
 export interface IngredientFormData {
+  outletType?: string; // "All" | "Restaurant" | "Bar"
   name: string;
   price: string;
   unit: string;

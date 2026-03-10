@@ -11,9 +11,7 @@ import {
   Plus,
   Download,
   AlertTriangle,
-  Pencil,
   Trash2,
-  FileDown,
   SquarePen,
 } from "lucide-react";
 import SearchBar from "@/components/Shared/SearchBar";
@@ -32,7 +30,7 @@ import { toast } from "sonner";
 
 export default function IngredientsClient() {
   const [ingredients, setIngredients] = useState<Ingredient[]>(ingredientsData);
-  const [activeTab, setActiveTab] = useState<IngredientStatus | "All">("All");
+  const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modals state
@@ -46,7 +44,7 @@ export default function IngredientsClient() {
   // Filtered data
   const filteredIngredients = useMemo(() => {
     return ingredients.filter((item) => {
-      const matchesTab = activeTab === "All" || item.status === activeTab;
+      const matchesTab = activeTab === "All" || item.outletType === activeTab;
       const matchesSearch =
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -101,6 +99,7 @@ export default function IngredientsClient() {
         price: Number(formData.price),
         unit: formData.unit,
         category: formData.category,
+        outletType: formData.outletType || "Restaurant",
         currentStock: Number(formData.currentStock),
         minimumStock: Number(formData.minimumStock),
         status: "Approved",
@@ -115,6 +114,7 @@ export default function IngredientsClient() {
             ? {
                 ...i,
                 ...formData,
+                outletType: formData.outletType || i.outletType || "Restaurant",
                 price: Number(formData.price),
                 currentStock: Number(formData.currentStock),
                 minimumStock: Number(formData.minimumStock),
@@ -150,12 +150,22 @@ export default function IngredientsClient() {
   const tableConfig = {
     columns: [
       {
+        key: "outletType",
+        header: "Outlet Type",
+        render: (outletType: string) => <span>{outletType}</span>,
+      },
+      {
         key: "name",
         header: "Name",
         render: (_: any, item: Ingredient) => (
           <div className="flex items-center gap-2">
             {item.hasWarning && (
-              <AlertTriangle className="w-4 h-4 text-red-500" />
+              <span
+                className="cursor-help"
+                title={item.currentStock === 0 ? "Empty stock" : "Low stock"}
+              >
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+              </span>
             )}
             <span className="font-bold text-foreground">{item.name}</span>
           </div>
@@ -173,22 +183,26 @@ export default function IngredientsClient() {
       {
         key: "category",
         header: "Category",
+        align: "center",
       },
       {
         key: "currentStock",
         header: "Current Stock",
+        align: "center",
         render: (stock: number, item: Ingredient) =>
           `${stock}${item.unit.toLowerCase()}`,
       },
       {
         key: "minimumStock",
         header: "Minimum Stock",
+        align: "center",
         render: (stock: number, item: Ingredient) =>
           `${stock}${item.unit.toLowerCase()}`,
       },
       {
         key: "status",
         header: "Status",
+        align: "center",
         render: (status: string) => (
           <span
             className={cn(
@@ -296,7 +310,7 @@ export default function IngredientsClient() {
 
           <div className="border-b border-gray-200">
             <nav className="flex gap-8">
-              {["All", "Approved", "Pending"].map((tab) => (
+              {["All", "Bar", "Restaurant"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab as any)}

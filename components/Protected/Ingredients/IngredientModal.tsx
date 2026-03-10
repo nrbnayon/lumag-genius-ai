@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
 import { readExcel } from "@/lib/excel";
+import { useGetAllCategoriesQuery } from "@/redux/services/categoriesApi";
 
 interface IngredientModalProps {
   isOpen: boolean;
@@ -27,11 +28,15 @@ export function IngredientModal({
     name: "",
     price: "",
     unit: "",
-    category: "Other",
+    category: "",
+    outletType: "Restaurant",
     currentStock: "",
     minimumStock: "",
     image: null,
   });
+
+  const { data: categoriesResponse, isLoading: isLoadingCategories } = useGetAllCategoriesQuery();
+  const categories = categoriesResponse?.data || [];
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [excelFileName, setExcelFileName] = useState<string>("");
@@ -45,6 +50,7 @@ export function IngredientModal({
         price: ingredient.price.toString(),
         unit: ingredient.unit,
         category: ingredient.category,
+        outletType: ingredient.outletType || "Restaurant",
         currentStock: ingredient.currentStock.toString(),
         minimumStock: ingredient.minimumStock.toString(),
         image: null,
@@ -54,7 +60,8 @@ export function IngredientModal({
         name: "",
         price: "",
         unit: "",
-        category: "Other",
+        category: categories.length > 0 ? categories[0].name : "",
+        outletType: "Restaurant",
         currentStock: "",
         minimumStock: "",
         image: null,
@@ -62,7 +69,7 @@ export function IngredientModal({
       setExcelFileName("");
     }
     setErrors({});
-  }, [ingredient, isOpen]);
+  }, [ingredient, isOpen, categories]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -252,23 +259,50 @@ export function IngredientModal({
               </div>
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-bold text-foreground mb-1.5">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value as any })
-                }
-                className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white font-medium"
-              >
-                <option value="Vegetable">Vegetable</option>
-                <option value="Meat">Meat</option>
-                <option value="Dairy">Dairy</option>
-                <option value="Other">Other</option>
-              </select>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Category came from api */} 
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-1.5">
+                  Category <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value as any })
+                  }
+                  disabled={isLoadingCategories}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white font-medium disabled:opacity-50"
+                >
+                  {isLoadingCategories ? (
+                    <option value="">Loading categories...</option>
+                  ) : categories.length === 0 ? (
+                    <option value="">No categories available</option>
+                  ) : (
+                    categories.map((cat) => (
+                      <option key={cat.id} value={cat.name}>
+                        {cat.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Outlet Type */}
+              <div>
+                <label className="block text-sm font-bold text-foreground mb-1.5">
+                  Outlet Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.outletType || "Restaurant"}
+                  onChange={(e) =>
+                    setFormData({ ...formData, outletType: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white font-medium"
+                >
+                  <option value="Restaurant">Restaurant</option>
+                  <option value="Bar">Bar</option>
+                </select>
+              </div>
             </div>
           </div>
 
