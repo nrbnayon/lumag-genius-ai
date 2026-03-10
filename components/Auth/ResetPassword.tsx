@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -12,19 +13,27 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { toast } from "sonner";
-import { RightSideImage } from "./RightSideImage";
 
+import { useResetPasswordMutation } from "@/redux/services/authApi";
+import { getCookie, deleteCookie } from "@/redux/features/apiSlice";
+
+// Password must meet: ≥8 chars, uppercase, lowercase, digit
 const resetPasswordSchema = z
   .object({
-    newPassword: z
+    new_password: z
       .string()
-      .min(1, "Password is required")
-      .min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+      .min(1, "New password is required")
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain uppercase, lowercase, and a number"
+      )
+      .refine((v) => !/\s/.test(v), { message: "Password cannot contain spaces" }),
+    confirm_password: z.string().min(1, "Please confirm your password"),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((d) => d.new_password === d.confirm_password, {
     message: "Passwords don't match",
-    path: ["confirmPassword"],
+    path: ["confirm_password"],
   });
 
 type FormValues = z.infer<typeof resetPasswordSchema>;
@@ -32,8 +41,24 @@ type FormValues = z.infer<typeof resetPasswordSchema>;
 const ResetPassword = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const router = useRouter();
+  const [resetPassword, { isLoading }] = useResetPasswordMutation();
+
+  // Read session cookies set by previous steps
+  const userId = getCookie("reset_userId") || "";
+  const secretKey = getCookie("reset_secretKey") || "";
+
+  // Guard: if cookies are missing, redirect back to the start
+  useEffect(() => {
+    if (isSuccess) return; // Don't trigger guard if we just succeeded
+
+    const isVerified = getCookie("reset_verified");
+    if (!isVerified || !userId || !secretKey) {
+      toast.error("Session expired. Please start the reset process again.");
+      router.replace("/forgot-password");
+    }
+  }, [router, userId, secretKey, isSuccess]);
 
   const {
     register,
@@ -42,52 +67,54 @@ const ResetPassword = () => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: {
-      newPassword: "",
-      confirmPassword: "",
-    },
+    defaultValues: { new_password: "", confirm_password: "" },
   });
 
-  useEffect(() => {
-    // Check if user came from verified OTP (optional security, can be disabled for testing)
-    const isVerified = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("reset_verified="));
-    if (!isVerified && process.env.NODE_ENV === "production") {
-      toast.error("Unauthorized access. Please verify OTP first.");
-      router.push("/forgot-password");
-    }
-  }, [router]);
-
   const handleTrimChange =
-    (field: keyof FormValues) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const trimmed = e.target.value.trim();
-      setValue(field, trimmed, { shouldValidate: true });
+    (field: keyof FormValues) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setValue(field, e.target.value.trim(), { shouldValidate: true });
     };
 
   const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
+    if (!userId || !secretKey) {
+      toast.error("Session expired. Please restart the password reset flow.");
+      router.replace("/forgot-password");
+      return;
+    }
+
     try {
-      // Simulation
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Password Reset Data:", data);
+      const result = await resetPassword({
+        user_id: userId,
+        secret_key: secretKey,
+        new_password: data.new_password,
+        confirm_password: data.confirm_password,
+      }).unwrap();
 
-      toast.success("Password reset successfully! Please login.");
+      toast.success(
+        result.message || "Your password has been reset successfully."
+      );
 
-      // Clear the verification cookie
-      document.cookie = "reset_verified=; path=/; max-age=0; SameSite=Strict";
+      setIsSuccess(true); // Disable the missing-cookie guard
 
-      router.push("/signin");
-    } catch (error) {
-      console.error("Reset failed:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
+      // Clear all reset-related session cookies
+      deleteCookie("reset_userId");
+      deleteCookie("reset_secretKey");
+      deleteCookie("reset_verified");
+
+      router.replace("/signin");
+    } catch (error: any) {
+      const message =
+        error?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
+      toast.error(message);
     }
   };
 
   return (
     <div className="relative h-screen w-full flex flex-col lg:flex-row">
+      {/* Left – Illustration */}
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -107,7 +134,7 @@ const ResetPassword = () => {
         </div>
       </motion.div>
 
-      {/* Right - Form */}
+      {/* Right – Form */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -115,42 +142,31 @@ const ResetPassword = () => {
         className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white"
       >
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
-          {/* Logo + Title */}
           <div className="text-center space-y-3">
-            {/* <div className="flex justify-center mb-6 md:mb-8">
-              <Image
-                src="/icons/logo.png"
-                alt="Xandra Logo"
-                width={140}
-                height={140}
-                className="w-28 sm:w-36 h-auto"
-                priority
-              />
-            </div> */}
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
-              Reset password
+              Set New Password
             </h1>
             <p className="text-base sm:text-lg text-secondary">
-              Please reset your password
+              Choose a strong new password for your account.
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Password */}
+            {/* New Password */}
             <FloatingInput
-              label="Password"
+              label="New Password"
               type={showPassword ? "text" : "password"}
-              error={errors.newPassword?.message}
+              error={errors.new_password?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
-              {...register("newPassword")}
-              onChange={handleTrimChange("newPassword")}
+              {...register("new_password")}
+              onChange={handleTrimChange("new_password")}
             >
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
                   <Eye className="h-5 w-5" />
@@ -160,20 +176,21 @@ const ResetPassword = () => {
               </button>
             </FloatingInput>
 
-            {/* Rewrite Password */}
+            {/* Confirm Password */}
             <FloatingInput
-              label="Rewrite Password"
+              label="Confirm Password"
               type={showConfirmPassword ? "text" : "password"}
-              error={errors.confirmPassword?.message}
+              error={errors.confirm_password?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 pr-14 text-base"
-              {...register("confirmPassword")}
-              onChange={handleTrimChange("confirmPassword")}
+              {...register("confirm_password")}
+              onChange={handleTrimChange("confirm_password")}
             >
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
                 className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors p-1"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
               >
                 {showConfirmPassword ? (
                   <Eye className="h-5 w-5" />
@@ -191,10 +208,10 @@ const ResetPassword = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                  Updating...
+                  Resetting…
                 </>
               ) : (
-                "Continue"
+                "Reset Password"
               )}
             </Button>
           </form>

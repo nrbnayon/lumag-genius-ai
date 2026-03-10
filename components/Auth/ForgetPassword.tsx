@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,14 +12,14 @@ import { Button } from "@/components/ui/button";
 import { FloatingInput } from "@/components/ui/floating-input";
 import { toast } from "sonner";
 import { emailValidationSchema } from "@/lib/formDataValidation";
-import { RightSideImage } from "./RightSideImage";
+import { useForgotPasswordMutation } from "@/redux/services/authApi";
+import { setCookie } from "@/redux/features/apiSlice";
 
 type FormValues = z.infer<typeof emailValidationSchema>;
 
 const ForgetPassword = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [countdown, setCountdown] = useState(41);
   const router = useRouter();
+  const [forgotPassword, { isLoading }] = useForgotPasswordMutation();
 
   const {
     register,
@@ -29,52 +28,45 @@ const ForgetPassword = () => {
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(emailValidationSchema),
-    defaultValues: {
-      email_address: "",
-    },
+    defaultValues: { email_address: "" },
   });
 
-  // Simple countdown effect
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [countdown]);
-
   const handleTrimChange =
-    (field: "email_address") => (e: React.ChangeEvent<HTMLInputElement>) => {
-      const trimmed = e.target.value.trim();
-      setValue(field, trimmed, { shouldValidate: true });
+    (field: "email_address") =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setValue(field, e.target.value.trim(), { shouldValidate: true });
     };
 
   const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
     try {
-      // Simulation
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Email for reset:", data.email_address);
+      const result = await forgotPassword({
+        email_address: data.email_address.trim(),
+      }).unwrap();
 
-      toast.success("OTP sent to your email.");
-      router.push(
-        `/verify-otp?flow=reset&email=${encodeURIComponent(data.email_address)}`,
+      // Store user_id in a short-lived cookie so the next steps can use it
+      // (better than passing it in the URL)
+      setCookie("reset_userId", result.user_id, undefined); // session cookie
+
+      toast.success(
+        result.message ||
+          "A password reset verification code has been sent to your email address."
       );
-    } catch (error) {
-      console.error("Failed to send OTP:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+      router.push(
+        `/verify-otp?flow=reset&email=${encodeURIComponent(data.email_address.trim())}`
+      );
+    } catch (error: any) {
+      const message =
+        error?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
+      toast.error(message);
+    }
   };
 
   return (
     <div className="relative h-screen w-full flex flex-col lg:flex-row">
+      {/* Left – Illustration */}
       <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -94,7 +86,7 @@ const ForgetPassword = () => {
         </div>
       </motion.div>
 
-      {/* Right - Form */}
+      {/* Right – Form */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -102,27 +94,15 @@ const ForgetPassword = () => {
         className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-white"
       >
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
-          {/* Logo + Title */}
           <div className="text-center space-y-3">
-            {/* <div className="flex justify-center mb-6 md:mb-8">
-              <Image
-                src="/icons/logo.png"
-                alt="Xandra Logo"
-                width={140}
-                height={140}
-                className="w-28 sm:w-36 h-auto"
-                priority
-              />
-            </div> */}
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
-              Reset password
+              Forgot Password
             </h1>
             <p className="text-base sm:text-lg text-secondary">
-              To reset password enter your email
+              Enter your email address to receive a reset code.
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <FloatingInput
               label="Email"
@@ -143,29 +123,12 @@ const ForgetPassword = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                  Sending...
+                  Sending…
                 </>
               ) : (
-                "Continue"
+                "Send Reset Code"
               )}
             </Button>
-
-            {/* Resend Link */}
-            <div className="text-center text-sm sm:text-base">
-              <span className="text-secondary">
-                Didn&apos;t get the email?{" "}
-              </span>
-              <button
-                type="button"
-                onClick={() => setCountdown(60)}
-                disabled={countdown > 0}
-                className="text-primary font-semibold hover:text-primary/80 hover:underline transition-colors disabled:opacity-70 disabled:no-underline cursor-pointer"
-              >
-                {countdown > 0
-                  ? `Resent in ${formatTime(countdown)}`
-                  : "Resend"}
-              </button>
-            </div>
           </form>
         </div>
       </motion.div>

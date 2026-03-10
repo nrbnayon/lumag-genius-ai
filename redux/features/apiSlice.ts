@@ -1,137 +1,149 @@
-// redux/services/apiSlice.ts
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import type { RootState } from '../store';
-import { updateTokens, logout } from '../features/authSlice';
-import type { ApiResponse, RefreshTokenResponse } from '@/types/users';
+// redux/features/apiSlice.ts
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import type { RootState } from "../store";
+import { updateTokens, logout } from "../features/authSlice";
+import type { RefreshTokenResponse } from "@/types/auth.types";
 
-// Helper function to get cookie value
-const getCookie = (name: string): string | null => {
-  if (typeof document === 'undefined') return null;
+// ─── Cookie Helpers ───────────────────────────────────────────────────────────
+
+export const getCookie = (name: string): string | null => {
+  if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  if (parts.length === 2) return parts.pop()?.split(";").shift() || null;
   return null;
 };
 
-// Helper function to set cookie
-const setCookie = (name: string, value: string, days: number = 7) => {
-  if (typeof document === 'undefined') return;
-  const expires = new Date();
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+/**
+ * @param days  – omit / undefined for a session cookie
+ *               pass a positive number for a persistent cookie
+ */
+export const setCookie = (
+  name: string,
+  value: string,
+  days?: number
+): void => {
+  if (typeof document === "undefined") return;
+  let cookieStr = `${name}=${value}; path=/; SameSite=Lax`;
+  if (days && days > 0) {
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    cookieStr += `; expires=${expires.toUTCString()}`;
+  }
+  document.cookie = cookieStr;
 };
 
-// Helper function to delete cookie
-const deleteCookie = (name: string) => {
-  if (typeof document === 'undefined') return;
+export const deleteCookie = (name: string): void => {
+  if (typeof document === "undefined") return;
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
 };
 
+// ─── Clear All Auth Cookies ───────────────────────────────────────────────────
+// Defined BEFORE it is referenced inside baseQueryWithReauth.
+
+export const clearAuthCookies = (): void => {
+  [
+    "accessToken",
+    "refreshToken",
+    "userRole",
+    "userEmail",
+    "userId",
+    "userName",
+    "rememberMe",
+    "reset_userId",
+    "reset_secretKey",
+    "reset_verified",
+  ].forEach(deleteCookie);
+};
+
+// ─── Base Query ───────────────────────────────────────────────────────────────
+
 const baseQuery = fetchBaseQuery({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002',
-  credentials: 'include',
+  // The API base URL – endpoints already include /api/...
+  baseUrl: process.env.NEXT_PUBLIC_APP_URL || "http://10.10.12.62:6005/",
+  credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     const state = getState() as RootState;
-    // Try to get token from Redux state first, then from cookies
-    let token = state.auth.token;
-    
-    if (!token) {
-      token = getCookie('accessToken');
-    }
+    const token = state.auth.token ?? getCookie("accessToken");
 
     if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
+      headers.set("Authorization", `Bearer ${token}`);
     }
-
-    headers.set('Content-Type', 'application/json');
+    // Don't override Content-Type for FormData (browser sets it with boundary)
+    if (!headers.get("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
     return headers;
   },
 });
 
-// Auto refresh logic with proper error handling
-const baseQueryWithReauth: typeof baseQuery = async (args, api, extraOptions) => {
+// ─── Auto-Refresh Wrapper ─────────────────────────────────────────────────────
+
+const baseQueryWithReauth: typeof baseQuery = async (
+  args,
+  api,
+  extraOptions
+) => {
   let result = await baseQuery(args, api, extraOptions);
 
-  // Check if we got a 401 error
   if (result.error && result.error.status === 401) {
     const state = api.getState() as RootState;
-    let refreshToken = state.auth.refreshToken;
-    
-    // Try to get refresh token from cookies if not in state
-    if (!refreshToken) {
-      refreshToken = getCookie('refreshToken');
-    }
+    const refreshToken = state.auth.refreshToken ?? getCookie("refreshToken");
 
     if (!refreshToken) {
-      // No refresh token available, logout
       api.dispatch(logout());
-      deleteCookie('accessToken');
-      deleteCookie('refreshToken');
-      deleteCookie('userRole');
-      deleteCookie('userId');
+      clearAuthCookies();
       return result;
     }
 
-    // Try to refresh the token
+    // Attempt silent token refresh
+    // POST /api/auth/refresh  body: { refresh_token }
     const refreshResult = await baseQuery(
       {
-        url: '/api/auth/custom-refresh/',
-        method: 'POST',
-        body: { refresh: refreshToken },
-        headers: {
-          Authorization: `Bearer ${state.auth.token || getCookie('accessToken')}`,
-        },
+        url: "/api/auth/refresh",
+        method: "POST",
+        body: { refresh_token: refreshToken },
       },
       api,
       extraOptions
     );
 
     if (refreshResult.data) {
-      const responseData = refreshResult.data as ApiResponse<RefreshTokenResponse>;
-      
-      if (responseData.success && responseData.data) {
-        const { access_token } = responseData.data;
+      // Response shape: { message, access_token, expires_in, expires_at }
+      const responseData = refreshResult.data as RefreshTokenResponse;
+      const newAccessToken = responseData.access_token;
 
-        // Update Redux state
+      if (newAccessToken) {
         api.dispatch(
           updateTokens({
-            token: access_token,
-            refreshToken: refreshToken,
+            token: newAccessToken,
+            tokenExpiresAt: responseData.expires_at,
           })
         );
 
-        // Update cookies
-        setCookie('accessToken', access_token, 7);
+        const rememberMe = getCookie("rememberMe") === "true";
+        setCookie("accessToken", newAccessToken, rememberMe ? 10 : undefined);
 
-        // Retry the original request with new token
+        // Retry the original request with the refreshed token
         result = await baseQuery(args, api, extraOptions);
       } else {
-        // Refresh failed, logout
         api.dispatch(logout());
-        deleteCookie('accessToken');
-        deleteCookie('refreshToken');
-        deleteCookie('userRole');
-        deleteCookie('userId');
+        clearAuthCookies();
       }
     } else {
-      // Refresh failed, logout
       api.dispatch(logout());
-      deleteCookie('accessToken');
-      deleteCookie('refreshToken');
-      deleteCookie('userRole');
-      deleteCookie('userId');
+      clearAuthCookies();
     }
   }
 
   return result;
 };
 
+// ─── API Slice ────────────────────────────────────────────────────────────────
+
 export const apiSlice = createApi({
-  reducerPath: 'api',
+  reducerPath: "api",
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['User'],
+  tagTypes: ["Auth", "Profile", "User"],
   endpoints: () => ({}),
 });
-
-// Export helper functions for use in components
-export { getCookie, setCookie, deleteCookie };

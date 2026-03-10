@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -17,23 +17,23 @@ import { Label } from "@/components/ui/label";
 
 import { useAppDispatch } from "@/redux/hooks";
 import { setCredentials } from "@/redux/features/authSlice";
+import { setCookie } from "@/redux/features/apiSlice";
+import { useLoginMutation } from "@/redux/services/authApi";
 import { toast } from "sonner";
 import { loginValidationSchema } from "@/lib/formDataValidation";
-import { RightSideImage } from "./RightSideImage";
 
 type FormValues = z.infer<typeof loginValidationSchema>;
 
 export const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [login, { isLoading }] = useLoginMutation();
 
   const {
     register,
     handleSubmit,
     control,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
@@ -45,85 +45,105 @@ export const SignInForm = () => {
     },
   });
 
-  // Trim spaces in real-time for email & password
+  // Real-time trim for email & password fields
   const handleTrimChange =
     (field: "email_address" | "password") =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const trimmed = e.target.value.trim();
-      setValue(field, trimmed, { shouldValidate: true });
+      setValue(field, e.target.value.trim(), { shouldValidate: true });
     };
 
   const onSubmit = async (data: FormValues) => {
-    // Final trim just in case (though already trimmed)
-    const cleanData = {
-      ...data,
-      email_address: data.email_address.trim(),
-      password: data.password.trim(),
-    };
-
-    setIsLoading(true);
     try {
-      // Replace with real API call
-      // const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(cleanData),
-      // });
+      const result = await login({
+        email_address: data.email_address.trim(),
+        password: data.password.trim(),
+      }).unwrap();
 
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // simulate delay
+      // The API returns { success, status, message, data: { user, tokens } }
+      const { user, tokens } = result.data!;
 
-      const mockUser = {
-        name: "Nayon II", // or from real response
-        email_address: cleanData.email_address,
-        role: "admin",
-        image: "/images/user.webp",
-      };
-      const mockToken = `mock_access_token_${Date.now()}`;
+      // ── Admin-only guard ──────────────────────────────────────────────────
+      if (user.role !== "admin") {
+        toast.error("Access denied. This panel is restricted to admins only.", {
+          icon: <ShieldAlert className="h-5 w-5 text-red-500" />,
+          duration: 5000,
+        });
+        return;
+      }
 
+      // ── Persist to Redux ──────────────────────────────────────────────────
       dispatch(
         setCredentials({
-          user: mockUser,
-          token: mockToken,
-        }),
+          user: {
+            id: user.id,
+            email_address: user.email_address,
+            full_name: user.full_name,
+            role: user.role,
+          },
+          token: tokens.access_token,
+          refreshToken: tokens.refresh_token,
+          tokenExpiresAt: tokens.expires_at,
+        })
       );
 
-      // Cookies - httpOnly would be better in real app (use server action / API route)
-      const maxAge = cleanData.rememberMe ? 86400 : undefined; // 1 day or session
-      document.cookie = `accessToken=${mockToken}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
-      document.cookie = `userRole=${mockUser.role}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
-      document.cookie = `userEmail=${encodeURIComponent(mockUser.email_address)}; path=/; ${maxAge ? `max-age=${maxAge};` : ""} samesite=lax`;
+      // ── Persist to browser cookies ────────────────────────────────────────
+      // Calculate cookie lifetime from the API's expires_in (ms)
+      const daysFromMs = tokens.expires_in / (1000 * 60 * 60 * 24);
+      const cookieDays = data.rememberMe ? daysFromMs : undefined; // undefined = session cookie
 
-      toast.success("Logged in successfully!");
-      router.push("/");
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("Login failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+      setCookie("accessToken", tokens.access_token, cookieDays);
+      setCookie("refreshToken", tokens.refresh_token, cookieDays);
+      setCookie("userRole", user.role, cookieDays);
+      setCookie("userId", user.id, cookieDays);
+      setCookie(
+        "userEmail",
+        encodeURIComponent(user.email_address),
+        cookieDays
+      );
+      setCookie(
+        "userName",
+        encodeURIComponent(user.full_name),
+        cookieDays
+      );
+      if (data.rememberMe) {
+        setCookie("rememberMe", "true", cookieDays);
+      }
+
+      toast.success(`Welcome back, ${user.full_name}! 🎉`);
+      // Use a hard navigation so the browser re-sends all cookies on the next request.
+      window.location.replace("/dashboard");
+    } catch (error: any) {
+      // Handle structured API errors
+      const message =
+        error?.data?.message ||
+        error?.message ||
+        "Login failed. Please check your credentials.";
+      toast.error(message);
     }
   };
 
   return (
     <div className="relative h-screen w-full flex flex-col lg:flex-row">
-      {/* Left - Image (hidden on mobile) */}
+      {/* Left – Brand Panel */}
       <motion.div
-        initial={{ opacity: 0, x: 30 }}
+        initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
         className="hidden lg:block lg:flex-1 h-screen overflow-hidden bg-[#E6F4FF]"
       >
         <div className="w-full h-full flex items-center justify-center">
           <Image
             src="/auth/logo.png"
-            alt="Auth Background"
+            alt="LumaG Genius AI"
             width={200}
             height={200}
-            className="object-cover"
+            className="object-contain"
+            priority
           />
         </div>
       </motion.div>
 
-      {/* Right - Form */}
+      {/* Right – Sign-In Form */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -131,10 +151,10 @@ export const SignInForm = () => {
         className="flex-1 flex items-center justify-center p-6 sm:p-8 lg:p-12 bg-white lg:min-h-screen"
       >
         <div className="w-full max-w-md lg:max-w-lg space-y-8">
-          {/* Logo + Title */}
+          {/* Title */}
           <div className="text-center space-y-3">
             <h1 className="text-2xl sm:text-3xl font-semibold text-foreground">
-              Log In
+              Admin Sign In
             </h1>
             <p className="text-lg sm:text-xl text-secondary">
               Please login to continue to your account.
@@ -147,7 +167,7 @@ export const SignInForm = () => {
             <FloatingInput
               label="Email"
               type="email"
-              autoComplete="email_address"
+              autoComplete="email"
               error={errors.email_address?.message}
               labelClassName="text-secondary"
               className="h-14 rounded-full border-2 focus:border-primary focus:ring-0 px-6 text-base"
@@ -155,7 +175,7 @@ export const SignInForm = () => {
               onChange={handleTrimChange("email_address")}
             />
 
-            {/* Password with eye toggle */}
+            {/* Password */}
             <FloatingInput
               label="Password"
               type={showPassword ? "text" : "password"}
@@ -180,7 +200,7 @@ export const SignInForm = () => {
               </button>
             </FloatingInput>
 
-            {/* Remember me */}
+            {/* Remember Me */}
             <Controller
               name="rememberMe"
               control={control}
@@ -211,14 +231,14 @@ export const SignInForm = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                  Logging in...
+                  Signing in…
                 </>
               ) : (
-                "Log In"
+                "Sign In"
               )}
             </Button>
 
-            {/* Forgot password */}
+            {/* Forgot Password */}
             <div className="text-center text-sm sm:text-base">
               <span className="text-secondary">Forgot Password? </span>
               <Link

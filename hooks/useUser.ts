@@ -1,85 +1,94 @@
 "use client";
 
-import { useAppSelector } from "@/redux/hooks";
-import {  ProfileResponse } from "@/types/auth.types";
+import { useRouter } from "next/navigation";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { logout as logoutAction } from "@/redux/features/authSlice";
+import { apiSlice } from "@/redux/features/apiSlice";
+import { clearAuthCookies } from "@/redux/features/apiSlice";
 import { useGetProfileQuery } from "@/redux/services/authApi";
-import { UserRole } from "@/types/users";
+import type { ProfileResponse } from "@/types/auth.types";
+import type { UserRole } from "@/types/users";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
 export interface UserInfo {
-.......
-  ...
-  isVerified?: boolean | null;
+  id?: string;
+  email_address?: string;
+  full_name?: string;
+  name?: string;    // Alias for full_name
+  role?: UserRole;
+  avatar?: string;
+  image?: string;   // Alias for avatar
+  phone_number?: string;
+  location?: string;
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   profile: ProfileResponse | null;
+  hasRole: (role: UserRole) => boolean;
+  logout: () => void;
 }
 
-export function useUser() {
+// ─── useUser Hook ─────────────────────────────────────────────────────────────
+export function useUser(): UserInfo {
   const {
     user,
     token: accessToken,
     isAuthenticated,
   } = useAppSelector((state) => state.auth);
 
-  // Fetch profile if authenticated
+  // Fetch live profile data whenever authenticated
   const { data: profileData, isLoading: isProfileLoading } = useGetProfileQuery(
     undefined,
-    {
-      skip: !isAuthenticated,
-    },
+    { skip: !isAuthenticated }
   );
 
-  const userProfile = profileData?.data || null;
+  const { logout } = useLogout();
 
-  const hasRole = (role: UserRole) => user?.role === role;
+  const profile = profileData?.data ?? null;
+
+  const hasRole = (role: UserRole): boolean =>
+    (profile?.role ?? user?.role) === role;
+
+  const fullName = profile?.full_name ?? user?.full_name;
+  const avatarImage = profile?.avatar ?? user?.avatar;
 
   return {
-
+    // Merge Redux user with live profile (profile takes precedence)
+    id: profile?.id ?? user?.id,
+    email_address: profile?.email_address ?? user?.email_address,
+    full_name: fullName,
+    name: fullName, // Alias for legacy component support
+    role: profile?.role ?? user?.role,
+    avatar: avatarImage,
+    image: avatarImage, // Alias for legacy component support
+    phone_number: profile?.phone_number,
+    location: profile?.location,
     accessToken,
     isAuthenticated,
     isLoading: isProfileLoading,
+    profile,
     hasRole,
+    logout,
   };
 }
 
-
-import { useRouter } from "next/navigation";
-import { useAppDispatch } from "@/redux/hooks";
-import { logout as logoutAction } from "@/redux/features/authSlice";
-import { apiSlice } from "@/redux/features/apiSlice";
-
+// ─── useLogout Hook ───────────────────────────────────────────────────────────
 export const useLogout = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
   const logout = () => {
-    // 1. Dispatch logout action to clear Redux state
+    // 1. Clear Redux state
     dispatch(logoutAction());
 
-    // 2. Clear RTK Query cache
+    // 2. Reset all RTK Query caches
     dispatch(apiSlice.util.resetApiState());
 
-    // 3. Clear cookies
-    const authCookies = [
-      "accessToken",
-      "refreshToken",
-      "userRole",
-      "userEmail",
-      "userId",
-    ];
+    // 3. Clear all auth cookies
+    clearAuthCookies();
 
-    authCookies.forEach((cookieName) => {
-      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax;`;
-    });
-
-    // 4. Redirect to login
-    // Using window.location.href for a hard redirect to ensure all states are clean
-    // or router.replace if we want to stay in SPA mode but force navigation
-    router.replace("/login");
-    
-    // Optional: hard reload if issues persist
-    // window.location.href = "/login";
+    // 4. Hard redirect to login – ensures clean state across the app
+    window.location.replace("/signin");
   };
 
   return { logout };
