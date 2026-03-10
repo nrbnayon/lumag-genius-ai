@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { StatsCard } from "@/components/Shared/StatsCard";
 import {
@@ -16,22 +16,63 @@ import {
 } from "lucide-react";
 import SearchBar from "@/components/Shared/SearchBar";
 import { cn } from "@/lib/utils";
-import { ingredientsData } from "@/data/ingredientsData";
 import {
+  useGetAllIngredientsQuery,
+  useDeleteIngredientMutation,
+  useApproveRejectIngredientMutation,
+} from "@/redux/services/ingredientsApi";
+import type {
   Ingredient,
-  IngredientFormData,
-  IngredientStatus,
-} from "@/types/ingredient";
+  CreateIngredientPayload,
+} from "@/types/ingredients.types";
 import { DynamicTable } from "@/components/Shared/DynamicTable";
+import { TablePagination } from "@/components/Shared/TablePagination";
 import { IngredientModal } from "./IngredientModal";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 import { ExportModal } from "./ExportModal";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/Skeleton/TableSkeleton";
 
 export default function IngredientsClient() {
-  const [ingredients, setIngredients] = useState<Ingredient[]>(ingredientsData);
+  // Query parameters state
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1); // Reset to page 1 on new search
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Tab change resets page
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
+
+  // Fetch from API
+  const {
+    data: ingredientsResponse,
+    isFetching,
+    isError,
+  } = useGetAllIngredientsQuery({
+    page: currentPage,
+    page_size: pageSize,
+    search_term: debouncedSearch,
+    outlet_type: activeTab !== "All" ? activeTab : undefined,
+  });
+
+  const [deleteIngredient] = useDeleteIngredientMutation();
+
+  const ingredients = ingredientsResponse?.data || [];
+  const totalItems = ingredientsResponse?.count || 0;
+  const totalPages = ingredientsResponse?.total_pages || 0;
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,28 +82,21 @@ export default function IngredientsClient() {
   const [selectedIngredient, setSelectedIngredient] =
     useState<Ingredient | null>(null);
 
-  // Filtered data
-  const filteredIngredients = useMemo(() => {
-    return ingredients.filter((item) => {
-      const matchesTab = activeTab === "All" || item.outletType === activeTab;
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.category.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesTab && matchesSearch;
-    });
-  }, [ingredients, activeTab, searchQuery]);
-
-  // Stats
-  const stats = useMemo(
-    () => ({
-      total: ingredients.length,
-      lowStock: ingredients.filter((i) => i.currentStock <= i.minimumStock)
+  // Stats calculation
+  const stats = useMemo(() => {
+    // We only have stats for the current page accurately or via total count.
+    // For a real production app with pagination, these global stats should be fetched
+    // from a dedicated /api/ingredients/stats endpoint.
+    return {
+      total: totalItems,
+      lowStock: ingredients.filter(
+        (i) => i.status === "low" || i.current_stock <= i.minimum_stock,
+      ).length,
+      purchaseRequest: "api not found",
+      pending: ingredients.filter((i) => i.approval_status === "pending")
         .length,
-      purchaseRequest: 22, // Dummy value as seen in image
-      pending: ingredients.filter((i) => i.status === "Pending").length,
-    }),
-    [ingredients],
-  );
+    };
+  }, [ingredients, totalItems]);
 
   // Handlers
   const handleAddClick = () => {
@@ -86,57 +120,33 @@ export default function IngredientsClient() {
     if (ingredient) {
       setSelectedIngredient(ingredient);
     } else {
-      setSelectedIngredient(null); // Means export all
+      setSelectedIngredient(null);
     }
     setIsExportModalOpen(true);
   };
 
-  const handleConfirmModal = (formData: IngredientFormData) => {
-    if (modalMode === "add") {
-      const newIngredient: Ingredient = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.name,
-        price: Number(formData.price),
-        unit: formData.unit,
-        category: formData.category,
-        outletType: formData.outletType || "Restaurant",
-        currentStock: Number(formData.currentStock),
-        minimumStock: Number(formData.minimumStock),
-        status: "Approved",
-        image: formData.image ? URL.createObjectURL(formData.image) : undefined,
-      };
-      setIngredients([newIngredient, ...ingredients]);
-      toast.success("Ingredient added successfully");
-    } else if (selectedIngredient) {
-      setIngredients(
-        ingredients.map((i) =>
-          i.id === selectedIngredient.id
-            ? {
-                ...i,
-                ...formData,
-                outletType: formData.outletType || i.outletType || "Restaurant",
-                price: Number(formData.price),
-                currentStock: Number(formData.currentStock),
-                minimumStock: Number(formData.minimumStock),
-                image: formData.image
-                  ? URL.createObjectURL(formData.image)
-                  : i.image,
-              }
-            : i,
-        ),
-      );
-      toast.success("Ingredient updated successfully");
-    }
+  // Ingredient Create / Edit success callback from Modal
+  const handleMutationSuccess = () => {
     setIsModalOpen(false);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedIngredient) {
-      setIngredients(ingredients.filter((i) => i.id !== selectedIngredient.id));
-      toast.success("Ingredient deleted successfully");
+  const handleConfirmDelete = async () => {
+    if (!selectedIngredient) return;
+    try {
+      await deleteIngredient(selectedIngredient.id).unwrap();
+      toast.success("Ingredient deleted successfully.");
+      setIsDeleteModalOpen(false);
+
+      // Auto-paginate back if we delete the last item on a page
+      if (ingredients.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to delete ingredient.");
     }
-    setIsDeleteModalOpen(false);
   };
+
+
 
   const handleConfirmExport = (data: Ingredient | Ingredient[]) => {
     const count = Array.isArray(data) ? data.length : 1;
@@ -150,46 +160,63 @@ export default function IngredientsClient() {
   const tableConfig = {
     columns: [
       {
-        key: "outletType",
+        key: "outlet_type",
         header: "Outlet Type",
-        render: (outletType: string) => <span>{outletType}</span>,
+        render: (outlet_type: string) => (
+          <span className="capitalize">{outlet_type}</span>
+        ),
       },
       {
         key: "name",
         header: "Name",
-        render: (_: any, item: Ingredient) => (
-          <div className="flex items-center gap-2">
-            {item.hasWarning && (
-              <span
-                className="cursor-help"
-                title={item.currentStock === 0 ? "Empty stock" : "Low stock"}
-              >
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-              </span>
-            )}
-            <span className="font-bold text-foreground">{item.name}</span>
-          </div>
-        ),
+        render: (_: any, item: Ingredient) => {
+          const isLowStock =
+            item.status === "low" ||
+            item.status === "non" ||
+            item.current_stock <= item.minimum_stock;
+          return (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                {isLowStock && (
+                  <span
+                    className="cursor-help"
+                    title={
+                      item.current_stock === 0 ? "Empty stock" : "Low stock"
+                    }
+                  >
+                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                  </span>
+                )}
+                <span className="font-bold text-foreground">{item.name}</span>
+                {item.is_special && (
+                  <span className="px-2 py-0.5 bg-blue-100 text-[#0190fe] text-[10px] font-bold rounded uppercase">
+                    Special
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        },
       },
       {
-        key: "category",
+        key: "category_name",
         header: "Category",
         align: "center",
       },
       {
-        key: "price",
+        key: "price_per_unit",
         header: "Price",
-        render: (price: number) => `$${price}`,
+        render: (price_per_unit: string) => `$${price_per_unit}`,
       },
       {
-        key: "currentStock",
+        key: "current_stock",
         header: "Current Stock",
         align: "center",
         render: (stock: number, item: Ingredient) =>
           `${stock}${item.unit.toLowerCase()}`,
       },
       {
-        key: "minimumStock",
+        key: "minimum_stock",
         header: "Minimum Stock",
         align: "center",
         render: (stock: number, item: Ingredient) =>
@@ -198,18 +225,21 @@ export default function IngredientsClient() {
       {
         key: "unit",
         header: "Unit",
+        render: (unit: string) => <span className="uppercase">{unit}</span>,
       },
       {
-        key: "status",
-        header: "Status",
+        key: "approval_status",
+        header: "Approve Status",
         align: "center",
         render: (status: string) => (
           <span
             className={cn(
-              "px-6 py-1.5 rounded-full text-xs font-bold",
-              status === "Approved"
+              "px-3 py-1 pb-[3px] rounded-full text-[11px] font-bold uppercase",
+              status.toLowerCase() === "approved"
                 ? "bg-[#ECFDF5] text-[#10B981]"
-                : "bg-[#FEF2F2] text-[#EF4444]",
+                : status.toLowerCase() === "rejected"
+                  ? "bg-[#FEF2F2] text-[#EF4444]"
+                  : "bg-orange-50 text-orange-500",
             )}
           >
             {status}
@@ -222,14 +252,8 @@ export default function IngredientsClient() {
       {
         icon: <SquarePen className="w-4 h-4" />,
         onClick: (item: Ingredient) => handleEditClick(item),
-        variant: "warning",
-        tooltip: "Edit",
-      },
-      {
-        icon: <Download className="w-4 h-4" />,
-        onClick: (item: Ingredient) => handleExportClick(item),
         variant: "primary",
-        tooltip: "Export",
+        tooltip: "Edit",
       },
       {
         icon: <Trash2 className="w-4 h-4" />,
@@ -247,7 +271,7 @@ export default function IngredientsClient() {
         description="Manage ingredient inventory, pricing, and purchase requests"
       />
 
-      <main className="p-4 md:p-8 space-y-8">
+      <main className="p-4 md:p-8 space-y-8 flex-1 w-full max-w-[1700px] mx-auto overflow-hidden">
         {/* Top Actions */}
         <div className="flex flex-col sm:flex-row justify-end gap-4">
           <button
@@ -267,7 +291,7 @@ export default function IngredientsClient() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           <StatsCard
             title="Total Ingredients"
             value={stats.total}
@@ -299,11 +323,11 @@ export default function IngredientsClient() {
         </div>
 
         {/* Filters & Table */}
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <SearchBar
               placeholder="Search Ingredients"
-              className="max-w-2xl bg-white border border-gray-100 shadow-xs"
+              className="w-full max-w-2xl bg-white border border-gray-100 shadow-xs"
               onSearch={setSearchQuery}
             />
           </div>
@@ -313,7 +337,7 @@ export default function IngredientsClient() {
               {["All", "Bar", "Restaurant"].map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab as any)}
+                  onClick={() => handleTabChange(tab)}
                   className={cn(
                     "py-4 px-2 text-sm font-bold transition-all relative cursor-pointer",
                     activeTab === tab
@@ -330,24 +354,55 @@ export default function IngredientsClient() {
             </nav>
           </div>
 
-          <DynamicTable
-            data={filteredIngredients}
-            config={tableConfig as any}
-            pagination={{ enabled: true, pageSize: 10 }}
-            className="overflow-hidden border-none shadow-[0px_4px_16px_0px_#A9A9A940]"
-            headerClassName="bg-[#E6F4FF] text-[#505050]"
-          />
+          <div className="bg-white rounded-[24px] shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden w-full overflow-x-auto min-h-[400px] flex flex-col">
+            {isFetching && ingredients.length === 0 ? (
+              <TableSkeleton rowCount={8} />
+            ) : isError ? (
+              <div className="p-12 text-center text-red-500 flex-1 flex flex-col items-center justify-center h-[300px]">
+                <p>Failed to load ingredients. Please try again.</p>
+              </div>
+            ) : (
+              <>
+                <DynamicTable
+                  data={ingredients}
+                  config={tableConfig as any}
+                  pagination={{ enabled: false }} // Rely on backend pagination below
+                  className="rounded-t-[24px] shadow-none w-full"
+                  headerClassName="bg-[#E6F4FF] text-[#505050]"
+                  emptyMessage="No ingredients found matching your criteria."
+                />
+
+                {/* Native Server Side Pagination */}
+                {totalItems > 0 && (
+                  <div className="mt-auto border-t border-gray-100 bg-white rounded-b-[24px]">
+                    <TablePagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={totalItems}
+                      itemsPerPage={pageSize}
+                      onPageChange={setCurrentPage}
+                      onPageSizeChange={setPageSize}
+                      pageSizeOptions={[5, 10, 20, 50, 100]}
+                      showPageSize={true}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </main>
 
       {/* Modals */}
-      <IngredientModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmModal}
-        ingredient={selectedIngredient}
-        mode={modalMode}
-      />
+      {isModalOpen && (
+        <IngredientModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={handleMutationSuccess}
+          ingredient={selectedIngredient}
+          mode={modalMode}
+        />
+      )}
 
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}

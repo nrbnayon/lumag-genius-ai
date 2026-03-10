@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Download } from "lucide-react";
-import { Ingredient } from "@/types/ingredient";
+import { Ingredient } from "@/types/ingredients.types";
 import { exportToExcel } from "@/lib/excel";
 
 interface ExportModalProps {
@@ -25,12 +25,14 @@ export function ExportModal({
     // Transform data for Excel
     const worksheetData = exportData.map((item) => ({
       "Ingredient Name": item.name,
-      Price: item.price,
-      Unit: item.unit,
-      Category: item.category,
-      "Current Stock": item.currentStock,
-      "Minimum Stock": item.minimumStock,
+      Price: item.price_per_unit,
+      Unit: item.unit.toUpperCase(),
+      Category: item.category_name,
+      "Outlet Type": item.outlet_type,
+      "Current Stock": item.current_stock,
+      "Minimum Stock": item.minimum_stock,
       Status: item.status,
+      "Approval Status": item.approval_status,
     }));
 
     // Generate file name
@@ -65,28 +67,27 @@ export function ExportModal({
           <div className="grid grid-cols-6 gap-0 border border-gray-100 rounded-lg overflow-hidden text-center text-sm font-medium mb-8">
             <div className="bg-gray-50/50 p-2 border-r border-gray-100">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Ingredient name</p>
-
               <p className="text-foreground">{sample?.name || "Chicken"}</p>
             </div>
             <div className="bg-gray-50/50 p-2 border-r border-gray-100">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Unit</p>
-              <p className="text-foreground">{sample?.unit || "Kg"}</p>
+              <p className="text-foreground uppercase">{sample?.unit || "Kg"}</p>
             </div>
             <div className="bg-gray-50/50 p-2 border-r border-gray-100">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Price</p>
-              <p className="text-foreground">${sample?.price || "20"}</p>
+              <p className="text-foreground">${sample?.price_per_unit || "20"}</p>
             </div>
             <div className="bg-gray-50/50 p-2 border-r border-gray-100">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Current Stock</p>
-              <p className="text-foreground">{sample?.currentStock || "20"}</p>
+              <p className="text-foreground">{sample?.current_stock ?? "20"}</p>
             </div>
             <div className="bg-gray-50/50 p-2 border-r border-gray-100">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Minimum Stock</p>
-              <p className="text-foreground">{sample?.minimumStock || "12"}</p>
+              <p className="text-foreground">{sample?.minimum_stock ?? "12"}</p>
             </div>
             <div className="bg-gray-50/50 p-2">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Category</p>
-              <p className="text-foreground">{sample?.category || "Others"}</p>
+              <p className="text-foreground">{sample?.category_name || "Others"}</p>
             </div>
           </div>
 
