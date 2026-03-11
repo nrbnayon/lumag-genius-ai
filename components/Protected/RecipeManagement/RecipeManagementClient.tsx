@@ -1,276 +1,289 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
+import { Search, Download, Plus } from "lucide-react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
-import { StatsCard } from "@/components/Shared/StatsCard";
-import {
-  UtensilsCrossed,
-  Percent,
-  TrendingUp,
-  Clock,
-  Plus,
-  Download,
-  Search,
-  PackageX,
-} from "lucide-react";
 import SearchBar from "@/components/Shared/SearchBar";
-import { Pagination } from "@/components/Shared/Pagination";
-import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
-import { RecipeGridSkeleton } from "@/components/Skeleton/RecipeSkeleton";
-import { toast } from "sonner";
-import { recipesData } from "@/data/recipeData";
-import { Recipe, RecipeFormData } from "@/types/recipe";
+import { TablePagination } from "@/components/Shared/TablePagination";
+import { StatsCard } from "@/components/Shared/StatsCard";
 import { RecipeCard } from "./RecipeCard";
 import { RecipeModal } from "./RecipeModal";
 import { RecipeExportModal } from "./RecipeExportModal";
+import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
+import { Recipe } from "@/types/recipes.types";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { useGetAllRecipesQuery, useDeleteRecipeMutation } from "@/redux/services/recipesApi";
+import { RecipeGridSkeleton } from "@/components/Skeleton/RecipeSkeleton";
+import { Package, Utensils, Wine, DollarSign } from "lucide-react";
 
-export default function RecipeClient() {
-  const [recipes, setRecipes] = useState<Recipe[]>(recipesData);
+const RecipeManagementClient = () => {
+  const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const itemsPerPage = 8;
+  const [pageSize, setPageSize] = useState(12);
 
-  // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [stagedItems, setStagedItems] = useState<Recipe[]>([]);
 
-  // Filtered data
-  const filteredRecipes = useMemo(() => {
-    return recipes.filter((item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [recipes, searchQuery]);
+  // API Hooks
+  const { data: recipesData, isLoading, isFetching } = useGetAllRecipesQuery({
+    page: currentPage,
+    page_size: pageSize,
+    search_term: debouncedSearch,
+    outlet_type: activeTab === "all" ? undefined : activeTab,
+    approval_status: "approved",
+  });
 
-  // Paginated data
-  const paginatedRecipes = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredRecipes.slice(start, start + itemsPerPage);
-  }, [filteredRecipes, currentPage]);
+  const [deleteRecipe, { isLoading: isDeleting }] = useDeleteRecipeMutation();
 
-  const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Handlers
-  const handleAddClick = () => {
+  const handleAddRecipe = () => {
     setModalMode("add");
     setSelectedRecipe(null);
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (recipe: Recipe) => {
+  const handleEditRecipe = (recipe: Recipe) => {
     setModalMode("edit");
     setSelectedRecipe(recipe);
     setIsModalOpen(true);
   };
 
   const handleDeleteClick = (recipe: Recipe) => {
-    setSelectedRecipe(recipe);
+    setRecipeToDelete(recipe);
     setIsDeleteModalOpen(true);
   };
 
-  const handleExportClick = (recipe?: Recipe) => {
-    if (recipe) {
-      setSelectedRecipe(recipe);
-    } else {
-      setSelectedRecipe(null);
+  const confirmDelete = async () => {
+    if (recipeToDelete) {
+      try {
+        await deleteRecipe(recipeToDelete.id).unwrap();
+        toast.success("Recipe deleted successfully");
+        setIsDeleteModalOpen(false);
+        setRecipeToDelete(null);
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to delete recipe");
+      }
+    }
+  };
+
+  const handleExportRecipe = (recipe: Recipe) => {
+    setStagedItems((prev) => {
+      const exists = prev.find((item) => item.id === recipe.id);
+      if (exists) return prev;
+      toast.success(`Staged ${recipe.name} for export`);
+      return [...prev, recipe];
+    });
+  };
+
+  const handleOpenExportModal = () => {
+    if (stagedItems.length === 0 && recipesData?.data?.[0]) {
+        // If nothing staged, but we have data, stage everything on current page
+        setStagedItems(recipesData.data);
+        setIsExportModalOpen(true);
+        return;
+    }
+    if (stagedItems.length === 0) {
+      toast.error("No items to export");
+      return;
     }
     setIsExportModalOpen(true);
   };
 
-  const handleConfirmModal = (formData: RecipeFormData) => {
-    if (modalMode === "add") {
-      const newRecipe: Recipe = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.name,
-        cookingTime: formData.cookingTime,
-        sellingPrice: formData.sellingPrice,
-        instruction: formData.instruction,
-        ingredients: formData.ingredients,
-        ingredientsCount: formData.ingredients.length,
-        cost: `$${formData.ingredients.reduce((acc, curr) => acc + parseFloat(curr.cost.replace(/[^0-9.-]+/g, "") || "0"), 0)}`,
-        status: "Pending",
-        image: formData.image ? URL.createObjectURL(formData.image) : undefined,
-      };
-      setRecipes([newRecipe, ...recipes]);
-      toast.success("Recipe added and sent for approval");
-    } else if (selectedRecipe) {
-      setRecipes(
-        recipes.map((r) =>
-          r.id === selectedRecipe.id
-            ? {
-                ...r,
-                name: formData.name,
-                cookingTime: formData.cookingTime,
-                sellingPrice: formData.sellingPrice,
-                instruction: formData.instruction,
-                ingredients: formData.ingredients,
-                ingredientsCount: formData.ingredients.length,
-                cost: `$${formData.ingredients.reduce((acc, curr) => acc + parseFloat(curr.cost.replace(/[^0-9.-]+/g, "") || "0"), 0)}`,
-                image: formData.image
-                  ? URL.createObjectURL(formData.image)
-                  : r.image,
-              }
-            : r,
-        ),
-      );
-      toast.success("Recipe updated successfully");
-    }
-    setIsModalOpen(false);
-  };
-
-  const handleConfirmDelete = () => {
-    if (selectedRecipe) {
-      setRecipes(recipes.filter((r) => r.id !== selectedRecipe.id));
-      toast.success("Recipe deleted successfully");
-    }
-    setIsDeleteModalOpen(false);
-  };
-
-  const handleConfirmExport = (data: Recipe | Recipe[]) => {
-    const count = Array.isArray(data) ? data.length : 1;
-    toast.success(`Exported ${count} recipe technical sheet(s) to Excel`);
-    setIsExportModalOpen(false);
-  };
+  const totalPages = recipesData?.total_pages || 1;
+  const recipes = recipesData?.data || [];
+  const totalItems = recipesData?.count || 0;
+  
+  const stats = [
+    {
+      title: "Total Recipes",
+      value: totalItems,
+      icon: Package,
+      iconColor: "#10B981",
+      iconBgColor: "#D1FAE5",
+    },
+    {
+      title: "Restaurant",
+      value: recipes.filter(r => r.outlet_type === "restaurant").length,
+      icon: Utensils,
+      iconColor: "#3B82F6",
+      iconBgColor: "#DBEAFE",
+    },
+    {
+      title: "Bar & Drinks",
+      value: recipes.filter(r => r.outlet_type === "bar").length,
+      icon: Wine,
+      iconColor: "#F59E0B",
+      iconBgColor: "#FEF3C7",
+    },
+    {
+      title: "Average Cost",
+      value: "$14.50",
+      icon: DollarSign,
+      iconColor: "#EF4444",
+      iconBgColor: "#FEE2E2",
+    },
+  ];
 
   return (
     <div className="pb-10">
       <DashboardHeader
-        title="Recipe Management"
-        description="Manage recipes with AI-generated technical sheets and cost analysis"
+        title="Recipe Library"
+        description="Unified management for kitchen and bar collections."
       />
 
-      <main className="p-4 md:p-8 space-y-8">
-        {/* Top Actions */}
+      <main className="p-4 md:p-8 space-y-8 flex-1 w-full max-w-[1700px] mx-auto overflow-hidden">
         <div className="flex flex-col sm:flex-row justify-end gap-4">
           <button
-            onClick={handleAddClick}
+            onClick={handleAddRecipe}
             className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg font-bold hover:bg-blue-600 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5 font-bold" />
             Add Recipes
           </button>
           <button
-            onClick={() => handleExportClick()}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-white text-secondary border border-gray-200 rounded-lg font-medium hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={handleOpenExportModal}
+            className="flex items-center justify-center gap-2 px-6 py-2.5 border border-[#0EA5E9] bg-white text-[#0EA5E9] rounded-lg font-bold hover:bg-gray-50 transition-colors cursor-pointer relative"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-5 h-5 text-[#0EA5E9]" />
             Export All
+            {stagedItems.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] rounded-full flex items-center justify-center border-2 border-white animate-in zoom-in">
+                {stagedItems.length}
+              </span>
+            )}
           </button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatsCard
-            title="Total Recipes"
-            value={22}
-            icon={UtensilsCrossed}
-            iconColor="#EF4444"
-            iconBgColor="#FEE2E2"
-          />
-          <StatsCard
-            title="Avg Food Cost %"
-            value="22.5"
-            icon={Percent}
-            iconColor="#3B82F6"
-            iconBgColor="#DBEAFE"
-          />
-          <StatsCard
-            title="High Margin items"
-            value={5}
-            icon={TrendingUp}
-            iconColor="#10B981"
-            iconBgColor="#D1FAE5"
-          />
-          <StatsCard
-            title="Pending Approval"
-            value={2}
-            icon={Clock}
-            iconColor="#F59E0B"
-            iconBgColor="#FEF3C7"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, idx) => (
+            <StatsCard key={idx} {...stat} />
+          ))}
         </div>
 
-        {/* Search & Grid */}
-        <div className="space-y-6">
-          <SearchBar
-            placeholder="Search Recipes"
-            className="max-w-2xl bg-white border border-gray-100 shadow-xs"
-            onSearch={(val) => {
-              setLoading(true);
-              setSearchQuery(val);
-              setTimeout(() => setLoading(false), 500);
-            }}
-          />
+        <div className="space-y-6 w-full">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <SearchBar
+              placeholder="Search recipes, methods..."
+              className="w-full max-w-2xl bg-white border border-gray-100 shadow-xs"
+              onSearch={setSearchQuery}
+            />
+          </div>
 
-          {loading ? (
+          <div className="border-b border-gray-200">
+            <nav className="flex gap-8">
+              {["all", "restaurant", "bar"].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setCurrentPage(1);
+                  }}
+                  className={cn(
+                    "py-4 px-2 text-sm font-bold transition-all relative cursor-pointer capitalize",
+                    activeTab === tab
+                      ? "text-[#0EA5E9]"
+                      : "text-secondary hover:text-foreground",
+                  )}
+                >
+                  {tab}
+                  {activeTab === tab && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0EA5E9]" />
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {isLoading || isFetching ? (
             <RecipeGridSkeleton />
-          ) : filteredRecipes.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 gap-4 2xl:gap-6">
-                {paginatedRecipes.map((recipe) => (
-                  <RecipeCard
-                    key={recipe.id}
-                    recipe={recipe}
-                    onEdit={handleEditClick}
-                    onDelete={handleDeleteClick}
-                    onExport={handleExportClick}
-                  />
-                ))}
-              </div>
-
-              <div className="flex justify-center pt-8">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  totalItems={filteredRecipes.length}
-                  itemsPerPage={itemsPerPage}
-                  currentItemsCount={paginatedRecipes.length}
+          ) : recipes.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {recipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onEdit={() => handleEditRecipe(recipe)}
+                  onDelete={() => handleDeleteClick(recipe)}
+                  onExport={() => handleExportRecipe(recipe)}
                 />
-              </div>
-            </>
+              ))}
+            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
               <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                 <Search className="w-10 h-10 text-gray-300" />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                No recipes found
-              </h3>
-              <p className="text-secondary">
-                Try adjusting your search to find what you're looking for.
+              <p className="text-gray-500 font-medium">
+                No recipes found. Try adjusting your search or filters.
               </p>
+            </div>
+          )}
+
+          {totalItems > 0 && (
+            <div className="mt-8 bg-white rounded-2xl border border-gray-100">
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={totalItems}
+                itemsPerPage={pageSize}
+                onPageChange={setCurrentPage}
+                onPageSizeChange={setPageSize}
+                pageSizeOptions={[8, 12, 24, 48]}
+                showPageSize={true}
+              />
             </div>
           )}
         </div>
       </main>
 
-      {/* Modals */}
-      <RecipeModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleConfirmModal}
-        recipe={selectedRecipe}
-        mode={modalMode}
-      />
+      {isModalOpen && (
+        <RecipeModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => {
+            setIsModalOpen(false);
+            setCurrentPage(1);
+          }}
+          recipe={selectedRecipe}
+          mode={modalMode}
+        />
+      )}
 
       <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setRecipeToDelete(null);
+        }}
+        onConfirm={confirmDelete}
         title="Delete Recipe"
-        description={`Are you sure you want to delete "${selectedRecipe?.name}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${recipeToDelete?.name}"? This action cannot be undone.`}
+        isLoading={isDeleting}
       />
 
       <RecipeExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
-        onExport={handleConfirmExport}
-        data={selectedRecipe || recipes}
+        onExport={() => setStagedItems([])}
+        data={stagedItems}
       />
     </div>
   );
-}
+};
+
+export default RecipeManagementClient;

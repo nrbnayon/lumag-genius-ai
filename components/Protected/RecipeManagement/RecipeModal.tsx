@@ -2,16 +2,27 @@
 
 import { useEffect, useState, useRef } from "react";
 import { X, Trash2, Plus } from "lucide-react";
-import { Recipe, RecipeFormData, RecipeIngredient } from "@/types/recipe";
+import { Recipe, CreateRecipePayload, UpdateRecipePayload } from "@/types/recipes.types";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
 import { readExcel } from "@/lib/excel";
+import { useCreateRecipesMutation, useUpdateRecipesBulkMutation } from "@/redux/services/recipesApi";
+
+interface RecipeFormData {
+  name: string;
+  cookingTime: string;
+  sellingPrice: string;
+  instruction: string;
+  outletType: string;
+  ingredients: { id?: number; ingredient: string; quantity: string; unit: string; cost: string }[];
+  image: File | null;
+}
 
 interface RecipeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: RecipeFormData) => void;
+  onSuccess: () => void;
   recipe?: Recipe | null;
   mode: "add" | "edit";
 }
@@ -19,7 +30,7 @@ interface RecipeModalProps {
 export function RecipeModal({
   isOpen,
   onClose,
-  onConfirm,
+  onSuccess,
   recipe,
   mode,
 }: RecipeModalProps) {
@@ -28,12 +39,19 @@ export function RecipeModal({
     cookingTime: "",
     sellingPrice: "",
     instruction: "",
-    ingredients: [{ name: "", quantity: "", unit: "", cost: "" }],
+    outletType: "restaurant",
+    ingredients: [{ ingredient: "", quantity: "", unit: "", cost: "" }],
     image: null,
   });
 
+  const [createRecipes, { isLoading: isCreating }] = useCreateRecipesMutation();
+  const [updateRecipes, { isLoading: isUpdating }] = useUpdateRecipesBulkMutation();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [excelFileName, setExcelFileName] = useState<string>("");
+  const [pendingCreateData, setPendingCreateData] = useState<CreateRecipePayload[]>([]);
+  const [pendingUpdateData, setPendingUpdateData] = useState<UpdateRecipePayload[]>([]);
+
   const [errors, setErrors] = useState<
     Partial<Record<keyof RecipeFormData | "ingredients", string>>
   >({});
@@ -42,13 +60,20 @@ export function RecipeModal({
     if (recipe) {
       setFormData({
         name: recipe.name,
-        cookingTime: recipe.cookingTime,
-        sellingPrice: recipe.sellingPrice,
+        cookingTime: recipe.avg_time.toString(),
+        sellingPrice: recipe.selling_cost,
         instruction: recipe.instruction,
+        outletType: recipe.outlet_type || "restaurant",
         ingredients:
           recipe.ingredients.length > 0
-            ? [...recipe.ingredients]
-            : [{ name: "", quantity: "", unit: "", cost: "" }],
+            ? recipe.ingredients.map(i => ({
+                id: i.id,
+                ingredient: i.ingredient,
+                quantity: i.quantity.toString(),
+                unit: i.unit,
+                cost: i.cost.toString()
+              }))
+            : [{ ingredient: "", quantity: "", unit: "", cost: "" }],
         image: null,
       });
     } else {
@@ -57,10 +82,13 @@ export function RecipeModal({
         cookingTime: "",
         sellingPrice: "",
         instruction: "",
-        ingredients: [{ name: "", quantity: "", unit: "", cost: "" }],
+        outletType: "restaurant",
+        ingredients: [{ ingredient: "", quantity: "", unit: "", cost: "" }],
         image: null,
       });
       setExcelFileName("");
+      setPendingCreateData([]);
+      setPendingUpdateData([]);
     }
     setErrors({});
   }, [recipe, isOpen]);
@@ -75,53 +103,70 @@ export function RecipeModal({
         const data = await readExcel(file);
 
         if (data && data.length > 0) {
-          const firstRow = data[0];
-          const find = (row: any, ...keys: string[]) => {
-            if (!row) return "";
-            const k = Object.keys(row).find((k) =>
-              keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-            );
-            return k ? String(row[k]) : "";
-          };
+          const createData: CreateRecipePayload[] = [];
+          const updateData: UpdateRecipePayload[] = [];
 
-          // Main recipe details from first row
-          const newName =
-            find(firstRow, "recipe", "name", "dish") || formData.name;
-          const newTime =
-            find(firstRow, "time", "duration") || formData.cookingTime;
-          const newPrice =
-            find(firstRow, "price", "selling", "cost") || formData.sellingPrice;
-          const newInstruction =
-            find(firstRow, "instruction", "method", "steps") ||
-            formData.instruction;
+          data.forEach((row: any) => {
+            const find = (r: any, ...keys: string[]) => {
+              const k = Object.keys(r).find((k) =>
+                keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+              );
+              return k ? String(r[k]) : "";
+            };
 
-          // Ingredients could be multiple rows
-          const extractedIngredients: RecipeIngredient[] = [];
-          data.forEach((row) => {
-            const ingName = find(row, "ingredient", "item");
-            if (ingName) {
-              extractedIngredients.push({
-                name: ingName,
-                quantity: find(row, "quantity", "qty", "amt"),
-                unit: find(row, "unit", "meas"),
-                cost: find(row, "ingredient cost", "cost", "price"),
-              });
+            const id = find(row, "id");
+            const name = find(row, "recipe name", "name", "dish");
+            const avg_time = parseInt(find(row, "avg time", "cooking time", "time") || "0");
+            const instruction = find(row, "instruction", "method");
+            const selling_cost = parseFloat(find(row, "selling cost", "selling price", "price") || "0");
+            const outlet_type = find(row, "outlet type", "outlet_type").toLowerCase() || "restaurant";
+            
+            if (id) {
+               updateData.push({
+                 id: parseInt(id),
+                 name,
+                 avg_time,
+                 instruction,
+                 selling_cost,
+                 outlet_type,
+                 ingredients: []
+               });
+            } else if (name) {
+               createData.push({
+                 name,
+                 avg_time,
+                 instruction,
+                 selling_cost,
+                 outlet_type,
+                 ingredients: []
+               });
             }
           });
 
-          setFormData((prev) => ({
-            ...prev,
-            name: newName,
-            cookingTime: newTime,
-            sellingPrice: newPrice,
-            instruction: newInstruction,
-            ingredients:
-              extractedIngredients.length > 0
-                ? extractedIngredients
-                : prev.ingredients,
-          }));
+          if (createData.length > 0 || updateData.length > 0) {
+             setPendingCreateData(createData);
+             setPendingUpdateData(updateData);
+             
+             const first = data[0];
+             const findFirst = (r: any, ...keys: string[]) => {
+                const k = Object.keys(r).find((k) =>
+                  keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+                );
+                return k ? String(r[k]) : "";
+              };
 
-          toast.success("Recipe auto-filled successfully!");
+             setFormData({
+               name: findFirst(first, "recipe name", "name", "dish"),
+               cookingTime: findFirst(first, "avg time", "cooking time", "time"),
+               sellingPrice: findFirst(first, "selling cost", "selling price", "price"),
+               instruction: findFirst(first, "instruction", "method"),
+               outletType: findFirst(first, "outlet type", "outlet_type").toLowerCase() || "restaurant",
+               ingredients: [{ ingredient: "", quantity: "", unit: "", cost: "" }],
+               image: null
+             });
+
+             toast.success(`Staged ${createData.length + updateData.length} recipes from Excel!`);
+          }
         } else {
           toast.error("No data found in the file.");
         }
@@ -139,14 +184,14 @@ export function RecipeModal({
       ...prev,
       ingredients: [
         ...prev.ingredients,
-        { name: "", quantity: "", unit: "", cost: "" },
+        { ingredient: "", quantity: "", unit: "", cost: "" },
       ],
     }));
   };
 
   const updateIngredient = (
     index: number,
-    field: keyof RecipeIngredient,
+    field: "ingredient" | "quantity" | "unit" | "cost",
     value: string,
   ) => {
     const newIngredients = [...formData.ingredients];
@@ -171,7 +216,7 @@ export function RecipeModal({
     if (!formData.instruction) newErrors.instruction = "Required";
 
     const validIngredients = formData.ingredients.every(
-      (i) => i.name && i.quantity && i.unit && i.cost,
+      (i) => i.ingredient && i.quantity && i.unit && i.cost,
     );
     if (!validIngredients)
       newErrors.ingredients = "All ingredient fields are required";
@@ -180,10 +225,58 @@ export function RecipeModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const executeBulkRequests = async (data: CreateRecipePayload[]) => {
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      await createRecipes(chunk).unwrap();
+    }
+  };
+
+  const executeBulkUpdates = async (data: UpdateRecipePayload[]) => {
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      await updateRecipes(chunk).unwrap();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validate()) {
-      onConfirm(formData);
+    if (!validate()) return;
+
+    try {
+      if (pendingCreateData.length > 0 || pendingUpdateData.length > 0) {
+         if (pendingCreateData.length > 0) await executeBulkRequests(pendingCreateData);
+         if (pendingUpdateData.length > 0) await executeBulkUpdates(pendingUpdateData);
+         toast.success("Excel synchronization complete!");
+      } else {
+        const payload = {
+          name: formData.name,
+          avg_time: parseInt(formData.cookingTime),
+          selling_cost: parseFloat(formData.sellingPrice),
+          instruction: formData.instruction,
+          outlet_type: formData.outletType,
+          ingredients: formData.ingredients.map(i => ({
+             id: i.id,
+             ingredient: i.ingredient,
+             quantity: parseFloat(i.quantity),
+             unit: i.unit,
+             cost: parseFloat(i.cost)
+          }))
+        };
+
+        if (mode === "add") {
+          await createRecipes([payload]).unwrap();
+          toast.success("Recipe added successfully!");
+        } else if (recipe) {
+          await updateRecipes([{ ...payload, id: recipe.id }]).unwrap();
+          toast.success("Recipe updated successfully!");
+        }
+      }
+      onSuccess();
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to save recipe.");
     }
   };
 
@@ -203,46 +296,67 @@ export function RecipeModal({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto custom-scrollbar">
+      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto custom-scrollbar border-none">
         <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <h2 className="text-xl font-bold text-foreground">
-            {mode === "add" ? "Add Recipe" : "Edit Recipe"}
+            {pendingCreateData.length > 0 || pendingUpdateData.length > 0
+              ? `Syncing ${pendingCreateData.length + pendingUpdateData.length} Recipes`
+              : mode === "add"
+                ? "Add New Recipe"
+                : "Edit Recipe"}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+            className="p-2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-foreground mb-1.5">
-                Recipe Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className={cn(
-                  "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                  errors.name ? "border-red-500" : "border-gray-200",
-                )}
-                placeholder="Enter recipe name"
-              />
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block text-sm font-bold text-foreground mb-1">
+                  Recipe Name <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className={cn(
+                    "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
+                    errors.name ? "border-red-500" : "border-gray-200",
+                  )}
+                  placeholder="Enter recipe name"
+                />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <label className="block text-sm font-bold text-foreground mb-1.5">
+                  Outlet Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.outletType}
+                  onChange={(e) =>
+                    setFormData({ ...formData, outletType: e.target.value })
+                  }
+                  className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium bg-white"
+                >
+                  <option value="restaurant">Restaurant</option>
+                  <option value="bar">Bar</option>
+                </select>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-bold text-foreground mb-1.5">
-                  Avg. Time <span className="text-red-500">*</span>
+                  Avg. Time (min) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   value={formData.cookingTime}
                   onChange={(e) =>
                     setFormData({ ...formData, cookingTime: e.target.value })
@@ -251,15 +365,16 @@ export function RecipeModal({
                     "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
                     errors.cookingTime ? "border-red-500" : "border-gray-200",
                   )}
-                  placeholder="e.g. 20min"
+                  placeholder="e.g. 20"
                 />
               </div>
               <div>
                 <label className="block text-sm font-bold text-foreground mb-1.5">
-                  Selling Cost <span className="text-red-500">*</span>
+                  Selling Cost ($) <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  step="0.01"
                   value={formData.sellingPrice}
                   onChange={(e) =>
                     setFormData({ ...formData, sellingPrice: e.target.value })
@@ -268,13 +383,13 @@ export function RecipeModal({
                     "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
                     errors.sellingPrice ? "border-red-500" : "border-gray-200",
                   )}
-                  placeholder="e.g. $45"
+                  placeholder="e.g. 45"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-foreground mb-1.5">
+              <label className="block text-sm font-bold text-foreground mb-1">
                 Instruction <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -300,79 +415,83 @@ export function RecipeModal({
                 <button
                   type="button"
                   onClick={addIngredient}
-                  className="flex items-center gap-1 text-sm font-bold text-primary hover:bg-blue-50 px-3 py-1 rounded-lg transition-colors cursor-pointer"
+                  className="flex items-center gap-1 text-xs font-bold text-[#0EA5E9] bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" /> Add
+                  <Plus className="w-4 h-4" /> Add Row
                 </button>
               </div>
 
               <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-secondary px-1 tracking-wider">
-                  <div className="col-span-4">Name</div>
-                  <div className="col-span-2 text-center">Quantity</div>
+                <div className="grid grid-cols-12 gap-2 text-[10px] uppercase font-bold text-secondary px-1 tracking-widest bg-gray-50 py-2 rounded-lg">
+                  <div className="col-span-4 pl-2">Ingredient</div>
+                  <div className="col-span-2 text-center">Qty</div>
                   <div className="col-span-3 text-center">Unit</div>
                   <div className="col-span-2 text-center">Cost</div>
                   <div className="col-span-1"></div>
                 </div>
 
-                {formData.ingredients.map((ing, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-12 gap-2 items-center"
-                  >
-                    <input
-                      type="text"
-                      value={ing.name}
-                      placeholder="Tomato"
-                      onChange={(e) =>
-                        updateIngredient(idx, "name", e.target.value)
-                      }
-                      className="col-span-4 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none font-medium"
-                    />
-                    <input
-                      type="text"
-                      value={ing.quantity}
-                      placeholder="100"
-                      onChange={(e) =>
-                        updateIngredient(idx, "quantity", e.target.value)
-                      }
-                      className="col-span-2 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-center font-medium"
-                    />
-                    <input
-                      type="text"
-                      value={ing.unit}
-                      placeholder="gm"
-                      onChange={(e) =>
-                        updateIngredient(idx, "unit", e.target.value)
-                      }
-                      className="col-span-3 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-center font-medium"
-                    />
-                    <input
-                      type="text"
-                      value={ing.cost}
-                      placeholder="$10"
-                      onChange={(e) =>
-                        updateIngredient(idx, "cost", e.target.value)
-                      }
-                      className="col-span-2 px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary outline-none text-center font-medium"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeIngredient(idx)}
-                      disabled={formData.ingredients.length === 1}
-                      className="col-span-1 flex justify-center text-gray-400 hover:text-red-500 disabled:opacity-30 cursor-pointer"
+                <div className="max-h-[250px] overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                  {formData.ingredients.map((ing, idx) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-12 gap-2 items-center p-2"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                      <input
+                        type="text"
+                        value={ing.ingredient}
+                        placeholder="Tomato"
+                        onChange={(e) =>
+                          updateIngredient(idx, "ingredient", e.target.value)
+                        }
+                        className="col-span-4 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-1 focus:ring-primary outline-none font-medium"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        value={ing.quantity}
+                        placeholder="100"
+                        onChange={(e) =>
+                          updateIngredient(idx, "quantity", e.target.value)
+                        }
+                        className="col-span-2 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-1 focus:ring-primary outline-none text-center font-medium"
+                      />
+                      <input
+                        type="text"
+                        value={ing.unit}
+                        placeholder="gm"
+                        onChange={(e) =>
+                          updateIngredient(idx, "unit", e.target.value)
+                        }
+                        className="col-span-3 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-1 focus:ring-primary outline-none text-center font-medium"
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        value={ing.cost}
+                        placeholder="10"
+                        onChange={(e) =>
+                          updateIngredient(idx, "cost", e.target.value)
+                        }
+                        className="col-span-2 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-1 focus:ring-primary outline-none text-center font-medium"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeIngredient(idx)}
+                        disabled={formData.ingredients.length === 1}
+                        className="col-span-1 flex justify-center text-red-400 hover:text-red-600 disabled:opacity-30 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
 
-                <div className="flex justify-end pt-2 pr-12 gap-4">
+                <div className="flex justify-end items-center pt-3 pr-24 gap-4 border-t border-gray-100">
                   <span className="text-xs font-bold text-secondary uppercase tracking-widest">
-                    Total
+                    Total Estimated Cost:
                   </span>
-                  <span className="text-sm font-bold text-foreground">
-                    ${totalIngredientsCost}
+                  <span className="text-sm font-extrabold text-[#0EA5E9]">
+                    ${totalIngredientsCost.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -383,20 +502,50 @@ export function RecipeModal({
               )}
             </div>
 
-            <div className="relative py-2">
+            <div className="relative py-1">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-gray-100" />
               </div>
-              <div className="relative flex justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-                <span className="bg-white px-4">Or</span>
+              <div className="relative flex justify-center text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <span className="bg-white px-4 italic">
+                  Excel synchronization
+                </span>
               </div>
             </div>
 
             {/* Excel Upload Area */}
             <div className="space-y-4">
-              <label className="block text-sm font-bold text-foreground">
-                Upload Recipe <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-bold text-foreground">
+                  Bulk Manage / Sync
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const templateData = [
+                      {
+                        ID: "",
+                        "Recipe Name": "Beef Burger",
+                        "Avg Time": "30",
+                        "Selling Cost": "15.00",
+                        Instruction: "Grill meat, assemble with bun.",
+                        "Outlet Type": "restaurant",
+                      },
+                    ];
+                    import("@/lib/excel").then((m) =>
+                      m.exportToExcel(
+                        templateData,
+                        "recipe_template.xlsx",
+                        "Template",
+                      ),
+                    );
+                  }}
+                  className="text-[10px] text-primary font-bold bg-blue-50 px-2.5 py-1.5 rounded-lg hover:bg-blue-100 transition-colors uppercase tracking-wider cursor-pointer"
+                >
+                  Download Template
+                </button>
+              </div>
+
               <input
                 type="file"
                 ref={fileInputRef}
@@ -407,14 +556,14 @@ export function RecipeModal({
 
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-blue-50/10 hover:bg-blue-50/30 transition-all cursor-pointer group"
+                className="border-2 border-dashed border-blue-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 bg-blue-50/10 hover:bg-blue-50/30 transition-all cursor-pointer group"
               >
-                <div className="w-12 h-12 bg-transparent flex items-center justify-center group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 bg-transparent flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Image
                     src="/icons/excel.png"
                     alt="Excel/CSV"
-                    width={40}
-                    height={40}
+                    width={32}
+                    height={32}
                     onError={(e) => {
                       (e.target as any).src =
                         "https://cdn-icons-png.flaticon.com/512/732/732220.png";
@@ -422,30 +571,37 @@ export function RecipeModal({
                   />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold text-foreground">
-                    {excelFileName || "Click to upload or drag and drop"}
+                  <p className="text-[13px] font-bold text-foreground">
+                    {excelFileName || "Upload technical sheet for sync"}
                   </p>
-                  <p className="text-xs font-medium text-secondary mt-1 uppercase tracking-wider">
-                    Supports: XLSX, XLS, CSV (Max. 50MB)
+                  <p className="text-[10px] font-medium text-secondary mt-1 uppercase tracking-widest opacity-60">
+                    XLSX, XLS, CSV format supported
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4 sticky bottom-0 bg-white pt-2 pb-4">
+          <div className="flex gap-4 sticky bottom-0 bg-white pt-4 pb-2 border-t border-gray-50">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+              className="flex-1 px-8 py-3 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer shadow-sm"
+              disabled={isCreating || isUpdating}
+              className="flex-1 px-8 py-3 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer shadow-md text-sm disabled:opacity-50"
             >
-              {mode === "add" ? "+ Add" : "Save"}
+              {isCreating || isUpdating
+                ? "Processing..."
+                : pendingCreateData.length > 0 || pendingUpdateData.length > 0
+                  ? `Sync ${pendingCreateData.length + pendingUpdateData.length} Items`
+                  : mode === "add"
+                    ? "Create Recipe"
+                    : "Update Recipe"}
             </button>
           </div>
         </form>

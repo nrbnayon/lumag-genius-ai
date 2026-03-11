@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Download } from "lucide-react";
-import { Recipe } from "@/types/recipe";
+import { Recipe } from "@/types/recipes.types";
 import { exportToExcel } from "@/lib/excel";
 
 interface RecipeExportModalProps {
@@ -22,23 +22,23 @@ export function RecipeExportModal({
   const handleExport = async () => {
     const exportData = Array.isArray(data) ? data : [data];
 
-    // Transform data for Excel - expanding ingredients into rows
     const worksheetData: any[] = [];
     exportData.forEach((recipe) => {
       recipe.ingredients.forEach((ing, idx) => {
         worksheetData.push({
+          "ID": idx === 0 ? recipe.id : "",
           "Recipe Name": idx === 0 ? recipe.name : "",
-          "Avg. Time": idx === 0 ? recipe.cookingTime : "",
-          "Selling Price": idx === 0 ? recipe.sellingPrice : "",
-          Instruction: idx === 0 ? recipe.instruction : "",
-          "Ingredient Name": ing.name,
-          Quantity: ing.quantity,
-          Unit: ing.unit,
-          Cost: ing.cost,
-          "Total Cost": idx === 0 ? recipe.cost : "",
+          "Avg. Time": idx === 0 ? recipe.avg_time : "",
+          "Selling Price": idx === 0 ? recipe.selling_cost : "",
+          "Instruction": idx === 0 ? recipe.instruction : "",
+          "Outlet Type": idx === 0 ? recipe.outlet_type : "",
+          "Ingredient Name": ing.ingredient,
+          "Quantity": ing.quantity,
+          "Unit": ing.unit,
+          "Cost": ing.cost,
+          "Total Cost": idx === 0 ? recipe.total_cost : "",
         });
       });
-      // Add an empty row between recipes if multiple
       if (Array.isArray(data) && data.length > 1) {
         worksheetData.push({});
       }
@@ -70,64 +70,64 @@ export function RecipeExportModal({
         </button>
 
         <div className="p-8">
-          <h2 className="text-xl font-bold mb-6">Expert Preview</h2>
+          <h2 className="text-xl font-bold mb-6">Export Preview ({Array.isArray(data) ? data.length : 1} recipes)</h2>
 
           <div className="border border-gray-200 rounded-xl overflow-x-auto mb-8">
             <table className="w-full text-sm text-center">
-              <thead className="bg-gray-50/50 text-secondary font-bold border-b border-gray-200">
+              <thead className="bg-[#E6F4FF] text-[#505050] font-bold border-b border-gray-200">
                 <tr>
                   <th className="p-4 min-w-[150px]">Recipe name</th>
                   <th className="p-4 min-w-[100px]">Avg. Time</th>
-                  <th className="p-4 min-w-[120px]">Selling Price</th>
+                  <th className="p-4 min-w-[120px]">Selling Cost</th>
                   <th className="p-4 min-w-[150px]">Instruction</th>
                   <th className="p-4" colSpan={4}>
                     Ingredients
                   </th>
                 </tr>
-                <tr className="border-t border-gray-100 text-xs text-gray-400">
+                <tr className="border-t border-gray-100 text-[10px] uppercase tracking-widest text-[#505050]">
                   <th colSpan={4}></th>
                   <th className="p-2 border-r border-gray-50">Name</th>
-                  <th className="p-2 border-r border-gray-50">Quantity</th>
+                  <th className="p-2 border-r border-gray-50">Qty</th>
                   <th className="p-2 border-r border-gray-50">Unit</th>
                   <th className="p-2">Cost</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 <tr>
-                  <td className="p-4 font-medium text-foreground border-r border-gray-50">
-                    {sample.name}
+                  <td className="p-4 font-bold text-foreground border-r border-gray-50">
+                    {sample?.name}
                   </td>
                   <td className="p-4 text-foreground border-r border-gray-50">
-                    {sample.cookingTime}
+                    {sample?.avg_time} min
                   </td>
                   <td className="p-4 text-foreground border-r border-gray-50">
-                    {sample.sellingPrice}
+                    ${sample?.selling_cost}
                   </td>
                   <td className="p-4 text-secondary text-xs text-left max-w-[200px] truncate border-r border-gray-50">
-                    {sample.instruction}
+                    {sample?.instruction}
                   </td>
                   <td colSpan={4} className="p-0">
                     <table className="w-full h-full text-[11px] divide-y divide-gray-50">
                       <tbody>
-                        {sample.ingredients.map((ing, i) => (
+                        {sample?.ingredients?.map((ing, i) => (
                           <tr key={i}>
-                            <td className="p-2 w-1/4 border-r border-gray-50">
-                              {ing.name}
+                            <td className="p-2 w-1/4 border-r border-gray-50 font-medium">
+                              {ing?.ingredient}
                             </td>
                             <td className="p-2 w-1/4 border-r border-gray-50">
-                              {ing.quantity}
+                              {ing?.quantity}
                             </td>
                             <td className="p-2 w-1/4 border-r border-gray-50">
-                              {ing.unit}
+                              {ing?.unit}
                             </td>
-                            <td className="p-2 w-1/4">{ing.cost}</td>
+                            <td className="p-2 w-1/4">${ing?.cost}</td>
                           </tr>
                         ))}
                         <tr className="font-bold bg-gray-50/30">
-                          <td colSpan={3} className="p-2 text-right">
-                            Total Cost
+                          <td colSpan={3} className="p-2 text-right uppercase tracking-widest text-[10px]">
+                            Total Estimated Cost
                           </td>
-                          <td className="p-2 text-foreground">{sample.cost}</td>
+                          <td className="p-2 text-primary font-extrabold text-[#0EA5E9]">${sample?.total_cost}</td>
                         </tr>
                       </tbody>
                     </table>
@@ -140,16 +140,16 @@ export function RecipeExportModal({
           <div className="flex gap-4">
             <button
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-foreground font-bold hover:bg-gray-50 transition-colors"
+              className="flex-1 px-6 py-3 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer text-sm"
             >
               Cancel
             </button>
             <button
               onClick={handleExport}
-              className="flex-1 px-6 py-3 bg-[#0EA5E9] text-white rounded-xl font-bold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+              className="flex-1 px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors shadow-md flex items-center justify-center gap-2 cursor-pointer text-sm"
             >
               <Download className="w-5 h-5" />
-              Export
+              Download Excel
             </button>
           </div>
         </div>

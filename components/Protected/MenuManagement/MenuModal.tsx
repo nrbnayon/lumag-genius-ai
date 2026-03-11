@@ -20,8 +20,8 @@ const MENU_TYPES: MenuType[] = [
   "Breakfast",
   "Lunch",
   "Dinner",
-  "Seasonal",
-  "Special",
+  // "Seasonal",
+  // "Special",
 ];
 const AVAILABLE_DISHES = [
   "Bread Pakora",

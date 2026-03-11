@@ -197,7 +197,7 @@ export default function IngredientsClient() {
         },
       },
       {
-        key: "category_name",
+        key: "category",
         header: "Category",
         align: "center",
       },
