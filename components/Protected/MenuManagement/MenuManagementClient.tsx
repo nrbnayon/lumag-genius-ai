@@ -86,7 +86,9 @@ export default function MenuManagementClient() {
     setIsExportModalOpen(true);
   };
 
-  const handleConfirmModal = async (formData: MenuFormData | MenuFormData[]) => {
+  const handleConfirmModal = async (
+    formData: MenuFormData | MenuFormData[],
+  ) => {
     try {
       if (modalMode === "add") {
         const payload = Array.isArray(formData) ? formData : [formData];
@@ -94,7 +96,7 @@ export default function MenuManagementClient() {
         toast.success(
           Array.isArray(formData)
             ? `Successfully added ${formData.length} menus`
-            : "Menu added successfully"
+            : "Menu added successfully",
         );
       } else if (selectedMenu) {
         if (Array.isArray(formData)) {
@@ -160,20 +162,25 @@ export default function MenuManagementClient() {
           <StatsCard
             title="Total Menus"
             value={totalItems}
+            items-
             icon={Utensils}
             iconColor="#3B82F6"
             iconBgColor="#DBEAFE"
           />
           <StatsCard
-             title="Approved"
-             value={menus.filter((m: Menu) => m.approval_status === "approved").length}
-             icon={LayoutGrid}
-             iconColor="#10B981"
-             iconBgColor="#D1FAE5"
+            title="Approved"
+            value={
+              menus.filter((m: Menu) => m.approval_status === "approved").length
+            }
+            icon={LayoutGrid}
+            iconColor="#10B981"
+            iconBgColor="#D1FAE5"
           />
           <StatsCard
             title="Pending Approval"
-            value={menus.filter((m: Menu) => m.approval_status === "pending").length}
+            value={
+              menus.filter((m: Menu) => m.approval_status === "pending").length
+            }
             icon={Clock}
             iconColor="#F59E0B"
             iconBgColor="#FEF3C7"

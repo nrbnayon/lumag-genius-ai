@@ -1,19 +1,27 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { X, Trash2, Check, ChevronDown } from "lucide-react";
+import { 
+  X, 
+  Check, 
+  ChevronDown,  
+  DollarSign, 
+  Store, 
+  Soup, 
+  FileSpreadsheet, 
+  UploadCloud, 
+  Layers 
+} from "lucide-react";
 import { Menu, MenuFormData, MenuType } from "@/types/menu";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { toast } from "sonner";
 import { readExcel } from "@/lib/excel";
-
 import { useGetDishesQuery } from "@/redux/services/menusApi";
 
 interface MenuModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: MenuFormData | MenuFormData[]) => void; // Support multi-data
+  onConfirm: (data: MenuFormData | MenuFormData[]) => void;
   menu?: Menu | null;
   mode: "add" | "edit";
 }
@@ -33,7 +41,7 @@ export function MenuModal({
   menu,
   mode,
 }: MenuModalProps) {
-  const { data: dishesData, isLoading: isLoadingDishes } = useGetDishesQuery(undefined, {
+  const { data: dishesData } = useGetDishesQuery(undefined, {
     skip: !isOpen,
   });
 
@@ -48,14 +56,11 @@ export function MenuModal({
   });
 
   const [multiData, setMultiData] = useState<MenuFormData[]>([]);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [excelFileName, setExcelFileName] = useState<string>("");
   const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [isDishesOpen, setIsDishesOpen] = useState(false);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof MenuFormData, string>>
-  >({});
+  const [errors, setErrors] = useState<Partial<Record<keyof MenuFormData, string>>>({});
   const [dishSearch, setDishSearch] = useState("");
   const dishInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +71,7 @@ export function MenuModal({
         name: menu.name,
         menu_type: menu.menu_type,
         outlet_type: menu.outlet_type || "restaurant",
-        dishes: menu.dishes.map(d => d.id), // Use IDs for update
+        dishes: menu.dishes.map(d => d.id),
         total_cost: menu.total_cost,
       });
       setMultiData([]);
@@ -92,7 +97,6 @@ export function MenuModal({
 
       try {
         const data = await readExcel(file);
-
         if (data && data.length > 0) {
           const processedData: MenuFormData[] = data.map((row: any) => {
             const find = (...keys: string[]) => {
@@ -119,15 +123,11 @@ export function MenuModal({
             };
           });
 
-          // Show first item in form
           if (processedData.length > 0) {
             setFormData(processedData[0]);
             setMultiData(processedData);
           }
-
           toast.success(`Extracted ${processedData.length} menu(s) successfully!`);
-        } else {
-          toast.error("No data found in the file.");
         }
       } catch (error) {
         console.error("Excel Read Error:", error);
@@ -165,7 +165,6 @@ export function MenuModal({
       e.preventDefault();
       addCustomDish();
     } else if (e.key === "Backspace" && !dishSearch && formData.dishes.length > 0) {
-      // Remove last dish if backspace is pressed on empty input
       setFormData((prev) => ({
         ...prev,
         dishes: (prev.dishes as (string | number)[]).slice(0, -1) as string[] | number[],
@@ -183,7 +182,6 @@ export function MenuModal({
     if (!formData.total_cost) newErrors.total_cost = "Required";
     if (formData.dishes.length === 0)
       newErrors.dishes = "Select at least one dish";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -192,7 +190,6 @@ export function MenuModal({
     e.preventDefault();
     if (validate()) {
       if (multiData.length > 1) {
-        // If we have multi-data but only edited the first one, update the first one in the list
         const updatedMultiData = [...multiData];
         updatedMultiData[0] = { ...formData };
         onConfirm(updatedMultiData);
@@ -210,302 +207,305 @@ export function MenuModal({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] overflow-y-auto custom-scrollbar">
-        <div className="flex items-center justify-between p-5 border-b border-gray-100 sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-bold text-foreground">
-            {mode === "add" ? "Add Menu" : "Edit Menu"}
-          </h2>
+      <div className="relative w-full max-w-3xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 max-h-[95vh] flex flex-col border-none">
+        {/* Header */}
+        <div className="flex items-center justify-between p-8 border-b border-gray-100 bg-gray-50/50">
+          <div className="flex flex-col">
+            <h2 className="text-2xl font-bold text-foreground leading-none">
+              {mode === "add" ? "Create New Menu" : "Update Menu Settings"}
+            </h2>
+            <p className="text-xs text-secondary mt-2 font-medium">Complete the information below or upload a file</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+            className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all cursor-pointer group"
           >
-            <X className="w-6 h-6" />
+            <X className="w-6 h-6 group-hover:rotate-90 transition-transform" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="space-y-4">
-            {/* Menu Name */}
-            <div>
-              <label className="block text-sm font-bold text-foreground mb-1.5">
-                Menu Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className={cn(
-                  "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                  errors.name ? "border-red-500" : "border-gray-200",
-                )}
-                placeholder="Enter menu name"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* Types Dropdown */}
-              <div className="relative">
-                <label className="block text-sm font-bold text-foreground mb-1.5">
-                  Types <span className="text-red-500">*</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsTypeOpen(!isTypeOpen)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-xl flex items-center justify-between hover:border-primary transition-all text-sm font-medium bg-white"
-                >
-                  <span className="capitalize">{formData.menu_type.toLowerCase()}</span>
-                  <ChevronDown
+        {/* Form Body */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <div className="space-y-4">
+              {/* Menu Name */}
+              <div className="bg-gray-50/50 p-6 rounded-3xl space-y-4 border border-gray-100">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-2">
+                    <Soup className="w-4 h-4 text-primary" />
+                    Menu Name <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className={cn(
-                      "w-4 h-4 transition-transform text-secondary",
-                      isTypeOpen && "rotate-180",
+                      "w-full px-5 py-3 bg-white border rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold placeholder:text-gray-300 shadow-sm",
+                      errors.name ? "border-red-500" : "border-gray-200",
                     )}
+                    placeholder="e.g. Summer Special"
                   />
-                </button>
-                {isTypeOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden py-1">
-                    {MENU_TYPES.map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => {
-                          setFormData({ ...formData, menu_type: type as MenuType });
-                          setIsTypeOpen(false);
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors font-medium capitalize"
-                      >
-                        {type.toLowerCase()}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                </div>
               </div>
 
-              {/* Total Cost */}
-              <div>
-                <label className="block text-sm font-bold text-foreground mb-1.5">
-                  Total Cost <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={formData.total_cost}
-                  onChange={(e) =>
-                    setFormData({ ...formData, total_cost: e.target.value })
-                  }
-                  className={cn(
-                    "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                    errors.total_cost ? "border-red-500" : "border-gray-200",
-                  )}
-                  placeholder="e.g. $20"
-                />
-              </div>
-            </div>
-
-            {/* Outlet Type Selection */}
-            <div className="flex items-center gap-4">
-               <label className="text-sm font-bold text-foreground">Outlet Type:</label>
-               <div className="flex gap-2">
-                 {["restaurant", "bar"].map((type) => (
-                   <button
-                     key={type}
-                     type="button"
-                     onClick={() => setFormData({ ...formData, outlet_type: type })}
-                     className={cn(
-                       "px-4 py-1.5 rounded-full text-xs font-bold border transition-all capitalize",
-                       formData.outlet_type === type
-                         ? "bg-primary text-white border-primary"
-                         : "bg-white text-secondary border-gray-200 hover:border-primary"
-                     )}
-                   >
-                     {type}
-                   </button>
-                 ))}
-               </div>
-            </div>
-
-            {/* Select Dishes Multi-select */}
-            <div className="relative">
-              <label className="block text-sm font-bold text-foreground mb-1.5">
-                Select Dishes <span className="text-red-500">*</span>
-              </label>
-              <div
-                className={cn(
-                  "min-h-[42px] px-3 py-1.5 border border-gray-200 rounded-xl flex flex-wrap gap-2 hover:border-primary transition-all bg-white cursor-text",
-                  errors.dishes && "border-red-500",
-                  isDishesOpen && "ring-2 ring-primary/20 border-primary",
-                )}
-                onClick={() => {
-                  setIsDishesOpen(true);
-                  dishInputRef.current?.focus();
-                }}
-              >
-                {formData.dishes.map((dish: string|number) => {
-                  const dishName = typeof dish === 'number' 
-                    ? availableDishes.find(d => d.id === dish)?.name || dish
-                    : dish;
-                  return (
-                    <span
-                      key={dish}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-primary text-xs font-bold rounded-lg border border-blue-100"
-                    >
-                      {dishName}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleDish(dish);
-                        }}
-                        className="p-0.5 hover:bg-blue-200 rounded-full transition-colors cursor-pointer"
-                      >
-                        <X className="w-3 h-3 text-red-500" />
-                      </button>
-                    </span>
-                  );
-                })}
-                <input
-                  ref={dishInputRef}
-                  type="text"
-                  value={dishSearch}
-                  onChange={(e) => {
-                    setDishSearch(e.target.value);
-                    setIsDishesOpen(true);
-                  }}
-                  onKeyDown={handleDishKeyDown}
-                  onFocus={() => setIsDishesOpen(true)}
-                  className="flex-1 min-w-[120px] outline-none text-sm font-medium placeholder:text-gray-300"
-                  placeholder={formData.dishes.length === 0 ? "Type or select dishes..." : ""}
-                />
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDishesOpen(!isDishesOpen);
-                  }}
-                  className="p-1"
-                >
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 transition-transform text-secondary",
-                      isDishesOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-              </div>
-
-              {isDishesOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setIsDishesOpen(false)}
-                  />
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden py-1 max-h-48 overflow-y-auto custom-scrollbar">
-                    {filteredDishes.length > 0 ? (
-                      filteredDishes.map((dish) => (
+              {/* Types & Cost */}
+              <div className="grid grid-cols-2 gap-6 bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+                <div className="relative">
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-2">
+                    <Layers className="w-4 h-4 text-blue-500" />
+                    Menu Category <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsTypeOpen(!isTypeOpen)}
+                    className="w-full px-5 py-3 border border-gray-200 rounded-2xl flex items-center justify-between hover:border-primary transition-all text-sm font-bold bg-white shadow-sm"
+                  >
+                    <span className="capitalize">{formData.menu_type.toLowerCase()}</span>
+                    <ChevronDown className={cn("w-4 h-4 transition-transform text-secondary", isTypeOpen && "rotate-180")} />
+                  </button>
+                  {isTypeOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-20 overflow-hidden py-1 animate-in slide-in-from-top-2 duration-200">
+                      {MENU_TYPES.map((type) => (
                         <button
-                          key={dish.id}
+                          key={type}
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, menu_type: type as MenuType });
+                            setIsTypeOpen(false);
+                          }}
+                          className="w-full px-5 py-3 text-left text-sm hover:bg-blue-50 transition-colors font-bold capitalize flex items-center justify-between"
+                        >
+                          {type.toLowerCase()}
+                          {formData.menu_type === type && <Check className="w-4 h-4 text-primary" />}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-2">
+                    <DollarSign className="w-4 h-4 text-emerald-500" />
+                    Initial Cost <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <div className="relative group">
+                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                    <input
+                      type="text"
+                      value={formData.total_cost}
+                      onChange={(e) => setFormData({ ...formData, total_cost: e.target.value.replace(/[^0-9.]/g, "") })}
+                      className={cn(
+                        "w-full pl-9 pr-5 py-3 bg-white border rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold placeholder:text-gray-300 shadow-sm",
+                        errors.total_cost ? "border-red-500" : "border-gray-200",
+                      )}
+                      placeholder="25.00"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Outlet Destination */}
+              <div className="flex items-center justify-between bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+                <div className="flex flex-col">
+                  <label className="text-sm font-bold text-foreground">Outlet Destination</label>
+                  <p className="text-[10px] text-secondary font-medium">Where will this menu be used?</p>
+                </div>
+                <div className="flex gap-2 p-1.5 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                  {[
+                    { id: "restaurant", label: "Restaurant", icon: Store },
+                    { id: "bar", label: "The Bar", icon: Soup }
+                  ].map((type) => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, outlet_type: type.id })}
+                      className={cn(
+                        "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-none",
+                        formData.outlet_type === type.id
+                          ? "bg-primary text-white shadow-md shadow-primary/20"
+                          : "text-secondary hover:bg-gray-50 hover:text-primary"
+                      )}
+                    >
+                      <type.icon className="w-3.5 h-3.5" />
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dishes Selection */}
+              <div className="relative bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+                <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-4">
+                  <Soup className="w-4 h-4 text-amber-500" />
+                  Select & Create Dishes <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div
+                  className={cn(
+                    "min-h-[60px] px-4 py-3 bg-white border-2 border-dashed border-gray-200 rounded-2xl flex flex-wrap gap-2 hover:border-primary/50 transition-all cursor-text",
+                    errors.dishes && "border-red-500",
+                    isDishesOpen && "border-solid border-primary ring-4 ring-primary/5",
+                  )}
+                  onClick={() => {
+                    setIsDishesOpen(true);
+                    dishInputRef.current?.focus();
+                  }}
+                >
+                  {formData.dishes.map((dish: string|number) => {
+                    const dishName = typeof dish === 'number' 
+                      ? availableDishes.find(d => d.id === dish)?.name || dish
+                      : dish;
+                    return (
+                      <span
+                        key={dish}
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-primary text-[11px] font-bold rounded-xl border border-blue-100 group animate-in zoom-in-95 duration-200"
+                      >
+                        {dishName}
+                        <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleDish(dish.id);
-                            setDishSearch("");
+                            toggleDish(dish);
                           }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between font-medium"
+                          className="p-0.5 hover:bg-red-50 rounded-lg transition-colors cursor-pointer group-hover:scale-110"
                         >
-                          <span>{dish.name}</span>
-                          {(formData.dishes as (string|number)[]).includes(dish.id) && (
-                            <Check className="w-4 h-4 text-primary" />
-                          )}
+                          <X className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
                         </button>
-                      ))
-                    ) : dishSearch ? (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addCustomDish();
-                        }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium text-primary"
-                      >
-                        <Check className="w-4 h-4" />
-                        <span>Add "{dishSearch}"</span>
-                      </button>
-                    ) : (
-                      <div className="px-4 py-2 text-sm text-gray-400 font-medium">
-                        No dishes found
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-100" />
-              </div>
-              <div className="relative flex justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-                <span className="bg-white px-4">Or</span>
-              </div>
-            </div>
-
-            {/* Excel Upload Area */}
-            <div className="space-y-4">
-              <label className="block text-sm font-bold text-foreground">
-                Upload Menu <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileUpload}
-              />
-
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 bg-blue-50/10 hover:bg-blue-50/30 transition-all cursor-pointer group"
-              >
-                <div className="w-12 h-12 bg-transparent flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Image
-                    src="/icons/excel.png"
-                    alt="Excel/CSV"
-                    width={40}
-                    height={40}
-                    onError={(e) => {
-                      (e.target as any).src =
-                        "https://cdn-icons-png.flaticon.com/512/732/732220.png";
+                      </span>
+                    );
+                  })}
+                  <input
+                    ref={dishInputRef}
+                    type="text"
+                    value={dishSearch}
+                    onChange={(e) => {
+                      setDishSearch(e.target.value);
+                      setIsDishesOpen(true);
                     }}
+                    onKeyDown={handleDishKeyDown}
+                    onFocus={() => setIsDishesOpen(true)}
+                    className="flex-1 min-w-[200px] outline-none text-sm font-bold placeholder:text-gray-300 bg-transparent"
+                    placeholder={formData.dishes.length === 0 ? "Type to search or add custom dish..." : "Add more..."}
                   />
                 </div>
-                <div className="text-center">
-                  <p className="text-sm font-bold text-foreground">
-                    {excelFileName || "Click to upload or drag and drop"}
-                  </p>
-                  <p className="text-xs font-medium text-secondary mt-1 uppercase tracking-wider">
-                    Supports: XLSX, XLS, CSV (Max. 50MB)
-                  </p>
+
+                {isDishesOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsDishesOpen(false)} />
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl z-20 overflow-hidden py-1 max-h-48 overflow-y-auto custom-scrollbar">
+                      {filteredDishes.length > 0 ? (
+                        filteredDishes.map((dish) => (
+                          <button
+                            key={dish.id}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleDish(dish.id);
+                              setDishSearch("");
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between font-bold"
+                          >
+                            <span>{dish.name}</span>
+                            {(formData.dishes as (string|number)[]).includes(dish.id) && (
+                              <Check className="w-4 h-4 text-primary" />
+                            )}
+                          </button>
+                        ))
+                      ) : dishSearch ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addCustomDish();
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 font-bold text-primary"
+                        >
+                          <Check className="w-4 h-4" />
+                          <span>Add "{dishSearch}"</span>
+                        </button>
+                      ) : (
+                        <div className="px-4 py-2 text-sm text-gray-400 font-bold">No dishes found</div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Import Section */}
+              <div className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200" />
+                </div>
+                <div className="relative flex justify-center text-[10px] font-black text-gray-400 uppercase tracking-[.3em]">
+                  <span className="bg-gray-50 px-6 rounded-full border border-gray-100 py-1">Direct Import</span>
+                </div>
+              </div>
+
+              {/* Excel Upload Area */}
+              <div className="space-y-4 bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-sm font-bold text-foreground">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+                    Excel Data Mapping
+                  </label>
+                  <div className="text-[10px] font-bold text-amber-600 bg-amber-50 px-3 py-1 rounded-lg border border-amber-100 uppercase tracking-wider">
+                    Bulk Actions Ready
+                  </div>
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={handleFileUpload}
+                />
+
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-emerald-200 rounded-[2rem] p-10 flex flex-col items-center justify-center gap-4 bg-emerald-50/10 hover:bg-emerald-50/30 hover:border-emerald-400 transition-all cursor-pointer group relative overflow-hidden shadow-inner"
+                >
+                  <div className="p-4 bg-white rounded-2xl shadow-sm border border-emerald-100 group-hover:scale-110 transition-transform group-hover:bg-emerald-50 relative z-10">
+                    <UploadCloud className="w-8 h-8 text-emerald-500" />
+                  </div>
+                  <div className="text-center relative z-10">
+                    <p className="text-base font-black text-foreground">
+                      {excelFileName || "Drop your Excel catalog here"}
+                    </p>
+                    <p className="text-xs font-bold text-secondary mt-2 opacity-60">
+                      Supports .XLSX, .XLS and .CSV formats
+                    </p>
+                  </div>
+                  <div className="absolute bottom-[-10px] right-[-10px] opacity-10 rotate-12 group-hover:rotate-0 transition-transform">
+                    <FileSpreadsheet className="w-24 h-24" />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex gap-4 sticky bottom-0 bg-white pt-2 pb-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex-1 px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors shadow-sm cursor-pointer"
-            >
-              {mode === "add" ? "+ Add" : "Save"}
-            </button>
-          </div>
-        </form>
+            {/* Submit Footer */}
+            <div className="p-2 pt-8 flex gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 px-8 py-4 border-2 border-gray-200 rounded-2xl text-secondary font-black hover:bg-white hover:border-gray-300 transition-all cursor-pointer text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-[2] px-8 py-4 bg-primary text-white rounded-2xl font-black hover:bg-blue-600 shadow-xl hover:shadow-primary/30 transition-all cursor-pointer transform active:scale-95 text-sm flex items-center justify-center gap-3"
+              >
+                {mode === "add" ? (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Create New Menu
+                  </>
+                ) : (
+                  "Save Changes"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
