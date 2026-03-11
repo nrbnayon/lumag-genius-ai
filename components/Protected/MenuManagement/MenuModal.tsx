@@ -8,29 +8,22 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { readExcel } from "@/lib/excel";
 
+import { useGetDishesQuery } from "@/redux/services/menusApi";
+
 interface MenuModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: MenuFormData) => void;
+  onConfirm: (data: MenuFormData | MenuFormData[]) => void; // Support multi-data
   menu?: Menu | null;
   mode: "add" | "edit";
 }
 
 const MENU_TYPES: MenuType[] = [
-  "Breakfast",
-  "Lunch",
-  "Dinner",
-  // "Seasonal",
-  // "Special",
-];
-const AVAILABLE_DISHES = [
-  "Bread Pakora",
-  "Beef",
-  "Chicken fry",
-  "Grilled Salmon Fillet",
-  "Chicken burger",
-  "Garden Salad",
-  "Mashed Potatoes",
+  "BREAKFAST",
+  "LUNCH",
+  "DINNER",
+  "SEASONAL",
+  "SPECIAL",
 ];
 
 export function MenuModal({
@@ -40,13 +33,21 @@ export function MenuModal({
   menu,
   mode,
 }: MenuModalProps) {
+  const { data: dishesData, isLoading: isLoadingDishes } = useGetDishesQuery(undefined, {
+    skip: !isOpen,
+  });
+
+  const availableDishes = dishesData?.data || [];
+
   const [formData, setFormData] = useState<MenuFormData>({
     name: "",
-    type: "Lunch",
+    menu_type: "LUNCH",
+    outlet_type: "restaurant",
     dishes: [],
-    cost: "",
-    image: null,
+    total_cost: "",
   });
+
+  const [multiData, setMultiData] = useState<MenuFormData[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [excelFileName, setExcelFileName] = useState<string>("");
@@ -55,25 +56,30 @@ export function MenuModal({
   const [errors, setErrors] = useState<
     Partial<Record<keyof MenuFormData, string>>
   >({});
+  const [dishSearch, setDishSearch] = useState("");
+  const dishInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (menu) {
       setFormData({
+        id: menu.id,
         name: menu.name,
-        type: menu.type,
-        dishes: menu.dishes,
-        cost: menu.cost,
-        image: null,
+        menu_type: menu.menu_type,
+        outlet_type: menu.outlet_type || "restaurant",
+        dishes: menu.dishes.map(d => d.id), // Use IDs for update
+        total_cost: menu.total_cost,
       });
+      setMultiData([]);
     } else {
       setFormData({
         name: "",
-        type: "Lunch",
+        menu_type: "LUNCH",
+        outlet_type: "restaurant",
         dishes: [],
-        cost: "",
-        image: null,
+        total_cost: "",
       });
       setExcelFileName("");
+      setMultiData([]);
     }
     setErrors({});
   }, [menu, isOpen]);
@@ -88,28 +94,38 @@ export function MenuModal({
         const data = await readExcel(file);
 
         if (data && data.length > 0) {
-          const row = data[0];
-          const find = (...keys: string[]) => {
-            const k = Object.keys(row).find((k) =>
-              keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-            );
-            return k ? String(row[k]) : "";
-          };
+          const processedData: MenuFormData[] = data.map((row: any) => {
+            const find = (...keys: string[]) => {
+              const k = Object.keys(row).find((k) =>
+                keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+              );
+              return k ? String(row[k]) : "";
+            };
 
-          const dishesStr = find("dishes", "items", "food");
-          const extractedDishes = dishesStr
-            ? dishesStr.split(",").map((d) => d.trim())
-            : [];
+            const dishesStr = find("dishes", "items", "food");
+            const extractedDishes = dishesStr
+              ? dishesStr.split(",").map((d) => d.trim())
+              : [];
 
-          setFormData((prev) => ({
-            ...prev,
-            name: find("name", "menu", "title") || prev.name,
-            type: (find("type", "category") as MenuType) || prev.type,
-            cost: find("cost", "price", "total") || prev.cost,
-            dishes: extractedDishes.length > 0 ? extractedDishes : prev.dishes,
-          }));
+            let rawType = find("type", "category", "menu_type").toUpperCase();
+            if (!MENU_TYPES.includes(rawType as MenuType)) rawType = "LUNCH";
 
-          toast.success("Menu auto-filled successfully!");
+            return {
+              name: find("name", "menu", "title"),
+              menu_type: rawType as MenuType,
+              outlet_type: find("outlet", "outlet_type") || "restaurant",
+              total_cost: find("cost", "price", "total", "total_cost"),
+              dishes: extractedDishes,
+            };
+          });
+
+          // Show first item in form
+          if (processedData.length > 0) {
+            setFormData(processedData[0]);
+            setMultiData(processedData);
+          }
+
+          toast.success(`Extracted ${processedData.length} menu(s) successfully!`);
         } else {
           toast.error("No data found in the file.");
         }
@@ -122,20 +138,49 @@ export function MenuModal({
     }
   };
 
-  const toggleDish = (dish: string) => {
+  const toggleDish = (dish: string | number) => {
     setFormData((prev) => {
-      const exists = prev.dishes.includes(dish);
+      const dishes = (prev.dishes || []) as (string | number)[];
+      const exists = dishes.includes(dish);
       if (exists) {
-        return { ...prev, dishes: prev.dishes.filter((d) => d !== dish) };
+        return { ...prev, dishes: dishes.filter((d) => d !== dish) as string[] | number[] };
       }
-      return { ...prev, dishes: [...prev.dishes, dish] };
+      return { ...prev, dishes: [...dishes, dish] as string[] | number[] };
     });
   };
+
+  const addCustomDish = () => {
+    const trimmedDish = dishSearch.trim();
+    if (trimmedDish && !(formData.dishes as (string | number)[]).includes(trimmedDish)) {
+      setFormData((prev) => ({
+        ...prev,
+        dishes: [...(prev.dishes as (string | number)[]), trimmedDish] as string[] | number[],
+      }));
+      setDishSearch("");
+    }
+  };
+
+  const handleDishKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addCustomDish();
+    } else if (e.key === "Backspace" && !dishSearch && formData.dishes.length > 0) {
+      // Remove last dish if backspace is pressed on empty input
+      setFormData((prev) => ({
+        ...prev,
+        dishes: (prev.dishes as (string | number)[]).slice(0, -1) as string[] | number[],
+      }));
+    }
+  };
+
+  const filteredDishes = availableDishes.filter((dish) =>
+    dish.name.toLowerCase().includes(dishSearch.toLowerCase())
+  );
 
   const validate = () => {
     const newErrors: any = {};
     if (!formData.name) newErrors.name = "Required";
-    if (!formData.cost) newErrors.cost = "Required";
+    if (!formData.total_cost) newErrors.total_cost = "Required";
     if (formData.dishes.length === 0)
       newErrors.dishes = "Select at least one dish";
 
@@ -146,7 +191,14 @@ export function MenuModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onConfirm(formData);
+      if (multiData.length > 1) {
+        // If we have multi-data but only edited the first one, update the first one in the list
+        const updatedMultiData = [...multiData];
+        updatedMultiData[0] = { ...formData };
+        onConfirm(updatedMultiData);
+      } else {
+        onConfirm(formData);
+      }
     }
   };
 
@@ -203,7 +255,7 @@ export function MenuModal({
                   onClick={() => setIsTypeOpen(!isTypeOpen)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-xl flex items-center justify-between hover:border-primary transition-all text-sm font-medium bg-white"
                 >
-                  <span>{formData.type}</span>
+                  <span className="capitalize">{formData.menu_type.toLowerCase()}</span>
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 transition-transform text-secondary",
@@ -218,12 +270,12 @@ export function MenuModal({
                         key={type}
                         type="button"
                         onClick={() => {
-                          setFormData({ ...formData, type });
+                          setFormData({ ...formData, menu_type: type as MenuType });
                           setIsTypeOpen(false);
                         }}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors font-medium"
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors font-medium capitalize"
                       >
-                        {type}
+                        {type.toLowerCase()}
                       </button>
                     ))}
                   </div>
@@ -237,17 +289,39 @@ export function MenuModal({
                 </label>
                 <input
                   type="text"
-                  value={formData.cost}
+                  value={formData.total_cost}
                   onChange={(e) =>
-                    setFormData({ ...formData, cost: e.target.value })
+                    setFormData({ ...formData, total_cost: e.target.value })
                   }
                   className={cn(
                     "w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                    errors.cost ? "border-red-500" : "border-gray-200",
+                    errors.total_cost ? "border-red-500" : "border-gray-200",
                   )}
                   placeholder="e.g. $20"
                 />
               </div>
+            </div>
+
+            {/* Outlet Type Selection */}
+            <div className="flex items-center gap-4">
+               <label className="text-sm font-bold text-foreground">Outlet Type:</label>
+               <div className="flex gap-2">
+                 {["restaurant", "bar"].map((type) => (
+                   <button
+                     key={type}
+                     type="button"
+                     onClick={() => setFormData({ ...formData, outlet_type: type })}
+                     className={cn(
+                       "px-4 py-1.5 rounded-full text-xs font-bold border transition-all capitalize",
+                       formData.outlet_type === type
+                         ? "bg-primary text-white border-primary"
+                         : "bg-white text-secondary border-gray-200 hover:border-primary"
+                     )}
+                   >
+                     {type}
+                   </button>
+                 ))}
+               </div>
             </div>
 
             {/* Select Dishes Multi-select */}
@@ -255,42 +329,114 @@ export function MenuModal({
               <label className="block text-sm font-bold text-foreground mb-1.5">
                 Select Dishes <span className="text-red-500">*</span>
               </label>
-              <button
-                type="button"
-                onClick={() => setIsDishesOpen(!isDishesOpen)}
+              <div
                 className={cn(
-                  "w-full px-4 py-2 border border-gray-200 rounded-xl flex items-center justify-between hover:border-primary transition-all text-sm font-medium bg-white",
+                  "min-h-[42px] px-3 py-1.5 border border-gray-200 rounded-xl flex flex-wrap gap-2 hover:border-primary transition-all bg-white cursor-text",
                   errors.dishes && "border-red-500",
+                  isDishesOpen && "ring-2 ring-primary/20 border-primary",
                 )}
+                onClick={() => {
+                  setIsDishesOpen(true);
+                  dishInputRef.current?.focus();
+                }}
               >
-                <span className="truncate">
-                  {formData.dishes.length > 0
-                    ? formData.dishes.join(", ")
-                    : "Select dishes"}
-                </span>
-                <ChevronDown
-                  className={cn(
-                    "w-4 h-4 transition-transform text-secondary",
-                    isDishesOpen && "rotate-180",
-                  )}
-                />
-              </button>
-              {isDishesOpen && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden py-1 max-h-48 overflow-y-auto custom-scrollbar">
-                  {AVAILABLE_DISHES.map((dish) => (
-                    <button
+                {formData.dishes.map((dish: string|number) => {
+                  const dishName = typeof dish === 'number' 
+                    ? availableDishes.find(d => d.id === dish)?.name || dish
+                    : dish;
+                  return (
+                    <span
                       key={dish}
-                      type="button"
-                      onClick={() => toggleDish(dish)}
-                      className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between font-medium"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-primary text-xs font-bold rounded-lg border border-blue-100"
                     >
-                      <span>{dish}</span>
-                      {formData.dishes.includes(dish) && (
-                        <Check className="w-4 h-4 text-primary" />
-                      )}
-                    </button>
-                  ))}
-                </div>
+                      {dishName}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleDish(dish);
+                        }}
+                        className="p-0.5 hover:bg-blue-200 rounded-full transition-colors cursor-pointer"
+                      >
+                        <X className="w-3 h-3 text-red-500" />
+                      </button>
+                    </span>
+                  );
+                })}
+                <input
+                  ref={dishInputRef}
+                  type="text"
+                  value={dishSearch}
+                  onChange={(e) => {
+                    setDishSearch(e.target.value);
+                    setIsDishesOpen(true);
+                  }}
+                  onKeyDown={handleDishKeyDown}
+                  onFocus={() => setIsDishesOpen(true)}
+                  className="flex-1 min-w-[120px] outline-none text-sm font-medium placeholder:text-gray-300"
+                  placeholder={formData.dishes.length === 0 ? "Type or select dishes..." : ""}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDishesOpen(!isDishesOpen);
+                  }}
+                  className="p-1"
+                >
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 transition-transform text-secondary",
+                      isDishesOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+              </div>
+
+              {isDishesOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsDishesOpen(false)}
+                  />
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-lg z-20 overflow-hidden py-1 max-h-48 overflow-y-auto custom-scrollbar">
+                    {filteredDishes.length > 0 ? (
+                      filteredDishes.map((dish) => (
+                        <button
+                          key={dish.id}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDish(dish.id);
+                            setDishSearch("");
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center justify-between font-medium"
+                        >
+                          <span>{dish.name}</span>
+                          {(formData.dishes as (string|number)[]).includes(dish.id) && (
+                            <Check className="w-4 h-4 text-primary" />
+                          )}
+                        </button>
+                      ))
+                    ) : dishSearch ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addCustomDish();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-blue-50 transition-colors flex items-center gap-2 font-medium text-primary"
+                      >
+                        <Check className="w-4 h-4" />
+                        <span>Add "{dishSearch}"</span>
+                      </button>
+                    ) : (
+                      <div className="px-4 py-2 text-sm text-gray-400 font-medium">
+                        No dishes found
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 

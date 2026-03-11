@@ -25,10 +25,10 @@ export function MenuExportModal({
     // Transform data for Excel
     const worksheetData = exportData.map((menu) => ({
       "Menu Name": menu.name,
-      Type: menu.type,
-      "Select Dishes": menu.dishes.join(", "),
-      "Total Cost": menu.cost,
-      Status: menu.status,
+      Type: menu.menu_type,
+      "Select Dishes": menu.dishes.map(d => d.name).join(", "),
+      "Total Cost": menu.total_cost,
+      Status: menu.approval_status,
     }));
 
     const fileName = Array.isArray(data)
@@ -77,12 +77,12 @@ export function MenuExportModal({
                     {sample.name}
                   </td>
                   <td className="p-4 text-foreground border-r border-gray-50">
-                    {sample.type}
+                    {sample.menu_type}
                   </td>
                   <td className="p-4 text-foreground border-r border-gray-50">
-                    {sample.dishes.join(", ")}
+                    {sample.dishes.map(d => d.name).join(", ")}
                   </td>
-                  <td className="p-4 text-foreground">{sample.cost}</td>
+                  <td className="p-4 text-foreground">{sample.total_cost}</td>
                 </tr>
               </tbody>
             </table>

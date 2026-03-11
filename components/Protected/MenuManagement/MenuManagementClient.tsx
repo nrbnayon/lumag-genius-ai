@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { StatsCard } from "@/components/Shared/StatsCard";
 import {
@@ -16,18 +16,24 @@ import SearchBar from "@/components/Shared/SearchBar";
 import { Pagination } from "@/components/Shared/Pagination";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 import { toast } from "sonner";
-import { menuData } from "@/data/menuData";
 import { Menu, MenuFormData } from "@/types/menu";
 import { MenuCard } from "./MenuCard";
 import { MenuModal } from "./MenuModal";
 import { MenuExportModal } from "./MenuExportModal";
 import { MenuGridSkeleton } from "@/components/Skeleton/MenuSkeleton";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  useGetAllMenusQuery,
+  useCreateMenusMutation,
+  useUpdateMenusMutation,
+  useUpdateMenuMutation,
+  useDeleteMenuMutation,
+} from "@/redux/services/menusApi";
 
 export default function MenuManagementClient() {
-  const [menus, setMenus] = useState<Menu[]>(menuData);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const itemsPerPage = 8;
 
   // Modals state
@@ -37,22 +43,21 @@ export default function MenuManagementClient() {
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedMenu, setSelectedMenu] = useState<Menu | null>(null);
 
-  // Filtered data
-  const filteredMenus = useMemo(() => {
-    return menus.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.type.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [menus, searchQuery]);
+  // API Hooks
+  const { data, isLoading, isFetching } = useGetAllMenusQuery({
+    page: currentPage,
+    page_size: itemsPerPage,
+    search_term: debouncedSearch,
+  });
 
-  // Paginated data
-  const paginatedMenus = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredMenus.slice(start, start + itemsPerPage);
-  }, [filteredMenus, currentPage]);
+  const [createMenus, { isLoading: isCreating }] = useCreateMenusMutation();
+  const [updateMenus, { isLoading: isUpdatingBulk }] = useUpdateMenusMutation();
+  const [updateMenu, { isLoading: isUpdatingSingle }] = useUpdateMenuMutation();
+  const [deleteMenu, { isLoading: isDeleting }] = useDeleteMenuMutation();
 
-  const totalPages = Math.ceil(filteredMenus.length / itemsPerPage);
+  const menus = data?.data || [];
+  const totalItems = data?.count || 0;
+  const totalPages = data?.total_pages || 1;
 
   // Handlers
   const handleAddClick = () => {
@@ -81,47 +86,39 @@ export default function MenuManagementClient() {
     setIsExportModalOpen(true);
   };
 
-  const handleConfirmModal = (formData: MenuFormData) => {
-    if (modalMode === "add") {
-      const newMenu: Menu = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.name,
-        type: formData.type,
-        cost: formData.cost,
-        dishes: formData.dishes,
-        itemsCount: formData.dishes.length,
-        status: "Pending",
-        image: formData.image ? URL.createObjectURL(formData.image) : undefined,
-      };
-      setMenus([newMenu, ...menus]);
-      toast.success("Menu added successfully");
-    } else if (selectedMenu) {
-      setMenus(
-        menus.map((m) =>
-          m.id === selectedMenu.id
-            ? {
-                ...m,
-                name: formData.name,
-                type: formData.type,
-                cost: formData.cost,
-                dishes: formData.dishes,
-                itemsCount: formData.dishes.length,
-                image: formData.image
-                  ? URL.createObjectURL(formData.image)
-                  : m.image,
-              }
-            : m,
-        ),
-      );
-      toast.success("Menu updated successfully");
+  const handleConfirmModal = async (formData: MenuFormData | MenuFormData[]) => {
+    try {
+      if (modalMode === "add") {
+        const payload = Array.isArray(formData) ? formData : [formData];
+        await createMenus(payload).unwrap();
+        toast.success(
+          Array.isArray(formData)
+            ? `Successfully added ${formData.length} menus`
+            : "Menu added successfully"
+        );
+      } else if (selectedMenu) {
+        if (Array.isArray(formData)) {
+          await updateMenus(formData).unwrap();
+          toast.success(`Updated ${formData.length} menus`);
+        } else {
+          await updateMenu({ id: selectedMenu.id, data: formData }).unwrap();
+          toast.success("Menu updated successfully");
+        }
+      }
+      setIsModalOpen(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to save menu");
     }
-    setIsModalOpen(false);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedMenu) {
-      setMenus(menus.filter((m) => m.id !== selectedMenu.id));
-      toast.success("Menu deleted successfully");
+      try {
+        await deleteMenu(selectedMenu.id).unwrap();
+        toast.success("Menu deleted successfully");
+      } catch (error: any) {
+        toast.error(error?.data?.message || "Failed to delete menu");
+      }
     }
     setIsDeleteModalOpen(false);
   };
@@ -162,31 +159,31 @@ export default function MenuManagementClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total Menus"
-            value={6}
+            value={totalItems}
             icon={Utensils}
-            iconColor="#EF4444"
-            iconBgColor="#FEE2E2"
-          />
-          <StatsCard
-            title="Total Menus Items"
-            value={60}
-            icon={LayoutGrid}
             iconColor="#3B82F6"
             iconBgColor="#DBEAFE"
+          />
+          <StatsCard
+             title="Approved"
+             value={menus.filter((m: Menu) => m.approval_status === "approved").length}
+             icon={LayoutGrid}
+             iconColor="#10B981"
+             iconBgColor="#D1FAE5"
+          />
+          <StatsCard
+            title="Pending Approval"
+            value={menus.filter((m: Menu) => m.approval_status === "pending").length}
+            icon={Clock}
+            iconColor="#F59E0B"
+            iconBgColor="#FEF3C7"
           />
           <StatsCard
             title="High Margin items"
             value={5}
             icon={TrendingUp}
-            iconColor="#10B981"
-            iconBgColor="#D1FAE5"
-          />
-          <StatsCard
-            title="Pending Approval"
-            value={2}
-            icon={Clock}
-            iconColor="#F59E0B"
-            iconBgColor="#FEF3C7"
+            iconColor="#8B5CF6"
+            iconBgColor="#EDE9FE"
           />
         </div>
 
@@ -196,18 +193,17 @@ export default function MenuManagementClient() {
             placeholder="Search Menus"
             className="max-w-2xl bg-white border border-gray-100 shadow-xs"
             onSearch={(val) => {
-              setLoading(true);
               setSearchQuery(val);
-              setTimeout(() => setLoading(false), 500);
+              setCurrentPage(1);
             }}
           />
 
-          {loading ? (
+          {isLoading || isFetching ? (
             <MenuGridSkeleton />
-          ) : filteredMenus.length > 0 ? (
+          ) : menus.length > 0 ? (
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 2xl:gap-6">
-                {paginatedMenus.map((menu) => (
+                {menus.map((menu) => (
                   <MenuCard
                     key={menu.id}
                     menu={menu}
@@ -223,9 +219,9 @@ export default function MenuManagementClient() {
                   currentPage={currentPage}
                   totalPages={totalPages}
                   onPageChange={setCurrentPage}
-                  totalItems={filteredMenus.length}
+                  totalItems={totalItems}
                   itemsPerPage={itemsPerPage}
-                  currentItemsCount={paginatedMenus.length}
+                  currentItemsCount={menus.length}
                 />
               </div>
             </>

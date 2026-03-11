@@ -18,12 +18,12 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
         <span
           className={cn(
             "px-4 py-1.5 rounded-full text-xs font-bold",
-            menu.status === "Approved"
+            menu.approval_status === "approved"
               ? "bg-[#ECFDF5] text-[#10B981]"
               : "bg-[#FEFCE8] text-[#F59E0B]",
           )}
         >
-          {menu.status}
+          {menu.approval_status}
         </span>
         <div className="flex items-center gap-2">
           <button
@@ -55,15 +55,15 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-secondary font-medium">Items</span>
-            <span className="text-foreground font-bold">{menu.itemsCount}</span>
+            <span className="text-foreground font-bold">{menu?.dishes.length}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-secondary font-medium">Cost</span>
-            <span className="text-foreground font-bold">{menu.cost}</span>
+            <span className="text-foreground font-bold">${menu?.total_cost}</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-secondary font-medium">Type</span>
-            <span className="text-foreground font-bold">{menu.type}</span>
+            <span className="text-foreground font-bold capitalize">{menu?.menu_type.toLowerCase()}</span>
           </div>
         </div>
       </div>
