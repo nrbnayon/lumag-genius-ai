@@ -103,69 +103,82 @@ export function RecipeModal({
         const data = await readExcel(file);
 
         if (data && data.length > 0) {
-          const createData: CreateRecipePayload[] = [];
-          const updateData: UpdateRecipePayload[] = [];
+          const allRecipes: (CreateRecipePayload | UpdateRecipePayload)[] = [];
+          let currentRecipe: any = null;
+
+          const find = (r: any, ...keys: string[]) => {
+            const k = Object.keys(r).find((k) =>
+              keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
+            );
+            return k ? String(r[k]) : "";
+          };
 
           data.forEach((row: any) => {
-            const find = (r: any, ...keys: string[]) => {
-              const k = Object.keys(r).find((k) =>
-                keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-              );
-              return k ? String(r[k]) : "";
-            };
-
             const id = find(row, "id");
             const name = find(row, "recipe name", "name", "dish");
-            const avg_time = parseInt(find(row, "avg time", "cooking time", "time") || "0");
-            const instruction = find(row, "instruction", "method");
-            const selling_cost = parseFloat(find(row, "selling cost", "selling price", "price") || "0");
-            const outlet_type = find(row, "outlet type", "outlet_type").toLowerCase() || "restaurant";
-            
-            if (id) {
-               updateData.push({
-                 id: parseInt(id),
-                 name,
-                 avg_time,
-                 instruction,
-                 selling_cost,
-                 outlet_type,
-                 ingredients: []
-               });
-            } else if (name) {
-               createData.push({
-                 name,
-                 avg_time,
-                 instruction,
-                 selling_cost,
-                 outlet_type,
-                 ingredients: []
-               });
+            const ingredientName = find(row, "ingredient name", "ingredient");
+
+            if (id || name) {
+              const avg_time = parseInt(find(row, "avg time", "cooking time", "time") || "0");
+              const instruction = find(row, "instruction", "method");
+              const selling_cost = parseFloat(find(row, "selling cost", "selling price", "price") || "0");
+              const outlet_type = find(row, "outlet type", "outlet_type").toLowerCase() || "restaurant";
+
+              currentRecipe = {
+                ...(id ? { id: parseInt(id) } : {}),
+                name: name || "",
+                avg_time: isNaN(avg_time) ? 0 : avg_time,
+                instruction: instruction || "",
+                selling_cost: isNaN(selling_cost) ? 0 : selling_cost,
+                outlet_type: outlet_type || "restaurant",
+                ingredients: [],
+              };
+              allRecipes.push(currentRecipe);
+            }
+
+            if (currentRecipe && ingredientName) {
+              const qty = parseFloat(find(row, "quantity", "qty") || "0");
+              const unit = find(row, "unit");
+              const cost = parseFloat(find(row, "cost") || "0");
+
+              currentRecipe.ingredients.push({
+                ingredient: ingredientName,
+                quantity: isNaN(qty) ? 0 : qty,
+                unit: unit || "",
+                cost: isNaN(cost) ? 0 : cost,
+              });
             }
           });
 
-          if (createData.length > 0 || updateData.length > 0) {
-             setPendingCreateData(createData);
-             setPendingUpdateData(updateData);
-             
-             const first = data[0];
-             const findFirst = (r: any, ...keys: string[]) => {
-                const k = Object.keys(r).find((k) =>
-                  keys.some((pk) => k.toLowerCase().includes(pk.toLowerCase())),
-                );
-                return k ? String(r[k]) : "";
-              };
+          const createData = allRecipes.filter((r) => !("id" in r)) as CreateRecipePayload[];
+          const updateData = allRecipes.filter((r) => "id" in r) as UpdateRecipePayload[];
 
-             setFormData({
-               name: findFirst(first, "recipe name", "name", "dish"),
-               cookingTime: findFirst(first, "avg time", "cooking time", "time"),
-               sellingPrice: findFirst(first, "selling cost", "selling price", "price"),
-               instruction: findFirst(first, "instruction", "method"),
-               outletType: findFirst(first, "outlet type", "outlet_type").toLowerCase() || "restaurant",
-               ingredients: [{ ingredient: "", quantity: "", unit: "", cost: "" }],
-               image: null
-             });
+          if (allRecipes.length > 0) {
+            setPendingCreateData(createData);
+            setPendingUpdateData(updateData);
 
-             toast.success(`Staged ${createData.length + updateData.length} recipes from Excel!`);
+            const first = allRecipes[0];
+            const firstIngredients = first.ingredients || [];
+            
+            setFormData({
+              name: first.name || "",
+              cookingTime: first.avg_time?.toString() || "",
+              sellingPrice: first.selling_cost?.toString() || "",
+              instruction: first.instruction || "",
+              outletType: first.outlet_type || "restaurant",
+              ingredients:
+                firstIngredients.length > 0
+                  ? firstIngredients.map((i) => ({
+                      ingredient: i.ingredient || "",
+                      quantity: i.quantity.toString() || "",
+                      unit: i.unit || "",
+                      cost: i.cost.toString() || "",
+                    }))
+                  : [{ ingredient: "", quantity: "", unit: "", cost: "" }],
+              image: null,
+            });
+
+            toast.success(`Staged ${allRecipes.length} recipes from Excel!`);
           }
         } else {
           toast.error("No data found in the file.");

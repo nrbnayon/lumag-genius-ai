@@ -50,7 +50,7 @@ export function RecipeCard({
           <button
             onClick={() => onExport(recipe)}
             className="p-2 bg-[#E0F2FE] text-[#0EA5E9] rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
-            title="Stage for Export"
+            title="Export Recipe"
           >
             <Download className="w-4 h-4" />
           </button>
@@ -99,7 +99,7 @@ export function RecipeCard({
               <span>Selling Cost</span>
             </div>
             <span className="text-lg font-extrabold text-foreground">
-              ${recipe.selling_cost}
+              ${recipe?.selling_cost}
             </span>
           </div>
         </div>

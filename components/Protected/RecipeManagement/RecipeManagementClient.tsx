@@ -82,12 +82,8 @@ const RecipeManagementClient = () => {
   };
 
   const handleExportRecipe = (recipe: Recipe) => {
-    setStagedItems((prev) => {
-      const exists = prev.find((item) => item.id === recipe.id);
-      if (exists) return prev;
-      toast.success(`Staged ${recipe.name} for export`);
-      return [...prev, recipe];
-    });
+    setStagedItems([recipe]);
+    setIsExportModalOpen(true);
   };
 
   const handleOpenExportModal = () => {
@@ -212,7 +208,7 @@ const RecipeManagementClient = () => {
           {isLoading || isFetching ? (
             <RecipeGridSkeleton />
           ) : recipes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 xl:gap-6">
               {recipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}

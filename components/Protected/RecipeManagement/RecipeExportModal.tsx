@@ -44,9 +44,11 @@ export function RecipeExportModal({
       }
     });
 
-    const fileName = Array.isArray(data)
-      ? "all_recipes_technical_sheets.xlsx"
-      : `${data.name.toLowerCase().replace(/\s+/g, "_")}_technical_sheet.xlsx`;
+    const isSingle = !Array.isArray(data) || data.length === 1;
+    const firstRecipe = Array.isArray(data) ? data[0] : data;
+    const fileName = isSingle
+      ? `${firstRecipe.name.toLowerCase().replace(/\s+/g, "_")}_technical_sheet.xlsx`
+      : "all_recipes_technical_sheets.xlsx";
 
     await exportToExcel(worksheetData, fileName, "Recipes");
     onExport(data);
