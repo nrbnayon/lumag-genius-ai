@@ -39,7 +39,7 @@ export function RecipeCard({
         >
           {recipe?.approval_status || "Pending"}
         </span>
-        <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(recipe)}
             className="p-2 bg-[#FEF3C7] text-[#F59E0B] rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"

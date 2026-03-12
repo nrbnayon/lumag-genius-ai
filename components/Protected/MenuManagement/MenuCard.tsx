@@ -30,7 +30,7 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
             {menu.outlet_type}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onEdit(menu)}
             className="p-2 bg-[#FEF3C7] text-[#F59E0B] rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"
@@ -63,8 +63,12 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
               <Layers className="w-3.5 h-3.5 text-blue-500" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-secondary font-bold uppercase">Items</span>
-              <span className="text-sm font-bold text-foreground">{menu?.dishes.length}</span>
+              <span className="text-[10px] text-secondary font-bold uppercase">
+                Items
+              </span>
+              <span className="text-sm font-bold text-foreground">
+                {menu?.dishes.length}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-xl bg-gray-50/50">
@@ -72,8 +76,12 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
               <DollarSign className="w-3.5 h-3.5 text-emerald-500" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-secondary font-bold uppercase">Cost</span>
-              <span className="text-sm font-bold text-foreground">${menu?.total_cost}</span>
+              <span className="text-[10px] text-secondary font-bold uppercase">
+                Cost
+              </span>
+              <span className="text-sm font-bold text-foreground">
+                ${menu?.total_cost}
+              </span>
             </div>
           </div>
           <div className="flex items-center gap-2 p-2 rounded-xl bg-gray-50/50 col-span-2">
@@ -81,8 +89,12 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
               <Utensils className="w-3.5 h-3.5 text-amber-500" />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] text-secondary font-bold uppercase">Menu Type</span>
-              <span className="text-sm font-bold text-foreground capitalize">{menu?.menu_type.toLowerCase()}</span>
+              <span className="text-[10px] text-secondary font-bold uppercase">
+                Menu Type
+              </span>
+              <span className="text-sm font-bold text-foreground capitalize">
+                {menu?.menu_type.toLowerCase()}
+              </span>
             </div>
           </div>
         </div>

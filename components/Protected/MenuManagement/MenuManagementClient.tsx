@@ -5,12 +5,12 @@ import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { StatsCard } from "@/components/Shared/StatsCard";
 import {
   Utensils,
-  LayoutGrid,
   TrendingUp,
   Clock,
   Plus,
   Download,
   Search,
+  CircleCheck,
 } from "lucide-react";
 import SearchBar from "@/components/Shared/SearchBar";
 import { Pagination } from "@/components/Shared/Pagination";
@@ -172,7 +172,7 @@ export default function MenuManagementClient() {
             value={
               menus.filter((m: Menu) => m.approval_status === "approved").length
             }
-            icon={LayoutGrid}
+            icon={CircleCheck}
             iconColor="#10B981"
             iconBgColor="#D1FAE5"
           />
