@@ -21,6 +21,7 @@
 //   cookingTime: string;
 //   sellingPrice: string;
 //   instruction: string;
+//   description?: string;
 //   outletType: string;
 //   ingredients: {
 //     id?: number;
@@ -52,6 +53,7 @@
 //     cookingTime: "",
 //     sellingPrice: "",
 //     instruction: "",
+//     description: "",
 //     outletType: "restaurant",
 //     ingredients: [{ ingredient: "", quantity: "", unit: "", cost: "" }],
 //     image: null,
@@ -81,6 +83,7 @@
 //         cookingTime: recipe.avg_time.toString(),
 //         sellingPrice: recipe.selling_cost,
 //         instruction: recipe.instruction,
+//         description: recipe.description || "",
 //         outletType: recipe.outlet_type || "restaurant",
 //         ingredients:
 //           recipe.ingredients.length > 0
@@ -100,6 +103,7 @@
 //         cookingTime: "",
 //         sellingPrice: "",
 //         instruction: "",
+//         description: "",
 //         outletType: "restaurant",
 //         ingredients: [{ ingredient: "", quantity: "", unit: "", cost: "" }],
 //         image: null,
@@ -141,6 +145,7 @@
 //                 find(row, "avg time", "cooking time", "time") || "0",
 //               );
 //               const instruction = find(row, "instruction", "method");
+//               const description = find(row, "description");
 //               const selling_cost = parseFloat(
 //                 find(row, "selling cost", "selling price", "price") || "0",
 //               );
@@ -153,6 +158,7 @@
 //                 name: name || "",
 //                 avg_time: isNaN(avg_time) ? 0 : avg_time,
 //                 instruction: instruction || "",
+//                 description: description || "",
 //                 selling_cost: isNaN(selling_cost) ? 0 : selling_cost,
 //                 outlet_type: outlet_type || "restaurant",
 //                 ingredients: [],
@@ -193,6 +199,7 @@
 //               cookingTime: first.avg_time?.toString() || "",
 //               sellingPrice: first.selling_cost?.toString() || "",
 //               instruction: first.instruction || "",
+//               description: first.description || "",
 //               outletType: first.outlet_type || "restaurant",
 //               ingredients:
 //                 firstIngredients.length > 0
@@ -299,6 +306,7 @@
 //           avg_time: parseInt(formData.cookingTime),
 //           selling_cost: parseFloat(formData.sellingPrice),
 //           instruction: formData.instruction,
+//           description: formData.description,
 //           outlet_type: formData.outletType,
 //           ingredients: formData.ingredients.map((i) => ({
 //             id: i.id,
@@ -479,6 +487,24 @@
 //                   placeholder="Enter recipe instructions"
 //                 />
 //               </div>
+//
+//               <div className="bg-gray-50/50 p-5 rounded-3xl border border-gray-100">
+//                 <label className="flex items-center gap-2 text-sm font-bold text-foreground mb-2">
+//                   Description
+//                 </label>
+//                 <textarea
+//                   value={formData.description}
+//                   onChange={(e) =>
+//                     setFormData({ ...formData, description: e.target.value })
+//                   }
+//                   rows={3}
+//                   className={cn(
+//                     "w-full px-5 py-3 border rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-bold placeholder:text-gray-300 shadow-sm bg-white resize-none",
+//                     "border-gray-200",
+//                   )}
+//                   placeholder="Enter recipe description"
+//                 />
+//               </div>
 
 //               {/* Ingredients Section */}
 //               <div className="bg-gray-50/50 p-5 rounded-3xl border border-gray-100 space-y-4">
@@ -603,6 +629,7 @@
 //                           "Avg Time": "30",
 //                           "Selling Cost": "15.00",
 //                           Instruction: "Grill meat, assemble with bun.",
+//                           Description: "Gourmet beef burger with cheese.",
 //                           "Outlet Type": "restaurant",
 //                         },
 //                       ];
@@ -756,6 +783,7 @@ import {
 
 interface RecipeFormData {
   name: string;
+  description?: string;
   cookingTime: string;
   sellingPrice: string;
   instruction: string;
@@ -787,6 +815,7 @@ export function RecipeModal({
 }: RecipeModalProps) {
   const [formData, setFormData] = useState<RecipeFormData>({
     name: "",
+    description: "",
     cookingTime: "",
     sellingPrice: "",
     instruction: "",
@@ -816,6 +845,7 @@ export function RecipeModal({
     if (recipe) {
       setFormData({
         name: recipe.name,
+        description: recipe?.description || "",
         cookingTime: recipe.avg_time.toString(),
         sellingPrice: recipe.selling_cost,
         instruction: recipe.instruction,
@@ -835,6 +865,7 @@ export function RecipeModal({
     } else {
       setFormData({
         name: "",
+        description: "",
         cookingTime: "",
         sellingPrice: "",
         instruction: "",
@@ -879,6 +910,7 @@ export function RecipeModal({
                 find(row, "avg time", "cooking time", "time") || "0",
               );
               const instruction = find(row, "instruction", "method");
+              const description = find(row, "description");
               const selling_cost = parseFloat(
                 find(row, "selling cost", "selling price", "price") || "0",
               );
@@ -891,6 +923,7 @@ export function RecipeModal({
                 name: name || "",
                 avg_time: isNaN(avg_time) ? 0 : avg_time,
                 instruction: instruction || "",
+                description: description || "",
                 selling_cost: isNaN(selling_cost) ? 0 : selling_cost,
                 outlet_type: outlet_type || "restaurant",
                 ingredients: [],
@@ -931,6 +964,7 @@ export function RecipeModal({
               cookingTime: first.avg_time?.toString() || "",
               sellingPrice: first.selling_cost?.toString() || "",
               instruction: first.instruction || "",
+              description: first.description || "",
               outletType: first.outlet_type || "restaurant",
               ingredients:
                 firstIngredients.length > 0
@@ -1037,6 +1071,7 @@ export function RecipeModal({
           avg_time: parseInt(formData.cookingTime),
           selling_cost: parseFloat(formData.sellingPrice),
           instruction: formData.instruction,
+          description: formData.description,
           outlet_type: formData.outletType,
           ingredients: formData.ingredients.map((i) => ({
             id: i.id,
@@ -1187,6 +1222,23 @@ export function RecipeModal({
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-bold text-foreground mb-1">
+                Description
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                rows={3}
+                className={cn(
+                  "w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300 resize-none",
+                )}
+                placeholder="Enter recipe description"
+              />
+            </div>
+
             {/* Ingredients Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -1310,6 +1362,7 @@ export function RecipeModal({
                         "Avg Time": "30",
                         "Selling Cost": "15.00",
                         Instruction: "Grill meat, assemble with bun.",
+                        Description: "Gourmet beef burger with cheese.",
                         "Outlet Type": "restaurant",
                       },
                     ];
