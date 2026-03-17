@@ -7,11 +7,24 @@ import type {
   PendingStaffListResponse,
   LeaveRequestsResponse,
   LeaveQueryParams,
+  HolidayCalendarResponse,
+  HolidayCalendarParams,
 } from "@/types/staff";
 
 export const staffApi = apiSlice.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
+    // ── 0. TEAM HOLIDAY CALENDAR ───────────────────────────────────────────
+    getTeamHolidayCalendar: builder.query<HolidayCalendarResponse, HolidayCalendarParams>({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        if (params.year) queryParams.append("year", params.year.toString());
+        if (params.month) queryParams.append("month", params.month.toString());
+        
+        return `/api/staff/team-holiday-calendar?${queryParams.toString()}`;
+      },
+      providesTags: ["HolidayCalendar"],
+    }),
     // ── 1. GET ALL STAFF ───────────────────────────────────────────────────
     getAllStaff: builder.query<StaffListResponse, StaffQueryParams>({
       query: (params) => {
@@ -109,6 +122,7 @@ export const staffApi = apiSlice.injectEndpoints({
 });
 
 export const {
+  useGetTeamHolidayCalendarQuery,
   useGetAllStaffQuery,
   useCreateStaffMutation,
   useUpdateStaffMutation,

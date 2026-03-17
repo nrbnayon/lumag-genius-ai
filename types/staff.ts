@@ -107,6 +107,58 @@ export interface LeaveQueryParams {
   leave_type?: string;
 }
 
+/* -- Team Holiday Calendar -- */
+export interface HolidayType {
+  key: string;
+  label: string;
+  color: string;
+}
+
+export interface CalendarEvent {
+  leave_request_id: number;
+  user_id: string;
+  employee_name: string;
+  leave_type: string;
+  leave_type_key: string;
+  leave_type_label: string;
+  color: string;
+  start_date: string;
+  end_date: string;
+  reason: string;
+  is_single_day: boolean;
+}
+
+export interface CalendarDay {
+  date: string;
+  day: number;
+  week_day: string;
+  is_today: boolean;
+  events: CalendarEvent[];
+}
+
+export interface HolidayCalendarData {
+  year: number;
+  month: number;
+  month_name: string;
+  today: string;
+  holiday_types: HolidayType[];
+  summary: {
+    total_holidays_this_month: number;
+    employees_affected: number;
+  };
+  days: CalendarDay[];
+}
+
+export interface HolidayCalendarResponse {
+  message: string;
+  data: HolidayCalendarData;
+}
+
+export interface HolidayCalendarParams {
+  year?: number;
+  month?: number;
+}
+
 /* -- Legacy compatibility types if needed during transition -- */
 export type StaffPosition =
   | "Bar Chef"
