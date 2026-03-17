@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { logout as logoutAction } from "@/redux/features/authSlice";
 import { apiSlice } from "@/redux/features/apiSlice";
@@ -18,8 +17,8 @@ export interface UserInfo {
   role?: UserRole;
   avatar?: string;
   image?: string;   // Alias for avatar
-  phone_number?: string;
-  location?: string;
+  phone_number?: string | null;
+  location?: string | null;
   accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -58,11 +57,11 @@ export function useUser(): UserInfo {
     email_address: profile?.email_address ?? user?.email_address,
     full_name: fullName,
     name: fullName, // Alias for legacy component support
-    role: profile?.role ?? user?.role,
+    role: (profile?.role ?? user?.role) as UserRole,
     avatar: avatarImage,
     image: avatarImage, // Alias for legacy component support
-    phone_number: profile?.phone_number,
-    location: profile?.location,
+    phone_number: profile?.phone_number ?? user?.phone_number,
+    location: profile?.location ?? user?.location,
     accessToken,
     isAuthenticated,
     isLoading: isProfileLoading,
@@ -74,7 +73,6 @@ export function useUser(): UserInfo {
 
 // ─── useLogout Hook ───────────────────────────────────────────────────────────
 export const useLogout = () => {
-  const router = useRouter();
   const dispatch = useAppDispatch();
 
   const logout = () => {

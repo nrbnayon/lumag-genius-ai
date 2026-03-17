@@ -117,7 +117,7 @@ export const authApi = apiSlice.injectEndpoints({
     updateProfile: builder.mutation<ApiResponse<ProfileResponse>, FormData>({
       query: (formData) => ({
         url: "/api/settings/personal-info/me",
-        method: "PUT",
+        method: "PATCH",
         body: formData,
       }),
       invalidatesTags: ["Profile"],
@@ -127,7 +127,7 @@ export const authApi = apiSlice.injectEndpoints({
     changePassword: builder.mutation<ApiResponse<any>, ChangePasswordRequest>({
       query: (data) => ({
         url: "/api/auth/change-password",
-        method: "PATCH",
+        method: "POST",
         body: data,
       }),
     }),

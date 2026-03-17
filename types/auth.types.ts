@@ -95,10 +95,13 @@ export interface ProfileResponse {
   id: string;
   full_name: string;
   email_address: string;
-  phone_number?: string;
-  avatar?: string;
-  location?: string;
-  role: UserRole;
+  phone_number: string | null;
+  avatar: string | null;
+  my_cv: string | null;
+  joined_date: string;
+  location: string | null;
+  role: string;
+  language: string;
 }
 
 // ─── Change Password ──────────────────────────────────────────────────────────
