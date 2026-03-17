@@ -1,8 +1,11 @@
-import { topBudgetMenus } from "@/data/analyticsData";
 import type { TopBudgetMenu } from "@/types/analytics";
 import { cn } from "@/lib/utils";
 
-export function TopBudgetMenusPanel() {
+interface TopBudgetMenusPanelProps {
+  data: TopBudgetMenu[];
+}
+
+export function TopBudgetMenusPanel({ data }: TopBudgetMenusPanelProps) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)]">
       <div className="mb-5">
@@ -10,30 +13,35 @@ export function TopBudgetMenusPanel() {
         <p className="text-sm text-secondary">Based on this month</p>
       </div>
       <div className="space-y-0 divide-y divide-gray-50">
-        {topBudgetMenus.map((menu: TopBudgetMenu) => (
+        {data.map((menu: TopBudgetMenu) => (
           <div
             key={menu.id}
             className="flex items-center justify-between py-3.5 hover:bg-gray-50/60 transition-colors rounded-lg px-1"
           >
             <div className="flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-[#E6F4FF] text-[#0190FE] font-bold flex items-center justify-center shrink-0">
-                {menu.id}
+                {menu.rank}
               </span>
-              <span className="text-sm font-medium text-foreground">
-                {menu.name}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground leading-tight">
+                  {menu.name}
+                </span>
+                <span className="text-xs text-secondary capitalize mt-0.5">
+                  {menu.menu_type.toLowerCase()} • {menu.outlet_type}
+                </span>
+              </div>
             </div>
-            <div className="text-right">
+            <div className="text-right flex flex-col items-end gap-1">
               <p className="text-sm font-semibold text-foreground">
-                {menu.amount}
+                ${menu.total_cost.toLocaleString()}
               </p>
               <p
                 className={cn(
                   "text-xs font-medium",
-                  menu.change.startsWith("-") ? "text-red-500" : "text-primary",
+                  menu.trend === "decrease" ? "text-red-500" : "text-green-500",
                 )}
               >
-                {menu.change}
+                {menu.trend === "increase" ? "+" : "-"}{menu.change_percent}%
               </p>
             </div>
           </div>

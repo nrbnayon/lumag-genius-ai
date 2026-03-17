@@ -11,14 +11,21 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { revenueCostTrendData } from "@/data/analyticsData";
+import type { RevenueCostTrendPoint } from "@/types/dashboard";
 
-export function AnalyticsRevenueCostTrendChart() {
+interface AnalyticsRevenueCostTrendChartProps {
+  data: RevenueCostTrendPoint[];
+}
+
+export function AnalyticsRevenueCostTrendChart({ data }: AnalyticsRevenueCostTrendChartProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const maxVal = Math.max(...data.map((d) => Math.max(d.revenue, d.cost ?? d.food_cost ?? 0, d.profit)), 0);
+  const yMax = maxVal === 0 ? 100 : Math.ceil((maxVal * 1.25) / 50) * 50;
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)]">
@@ -32,7 +39,7 @@ export function AnalyticsRevenueCostTrendChart() {
         {isMounted ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={revenueCostTrendData}
+              data={data}
               margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
             >
               <CartesianGrid
@@ -51,9 +58,8 @@ export function AnalyticsRevenueCostTrendChart() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "#98A2B3", fontSize: 11 }}
-                domain={[0, 140000]}
-                ticks={[0, 35000, 70000, 105000, 140000]}
-                tickFormatter={(v) => (v === 0 ? "0" : `${v / 1000}k`)}
+                domain={[0, yMax]}
+                tickFormatter={(v) => (v === 0 ? "0" : `${v >= 1000 ? v / 1000 + "k" : v}`)}
                 width={45}
               />
               <Tooltip
@@ -63,9 +69,7 @@ export function AnalyticsRevenueCostTrendChart() {
                   boxShadow:
                     "0px 4px 6px -2px rgba(0,0,0,0.05), 0px 10px 15px -3px rgba(0,0,0,0.1)",
                 }}
-                formatter={(value: number | string | undefined) => [
-                  `$${Number(value ?? 0).toLocaleString()}`,
-                ]}
+                formatter={(value: any) => [`$${Number(value ?? 0).toLocaleString()}`, undefined]}
               />
               <Legend
                 verticalAlign="bottom"
@@ -76,7 +80,7 @@ export function AnalyticsRevenueCostTrendChart() {
               />
               <Line
                 type="monotone"
-                dataKey="cost"
+                dataKey="food_cost"
                 name="Food Cost"
                 stroke="#F87171"
                 strokeWidth={2}

@@ -28,7 +28,8 @@ export interface SummaryCards {
 export interface RevenueCostTrendPoint {
   month: string;
   revenue: number;
-  cost: number;
+  cost?: number;
+  food_cost?: number;
   profit: number;
 }
 

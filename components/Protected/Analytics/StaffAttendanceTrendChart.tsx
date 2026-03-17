@@ -11,14 +11,21 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { staffAttendanceTrendData } from "@/data/analyticsData";
+import type { StaffAttendanceTrendPoint } from "@/types/analytics";
 
-export function StaffAttendanceTrendChart() {
+interface StaffAttendanceTrendChartProps {
+  data: StaffAttendanceTrendPoint[];
+}
+
+export function StaffAttendanceTrendChart({ data }: StaffAttendanceTrendChartProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const maxVal = Math.max(...data.map((d) => Math.max(d.present, d.absent)), 0);
+  const yMax = maxVal === 0 ? 10 : Math.ceil((maxVal * 1.2) / 5) * 5;
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)]">
@@ -32,7 +39,7 @@ export function StaffAttendanceTrendChart() {
         {isMounted ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
-              data={staffAttendanceTrendData}
+              data={data}
               margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
             >
               <CartesianGrid
@@ -51,8 +58,7 @@ export function StaffAttendanceTrendChart() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: "#98A2B3", fontSize: 12 }}
-                domain={[0, 35]}
-                ticks={[0, 10, 20, 30]}
+                domain={[0, yMax]}
                 width={35}
               />
               <Tooltip

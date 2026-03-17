@@ -1,9 +1,12 @@
-import { staffPerformanceData } from "@/data/analyticsData";
 import type { StaffPerformance } from "@/types/analytics";
 
 const HEADER_COLS = ["Staff Name", "Role", "Attendance", "Leave days"];
 
-export function StaffPerformanceTable() {
+interface StaffPerformanceTableProps {
+  data: StaffPerformance[];
+}
+
+export function StaffPerformanceTable({ data }: StaffPerformanceTableProps) {
   return (
     <div className="bg-white rounded-2xl shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)] overflow-hidden">
       <div className="p-6 pb-4">
@@ -27,17 +30,22 @@ export function StaffPerformanceTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {staffPerformanceData.map((staff: StaffPerformance) => (
+            {data.map((staff: StaffPerformance) => (
               <tr
-                key={staff.id}
+                key={staff.staff_id}
                 className="hover:bg-gray-50/50 transition-colors"
               >
                 <td className="px-6 py-4 font-medium text-foreground">
-                  {staff.name}
+                  <div className="flex flex-col">
+                    <span>{staff.staff_name}</span>
+                    <span className="text-xs text-secondary font-normal">
+                      {staff.email}
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 text-secondary">{staff.role}</td>
-                <td className="px-6 py-4 text-secondary">{staff.attendance}</td>
-                <td className="px-6 py-4 text-secondary">{staff.leaveDays}</td>
+                <td className="px-6 py-4 text-secondary">{staff.attendance_percent}%</td>
+                <td className="px-6 py-4 text-secondary">{staff.leave_days}</td>
               </tr>
             ))}
           </tbody>

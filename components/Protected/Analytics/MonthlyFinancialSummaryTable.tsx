@@ -1,4 +1,3 @@
-import { monthlyFinancialSummary } from "@/data/analyticsData";
 import type { MonthlyFinancialSummary } from "@/types/analytics";
 
 const HEADER_COLS = [
@@ -9,7 +8,11 @@ const HEADER_COLS = [
   "Profit Margin",
 ];
 
-export function MonthlyFinancialSummaryTable() {
+interface MonthlyFinancialSummaryTableProps {
+  data: MonthlyFinancialSummary[];
+}
+
+export function MonthlyFinancialSummaryTable({ data }: MonthlyFinancialSummaryTableProps) {
   return (
     <div className="bg-white rounded-2xl shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)] overflow-hidden">
       <div className="p-6 pb-4">
@@ -33,15 +36,15 @@ export function MonthlyFinancialSummaryTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {monthlyFinancialSummary.map((row: MonthlyFinancialSummary, i) => (
+            {data.map((row: MonthlyFinancialSummary, i) => (
               <tr key={i} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-6 py-4 font-medium text-foreground">
                   {row.month}
                 </td>
-                <td className="px-6 py-4 text-secondary">{row.revenue}</td>
-                <td className="px-6 py-4 text-secondary">{row.foodCost}</td>
-                <td className="px-6 py-4 text-secondary">{row.profit}</td>
-                <td className="px-6 py-4 text-secondary">{row.profitMargin}</td>
+                <td className="px-6 py-4 text-secondary">${row.revenue.toLocaleString()}</td>
+                <td className="px-6 py-4 text-secondary">${row.food_cost.toLocaleString()}</td>
+                <td className="px-6 py-4 text-secondary">${row.profit.toLocaleString()}</td>
+                <td className="px-6 py-4 text-secondary">{row.profit_margin}%</td>
               </tr>
             ))}
           </tbody>

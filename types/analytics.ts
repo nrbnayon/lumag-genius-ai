@@ -1,61 +1,60 @@
-// Analytics Types
-
-export interface AnalyticsStats {
-  totalRevenue: {
-    value: string;
-    percentage: string;
-    trend: "up" | "down";
-  };
-  foodCost: {
-    value: string;
-    percentage: string;
-    trend: "up" | "down";
-  };
-  profit: {
-    value: string;
-    percentage: string;
-    trend: "up" | "down";
-  };
-}
-
-export interface RevenueCostTrendPoint {
-  month: string;
-  revenue: number;
-  cost: number;
-  profit: number;
-}
+import { SummaryCardBase, RevenueCostTrendPoint, TopBudgetRecipe } from "./dashboard";
 
 export interface StaffAttendanceTrendPoint {
   week: string;
-  absent: number;
+  start_date: string;
+  end_date: string;
   present: number;
-}
-
-export interface TopBudgetRecipe {
-  id: number;
-  name: string;
-  amount: string;
+  absent: number;
 }
 
 export interface TopBudgetMenu {
+  rank: number;
   id: number;
   name: string;
-  amount: string;
-  change: string;
+  menu_type: string;
+  total_cost: number;
+  change_percent: number;
+  trend: "increase" | "decrease";
+  outlet_type: string;
 }
 
 export interface MonthlyFinancialSummary {
   month: string;
-  revenue: string;
-  foodCost: string;
-  profit: string;
-  profitMargin: string;
+  revenue: number;
+  food_cost: number;
+  profit: number;
+  profit_margin: number;
 }
 
 export interface StaffPerformance {
-  id: string;
-  name: string;
+  staff_id: string;
+  staff_name: string;
   role: string;
-  attendance: string;
-  leaveDays: number;
+  attendance_percent: number;
+  leave_days: number;
+  email: string;
+}
+
+export interface AnalyticsSummaryCards {
+  total_revenue: SummaryCardBase;
+  food_cost: SummaryCardBase;
+  profit: SummaryCardBase;
+}
+
+export interface AnalyticsData {
+  year: number;
+  month: number;
+  summary_cards: AnalyticsSummaryCards;
+  revenue_cost_trend: RevenueCostTrendPoint[];
+  top_budget_recipes: TopBudgetRecipe[];
+  weekly_attendance_trends: StaffAttendanceTrendPoint[];
+  top_budget_menus: TopBudgetMenu[];
+  monthly_financial_summary: MonthlyFinancialSummary[];
+  individual_staff_performance: StaffPerformance[];
+}
+
+export interface AnalyticsResponse {
+  message: string;
+  data: AnalyticsData;
 }
