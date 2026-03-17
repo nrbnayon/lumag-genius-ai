@@ -1,64 +1,77 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { PurchaseTable } from "./PurchaseTable";
 import { PurchaseModal } from "./PurchaseModal";
-import { purchasesData, otherProductsData } from "@/data/purchaseData";
-import type { Purchase } from "@/types/supplier";
-import { toast } from "sonner";
 import { PurchaseSkeleton } from "@/components/Skeleton/PurchaseSkeleton";
+import {
+  useGetAllPurchasesQuery,
+  useCreatePurchasesMutation,
+} from "@/redux/services/suppliersApi";
+import type { CreatePurchasePayload } from "@/types/supplier";
+import { toast } from "sonner";
 
 export default function AllPurchasesClient() {
   const [search, setSearch] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulate loading
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Global add-purchase modal (from header button)
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isAddOtherOpen, setIsAddOtherOpen] = useState(false);
 
-  // Local copies so tables can be seeded from the same state
-  const [purchases, setPurchases] = useState<Purchase[]>(purchasesData);
-  const [others, setOthers] = useState<Purchase[]>(otherProductsData);
+  // Fetch regular (non-special) purchases
+  const regularQuery = useGetAllPurchasesQuery({ is_special: false });
+  // Fetch special (other) purchases
+  const specialQuery = useGetAllPurchasesQuery({ is_special: true });
 
-  const handleAddPurchase = (data: Partial<Purchase>) => {
-    const item: Purchase = {
-      id: `p-${Date.now()}`,
-      productName: data.productName ?? "",
-      price: data.price ?? "$0",
-      unit: data.unit ?? "",
-      category: data.category ?? "Vegetable",
-      quantity: data.quantity ?? 0,
-      supplierName: data.supplierName ?? "",
-      purchaseDate: data.purchaseDate ?? "",
-    };
-    setPurchases((prev) => [item, ...prev]);
-    setIsAddOpen(false);
-    toast.success("Purchase added!");
+  const [createPurchases, { isLoading: isCreating }] = useCreatePurchasesMutation();
+
+  const handleAddPurchase = async (formData: Partial<CreatePurchasePayload>) => {
+    try {
+      await createPurchases([
+        {
+          supplier_name: formData.supplier_name ?? "",
+          product_name: formData.product_name ?? "",
+          category_name: formData.category_name ?? "",
+          unit: formData.unit ?? "",
+          price: formData.price ?? 0,
+          quantity: formData.quantity ?? 0,
+          purchase_date: formData.purchase_date ?? "",
+          is_special: false,
+          remarks: formData.remarks ?? "",
+          outlet_type: formData.outlet_type ?? "restaurant",
+        },
+      ]).unwrap();
+      setIsAddOpen(false);
+      toast.success("Purchase added successfully!");
+    } catch (err: any) {
+      toast.error(err?.data?.message ?? "Failed to add purchase.");
+    }
   };
 
-  const handleAddOther = (data: Partial<Purchase>) => {
-    const item: Purchase = {
-      id: `op-${Date.now()}`,
-      productName: data.productName ?? "",
-      price: data.price ?? "$0",
-      unit: data.unit ?? "",
-      category: data.category ?? "Other",
-      quantity: data.quantity ?? 0,
-      supplierName: data.supplierName ?? "",
-      purchaseDate: data.purchaseDate ?? "",
-    };
-    setOthers((prev) => [item, ...prev]);
-    setIsAddOtherOpen(false);
-    toast.success("Other product added!");
+  const handleAddOther = async (formData: Partial<CreatePurchasePayload>) => {
+    try {
+      await createPurchases([
+        {
+          supplier_name: formData.supplier_name ?? "",
+          product_name: formData.product_name ?? "",
+          category_name: formData.category_name ?? "",
+          unit: formData.unit ?? "",
+          price: formData.price ?? 0,
+          quantity: formData.quantity ?? 0,
+          purchase_date: formData.purchase_date ?? "",
+          is_special: true,
+          remarks: formData.remarks ?? "",
+          outlet_type: formData.outlet_type ?? "bar",
+        },
+      ]).unwrap();
+      setIsAddOtherOpen(false);
+      toast.success("Other product added successfully!");
+    } catch (err: any) {
+      toast.error(err?.data?.message ?? "Failed to add other product.");
+    }
   };
+
+  const isLoading = regularQuery.isLoading && specialQuery.isLoading;
 
   if (isLoading) {
     return (
@@ -119,20 +132,20 @@ export default function AllPurchasesClient() {
           </div>
         </div>
 
-        {/* All Purchased List table */}
+        {/* All Purchased List table (regular) */}
         <PurchaseTable
           title=""
-          initialData={purchases}
-          modalType="purchase"
+          queryParams={{ is_special: false }}
+          isSpecial={false}
           externalSearch={search}
         />
 
-        {/* Other Product table */}
+        {/* Other Product table (special) */}
         <PurchaseTable
           title="Other Product"
           subtitle="(These products are special and for special events)"
-          initialData={others}
-          modalType="other"
+          queryParams={{ is_special: true }}
+          isSpecial={true}
           externalSearch={search}
         />
       </main>
@@ -144,6 +157,7 @@ export default function AllPurchasesClient() {
         onConfirm={handleAddPurchase}
         mode="add"
         type="purchase"
+        isLoading={isCreating}
       />
 
       {/* Global Add Others Modal */}
@@ -153,6 +167,7 @@ export default function AllPurchasesClient() {
         onConfirm={handleAddOther}
         mode="add"
         type="other"
+        isLoading={isCreating}
       />
     </div>
   );

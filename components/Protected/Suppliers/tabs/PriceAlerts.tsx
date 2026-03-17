@@ -2,115 +2,160 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { TrendingUp } from "lucide-react";
-import { PriceAlert } from "@/types/supplier";
+import { TrendingUp, TrendingDown } from "lucide-react";
+import { useGetPriceAlertsQuery } from "@/redux/services/suppliersApi";
+import { PriceAlertItem } from "@/types/supplier";
 import { AcceptAlertModal } from "../AcceptAlertModal";
 import { NegotiateAlertModal } from "../NegotiateAlertModal";
 import { toast } from "sonner";
 
-interface PriceAlertsProps {
-  alerts: PriceAlert[];
-}
-
-export function PriceAlerts({ alerts: initialAlerts }: PriceAlertsProps) {
-  const [alerts, setAlerts] = useState(initialAlerts);
-  const [selectedAlert, setSelectedAlert] = useState<PriceAlert | null>(null);
+export function PriceAlerts() {
+  const { data, isLoading } = useGetPriceAlertsQuery();
+  const [selectedAlert, setSelectedAlert] = useState<PriceAlertItem | null>(null);
   const [isAcceptOpen, setIsAcceptOpen] = useState(false);
   const [isNegotiateOpen, setIsNegotiateOpen] = useState(false);
 
-  const handleAcceptClick = (alert: PriceAlert) => {
+  const alerts = data?.data ?? [];
+
+  const handleAcceptClick = (alert: PriceAlertItem) => {
     setSelectedAlert(alert);
     setIsAcceptOpen(true);
   };
 
-  const handleNegotiateClick = (alert: PriceAlert) => {
+  const handleNegotiateClick = (alert: PriceAlertItem) => {
     setSelectedAlert(alert);
     setIsNegotiateOpen(true);
   };
 
-  const onConfirmAccept = (alert: PriceAlert) => {
-    toast.success(`Price change for ${alert.productName} accepted`);
-    setAlerts(alerts.filter((a) => a.id !== alert.id));
+  const onConfirmAccept = (alert: PriceAlertItem) => {
+    toast.success(`Price change for ${alert.product_name} accepted`);
     setIsAcceptOpen(false);
+    setSelectedAlert(null);
   };
 
   const onConfirmNegotiate = (
-    alert: PriceAlert,
+    alert: PriceAlertItem,
     proposed: string,
     msg: string,
     method: string,
   ) => {
-    toast.success(`Negotiation request sent to ${alert.supplierName}`);
+    toast.success(`Negotiation request sent to ${alert.supplier_name}`);
     setIsNegotiateOpen(false);
+    setSelectedAlert(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white p-6 rounded-2xl border border-gray-50 shadow-xs animate-pulse"
+          >
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div className="space-y-2 flex-1">
+                <div className="h-3 w-24 bg-gray-100 rounded" />
+                <div className="h-5 w-56 bg-gray-100 rounded" />
+                <div className="h-3 w-40 bg-gray-100 rounded" />
+              </div>
+              <div className="flex items-center gap-6">
+                <div className="h-10 w-16 bg-gray-100 rounded" />
+                <div className="space-y-2">
+                  <div className="h-8 w-28 bg-gray-100 rounded-lg" />
+                  <div className="h-8 w-28 bg-gray-100 rounded-lg" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (alerts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+          <TrendingUp className="w-10 h-10 text-gray-300" />
+        </div>
+        <h3 className="text-xl font-bold text-foreground mb-2">No price alerts</h3>
+        <p className="text-secondary">All prices are stable. No alerts at this time.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {alerts.map((alert) => (
-        <div
-          key={alert.id}
-          className="bg-white p-6 rounded-2xl border border-gray-50 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/20 transition-all"
-        >
-          <div className="space-y-2">
-            {alert.isSuddenChange && (
-              <span className="px-3 py-1 bg-red-50 text-red-500 text-xs font-bold rounded-lg uppercase tracking-wider">
-                Sudden Change is visible
-              </span>
-            )}
-            <h4 className="text-lg font-bold text-foreground">
-              {alert.productName} - Price {alert.type}
-            </h4>
-            <p className="text-sm text-gray-400 font-medium">
-              Supplier: {alert.supplierName}
-            </p>
-            <div className="flex items-center gap-2 text-xs font-bold text-secondary">
-              Previous: {alert.previousPrice}
-              <TrendingUp
-                className={cn(
-                  "w-3 h-3 transition-transform",
-                  alert.type === "Increase"
-                    ? "text-red-500 rotate-0"
-                    : "text-emerald-500 rotate-180",
-                )}
-              />
-              Current: {alert.currentPrice}
-            </div>
-          </div>
+      {alerts.map((alert, index) => {
+        const isIncrease = alert.alert_type === "increase";
+        const changePercent = parseFloat(alert.change_percentage);
 
-          <div className="flex items-center gap-8 w-full md:w-auto">
-            <div className="text-right">
-              <div
-                className={cn(
-                  "text-2xl font-bold",
-                  alert.type === "Increase"
-                    ? "text-primary"
-                    : "text-emerald-500",
+        return (
+          <div
+            key={`${alert.supplier_id}-${alert.product_name}-${index}`}
+            className="bg-white p-6 rounded-2xl border border-gray-50 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-primary/20 transition-all"
+          >
+            <div className="space-y-2">
+              <h4 className="text-lg font-bold text-foreground">
+                {alert.product_name} — Price{" "}
+                <span className={cn(isIncrease ? "text-red-500" : "text-emerald-500")}>
+                  {isIncrease ? "Increase" : "Decrease"}
+                </span>
+              </h4>
+              <p className="text-sm text-gray-400 font-medium">
+                Supplier: {alert.supplier_name} &bull; Category: {alert.category_name}
+              </p>
+              <div className="flex items-center gap-2 text-xs font-bold text-secondary">
+                Previous: ${parseFloat(alert.previous_price).toFixed(2)}
+                {isIncrease ? (
+                  <TrendingUp className="w-3 h-3 text-red-500" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 text-emerald-500" />
                 )}
-              >
-                {alert.type === "Increase" ? "+" : "-"}
-                {alert.percentageChange}%
+                Current: ${parseFloat(alert.current_price).toFixed(2)}
+                <span className="text-gray-400">/ {alert.unit}</span>
               </div>
-              <div className="text-xs font-bold text-gray-400 uppercase">
-                {alert.type === "Increase" ? "Increase" : "Decrease"}
-              </div>
+              <p className="text-xs text-secondary">
+                Purchase date: {new Date(alert.purchase_date).toLocaleDateString()}
+              </p>
             </div>
-            <div className="flex flex-col gap-2 min-w-[120px]">
-              <button
-                onClick={() => handleAcceptClick(alert)}
-                className="w-full py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer outline-none"
-              >
-                Accept Price
-              </button>
-              <button
-                onClick={() => handleNegotiateClick(alert)}
-                className="w-full py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors cursor-pointer outline-none"
-              >
-                Negotiate
-              </button>
+
+            <div className="flex items-center gap-8 w-full md:w-auto">
+              <div className="text-right">
+                <div
+                  className={cn(
+                    "text-2xl font-bold",
+                    isIncrease ? "text-primary" : "text-emerald-500",
+                  )}
+                >
+                  {isIncrease ? "+" : ""}
+                  {changePercent.toFixed(1)}%
+                </div>
+                <div className="text-xs font-bold text-gray-400 uppercase">
+                  {isIncrease ? "Increase" : "Decrease"}
+                </div>
+                <div className="text-xs text-secondary mt-0.5">
+                  {isIncrease ? "+" : ""}${parseFloat(alert.change_amount).toFixed(2)}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 min-w-[120px]">
+                <button
+                  onClick={() => handleAcceptClick(alert)}
+                  className="w-full py-2 bg-emerald-50 text-emerald-600 text-xs font-bold rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer outline-none"
+                >
+                  Accept Price
+                </button>
+                <button
+                  onClick={() => handleNegotiateClick(alert)}
+                  className="w-full py-2 bg-blue-50 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors cursor-pointer outline-none"
+                >
+                  Negotiate
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <AcceptAlertModal
         isOpen={isAcceptOpen}

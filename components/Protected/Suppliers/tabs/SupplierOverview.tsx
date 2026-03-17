@@ -6,34 +6,29 @@ import SearchBar from "@/components/Shared/SearchBar";
 import { Pagination } from "@/components/Shared/Pagination";
 import { SupplierCard } from "../SupplierCard";
 import { SupplierGridSkeleton } from "@/components/Skeleton/SupplierSkeleton";
-import { Supplier } from "@/types/supplier";
+import { SupplierDetail } from "@/types/supplier";
+import { useGetAllSuppliersQuery } from "@/redux/services/suppliersApi";
 
 interface SupplierOverviewProps {
-  suppliers: Supplier[];
-  onViewDetails: (supplier: Supplier) => void;
+  onViewDetails: (supplier: SupplierDetail) => void;
 }
 
-export function SupplierOverview({
-  suppliers,
-  onViewDetails,
-}: SupplierOverviewProps) {
+export function SupplierOverview({ onViewDetails }: SupplierOverviewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(false);
   const itemsPerPage = 8;
 
-  const filteredSuppliers = suppliers.filter(
-    (item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.email_address.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  const { data, isLoading, isFetching } = useGetAllSuppliersQuery({
+    page: currentPage,
+    page_size: itemsPerPage,
+    search_term: searchQuery || undefined,
+  });
 
-  const start = (currentPage - 1) * itemsPerPage;
-  const paginatedSuppliers = filteredSuppliers.slice(
-    start,
-    start + itemsPerPage,
-  );
-  const totalPages = Math.ceil(filteredSuppliers.length / itemsPerPage);
+  const suppliers = data?.data ?? [];
+  const totalItems = data?.count ?? 0;
+  const totalPages = data?.total_pages ?? 1;
+
+  const loading = isLoading || isFetching;
 
   return (
     <div className="space-y-6">
@@ -41,18 +36,17 @@ export function SupplierOverview({
         placeholder="Search Suppliers"
         className="max-w-xl bg-white border border-gray-100 shadow-xs"
         onSearch={(val) => {
-          setLoading(true);
           setSearchQuery(val);
-          setTimeout(() => setLoading(false), 500);
+          setCurrentPage(1);
         }}
       />
 
       {loading ? (
         <SupplierGridSkeleton />
-      ) : filteredSuppliers.length > 0 ? (
+      ) : suppliers.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 2xl:gap-6">
-            {paginatedSuppliers.map((supplier) => (
+            {suppliers.map((supplier) => (
               <SupplierCard
                 key={supplier.id}
                 supplier={supplier}
@@ -66,9 +60,9 @@ export function SupplierOverview({
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
-              totalItems={filteredSuppliers.length}
+              totalItems={totalItems}
               itemsPerPage={itemsPerPage}
-              currentItemsCount={paginatedSuppliers.length}
+              currentItemsCount={suppliers.length}
             />
           </div>
         </>

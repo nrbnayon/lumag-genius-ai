@@ -9,17 +9,32 @@ import {
   Calendar,
   FileText,
   Building2,
+  Loader2,
 } from "lucide-react";
-import { Supplier } from "@/types/supplier";
+import { SupplierDetail, SupplierPayload } from "@/types/supplier";
 import { cn } from "@/lib/utils";
 
 interface SupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: Partial<Supplier>) => void;
-  supplier?: Supplier | null;
+  onConfirm: (data: Partial<SupplierPayload>) => void;
+  supplier?: SupplierDetail | null;
   mode: "add" | "edit";
+  isLoading?: boolean;
 }
+
+const emptyForm: Partial<SupplierPayload> = {
+  name: "",
+  phone: "",
+  email: "",
+  address: "",
+  contract_start_date: "",
+  contract_end_date: "",
+  notes: "",
+  rating: 4.5,
+  is_active: true,
+  outlet_type: "restaurant",
+};
 
 export function SupplierModal({
   isOpen,
@@ -27,47 +42,34 @@ export function SupplierModal({
   onConfirm,
   supplier,
   mode,
+  isLoading = false,
 }: SupplierModalProps) {
-  const [formData, setFormData] = useState<Partial<Supplier>>({
-    name: "",
-    phone: "",
-    email_address: "",
-    address: "",
-    contractStart: "",
-    contractEnd: "",
-    notes: "",
-  });
-
-  const [errors, setErrors] = useState<Partial<Record<keyof Supplier, string>>>(
-    {},
-  );
+  const [formData, setFormData] = useState<Partial<SupplierPayload>>(emptyForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof SupplierPayload, string>>>({});
 
   useEffect(() => {
     if (supplier) {
       setFormData({
-        ...supplier,
+        name: supplier.name,
+        phone: supplier.phone ?? "",
+        email: supplier.email ?? "",
+        address: supplier.address ?? "",
+        contract_start_date: supplier.contract_start_date ?? "",
+        contract_end_date: supplier.contract_end_date ?? "",
+        notes: supplier.notes ?? "",
+        rating: parseFloat(supplier.rating) || 4.5,
+        is_active: supplier.is_active,
+        outlet_type: supplier.outlet_type,
       });
     } else {
-      setFormData({
-        name: "",
-        phone: "",
-        email_address: "",
-        address: "",
-        contractStart: "",
-        contractEnd: "",
-        notes: "",
-      });
+      setFormData(emptyForm);
     }
     setErrors({});
   }, [supplier, isOpen]);
 
   const validate = () => {
-    const newErrors: any = {};
-    if (!formData.name) newErrors.name = "Required";
-    if (!formData.phone) newErrors.phone = "Required";
-    if (!formData.email_address) newErrors.email_address = "Required";
-    if (!formData.address) newErrors.address = "Required";
-
+    const newErrors: Partial<Record<keyof SupplierPayload, string>> = {};
+    if (!formData.name?.trim()) newErrors.name = "Required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -75,7 +77,17 @@ export function SupplierModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validate()) {
-      onConfirm(formData);
+      // Clean up empty strings -> undefined for optional fields
+      const payload: Partial<SupplierPayload> = {
+        ...formData,
+        phone: formData.phone?.trim() || undefined,
+        email: formData.email?.trim() || undefined,
+        address: formData.address?.trim() || undefined,
+        contract_start_date: formData.contract_start_date?.trim() || undefined,
+        contract_end_date: formData.contract_end_date?.trim() || undefined,
+        notes: formData.notes?.trim() || undefined,
+      };
+      onConfirm(payload);
     }
   };
 
@@ -116,7 +128,7 @@ export function SupplierModal({
               <div className="relative">
                 <input
                   type="text"
-                  value={formData.name}
+                  value={formData.name ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
@@ -126,6 +138,9 @@ export function SupplierModal({
                   )}
                   placeholder="Ocean Fresh Ltd."
                 />
+                {errors.name && (
+                  <p className="text-xs text-red-500 mt-1">{errors.name}</p>
+                )}
               </div>
             </div>
 
@@ -133,7 +148,7 @@ export function SupplierModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Phone <span className="text-red-500">*</span>
+                  Phone
                 </label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
@@ -141,21 +156,18 @@ export function SupplierModal({
                   </div>
                   <input
                     type="text"
-                    value={formData.phone}
+                    value={formData.phone ?? ""}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className={cn(
-                      "w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium",
-                      errors.phone && "border-red-500 bg-red-50/10",
-                    )}
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium"
                     placeholder="+1 (555) 123-4567"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-semibold text-foreground mb-1.5">
-                  Email <span className="text-red-500">*</span>
+                  Email
                 </label>
                 <div className="relative group">
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
@@ -163,17 +175,11 @@ export function SupplierModal({
                   </div>
                   <input
                     type="email"
-                    value={formData.email_address}
+                    value={formData.email ?? ""}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        email_address: e.target.value,
-                      })
+                      setFormData({ ...formData, email: e.target.value })
                     }
-                    className={cn(
-                      "w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium",
-                      errors.email_address && "border-red-500 bg-red-50/10",
-                    )}
+                    className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium"
                     placeholder="orders@oceanfresh.com"
                   />
                 </div>
@@ -183,25 +189,42 @@ export function SupplierModal({
             {/* Address */}
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
-                Address <span className="text-red-500">*</span>
+                Address
               </label>
               <div className="relative group">
-                <div className="absolute left-4 top-4 text-gray-400 group-focus-within:text-primary transition-colors">
+                <div className="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-primary transition-colors">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <input
                   type="text"
-                  value={formData.address}
+                  value={formData.address ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, address: e.target.value })
                   }
-                  className={cn(
-                    "w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium",
-                    errors.address && "border-red-500 bg-red-50/10",
-                  )}
+                  className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-gray-400 font-medium"
                   placeholder="123 Harbor Way, Boston, MA"
                 />
               </div>
+            </div>
+
+            {/* Outlet Type */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                Outlet Type
+              </label>
+              <select
+                value={formData.outlet_type ?? "restaurant"}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    outlet_type: e.target.value as "bar" | "restaurant",
+                  })
+                }
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium bg-white"
+              >
+                <option value="restaurant">Restaurant</option>
+                <option value="bar">Bar</option>
+              </select>
             </div>
 
             {/* Contracts */}
@@ -216,11 +239,11 @@ export function SupplierModal({
                   </div>
                   <input
                     type="date"
-                    value={formData.contractStart}
+                    value={formData.contract_start_date ?? ""}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        contractStart: e.target.value,
+                        contract_start_date: e.target.value,
                       })
                     }
                     className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
@@ -237,14 +260,33 @@ export function SupplierModal({
                   </div>
                   <input
                     type="date"
-                    value={formData.contractEnd}
+                    value={formData.contract_end_date ?? ""}
                     onChange={(e) =>
-                      setFormData({ ...formData, contractEnd: e.target.value })
+                      setFormData({ ...formData, contract_end_date: e.target.value })
                     }
                     className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Rating */}
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                Rating (0–5)
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={5}
+                step={0.1}
+                value={formData.rating ?? 4.5}
+                onChange={(e) =>
+                  setFormData({ ...formData, rating: parseFloat(e.target.value) })
+                }
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium"
+                placeholder="4.5"
+              />
             </div>
 
             {/* Notes */}
@@ -257,7 +299,7 @@ export function SupplierModal({
                   <FileText className="w-4 h-4" />
                 </div>
                 <textarea
-                  value={formData.notes}
+                  value={formData.notes ?? ""}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
@@ -273,37 +315,22 @@ export function SupplierModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors text-sm cursor-pointer"
+              disabled={isLoading}
+              className="flex-1 px-6 py-3 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors text-sm cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-shadow shadow-md hover:shadow-lg text-sm cursor-pointer"
+              disabled={isLoading}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-shadow shadow-md hover:shadow-lg text-sm cursor-pointer disabled:opacity-70"
             >
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === "add" ? "+ Add" : "Save"}
             </button>
           </div>
         </form>
       </div>
     </div>
-  );
-}
-
-function PlusIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   );
 }

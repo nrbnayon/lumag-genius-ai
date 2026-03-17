@@ -6,16 +6,16 @@ import { StatsCard } from "@/components/Shared/StatsCard";
 import { Truck, AlertTriangle, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import {
-  suppliersData,
-  priceComparisonData,
-  priceAlertsData,
-  productHistoryData,
-} from "@/data/supplierData";
-import { Supplier } from "@/types/supplier";
 import { SupplierModal } from "./SupplierModal";
 import { SupplierDetailsModal } from "./SupplierDetailsModal";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
+import {
+  useGetSupplierOverviewQuery,
+  useGetPriceAlertsQuery,
+  useCreateSupplierMutation,
+  useUpdateSupplierMutation,
+} from "@/redux/services/suppliersApi";
+import type { SupplierDetail, SupplierPayload } from "@/types/supplier";
 
 // Sub-components
 import { SupplierOverview } from "./tabs/SupplierOverview";
@@ -34,16 +34,23 @@ type SupplierTab =
 
 export default function SuppliersClient() {
   const [activeTab, setActiveTab] = useState<SupplierTab>("Overview");
-  const [suppliers, setSuppliers] = useState<Supplier[]>(suppliersData);
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null,
-  );
+  const [selectedSupplier, setSelectedSupplier] = useState<SupplierDetail | null>(null);
+
+  // API data
+  const { data: overviewData, isLoading: overviewLoading } = useGetSupplierOverviewQuery();
+  const { data: alertsData } = useGetPriceAlertsQuery();
+
+  const [createSupplier, { isLoading: isCreating }] = useCreateSupplierMutation();
+  const [updateSupplier, { isLoading: isUpdating }] = useUpdateSupplierMutation();
+
+  const activeSuppliers = overviewData?.summary?.active_suppliers ?? 0;
+  const priceAlerts = overviewData?.summary?.price_alerts ?? alertsData?.count ?? 0;
 
   // Handlers
   const handleAddClick = () => {
@@ -52,55 +59,46 @@ export default function SuppliersClient() {
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (supplier: Supplier) => {
+  const handleEditClick = (supplier: SupplierDetail) => {
     setModalMode("edit");
     setSelectedSupplier(supplier);
     setIsModalOpen(true);
     setIsDetailsModalOpen(false);
   };
 
-  const handleViewDetails = (supplier: Supplier) => {
+  const handleViewDetails = (supplier: SupplierDetail) => {
     setSelectedSupplier(supplier);
     setIsDetailsModalOpen(true);
   };
 
-  const handleRemoveClick = (supplier: Supplier) => {
+  const handleRemoveClick = (supplier: SupplierDetail) => {
     setSelectedSupplier(supplier);
     setIsDeleteModalOpen(true);
   };
 
   const handleConfirmDelete = () => {
-    if (selectedSupplier) {
-      setSuppliers(suppliers.filter((s) => s.id !== selectedSupplier.id));
-      toast.success(`Supplier "${selectedSupplier.name}" removed successfully`);
-      setIsDeleteModalOpen(false);
-      setIsDetailsModalOpen(false);
-    }
+    // No delete endpoint provided — close modal
+    toast.info("Supplier removal is managed by admin approval.");
+    setIsDeleteModalOpen(false);
+    setIsDetailsModalOpen(false);
   };
 
-  const handleConfirmModal = (formData: Partial<Supplier>) => {
-    if (modalMode === "add") {
-      const newSupplier: Supplier = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: formData.name!,
-        phone: formData.phone!,
-        email_address: formData.email_address!,
-        address: formData.address!,
-        rating: 4.5,
-        itemsCount: 0,
-        ...formData,
-      };
-      setSuppliers([newSupplier, ...suppliers]);
-      toast.success("Supplier added successfully");
-    } else if (selectedSupplier) {
-      setSuppliers(
-        suppliers.map((s) =>
-          s.id === selectedSupplier.id ? { ...s, ...formData } : s,
-        ),
-      );
-      toast.success("Supplier updated successfully");
+  const handleConfirmModal = async (formData: Partial<SupplierPayload>) => {
+    try {
+      if (modalMode === "add") {
+        await createSupplier(formData as SupplierPayload).unwrap();
+        toast.success("Supplier added successfully");
+      } else if (selectedSupplier) {
+        await updateSupplier({
+          id: selectedSupplier.id,
+          payload: formData,
+        }).unwrap();
+        toast.success("Supplier updated successfully");
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      toast.error(err?.data?.message ?? "Operation failed. Please try again.");
     }
-    setIsModalOpen(false);
   };
 
   const tabs = [
@@ -149,14 +147,14 @@ export default function SuppliersClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Active Suppliers"
-            value={suppliers.length}
+            value={overviewLoading ? "—" : activeSuppliers}
             icon={Truck}
             iconColor="#10B981"
             iconBgColor="#D1FAE5"
           />
           <StatsCard
             title="Price Alerts"
-            value={priceAlertsData.length}
+            value={overviewLoading ? "—" : priceAlerts}
             icon={AlertTriangle}
             iconColor="#EF4444"
             iconBgColor="#FEE2E2"
@@ -187,20 +185,15 @@ export default function SuppliersClient() {
         <div>
           {activeTab === "Overview" && (
             <SupplierOverview
-              suppliers={suppliers}
               onViewDetails={handleViewDetails}
             />
           )}
 
-          {activeTab === "Comparison" && (
-            <PriceComparison data={priceComparisonData} />
-          )}
+          {activeTab === "Comparison" && <PriceComparison />}
 
-          {activeTab === "History" && (
-            <PriceHistory data={productHistoryData} />
-          )}
+          {activeTab === "History" && <PriceHistory />}
 
-          {activeTab === "Alerts" && <PriceAlerts alerts={priceAlertsData} />}
+          {activeTab === "Alerts" && <PriceAlerts />}
 
           {activeTab === "ShoppingList" && <ShoppingList />}
         </div>
@@ -213,6 +206,7 @@ export default function SuppliersClient() {
         onConfirm={handleConfirmModal}
         supplier={selectedSupplier}
         mode={modalMode}
+        isLoading={isCreating || isUpdating}
       />
 
       <SupplierDetailsModal

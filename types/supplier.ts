@@ -1,59 +1,272 @@
-export interface Supplier {
-  id: string;
+// ── Supplier ──────────────────────────────────────────────────────────────────
+
+export interface SupplierDetail {
+  id: number;
   name: string;
-  phone: string;
-  email_address: string;
-  address: string;
-  rating?: number;
-  itemsCount?: number;
-  contractStart?: string;
-  contractEnd?: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  contract_start_date: string | null;
+  contract_end_date: string | null;
+  notes: string | null;
+  rating: string;
+  is_active: boolean;
+  outlet_type: "bar" | "restaurant";
+  approval_status: "pending" | "approved" | "rejected";
+  approved_by: string | null;
+  approved_by_name: string | null;
+  approved_at: string | null;
+  rejected_by: string | null;
+  rejected_by_name: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  created_by: string;
+  created_by_name: string;
+  updated_by: string;
+  updated_by_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupplierListResponse {
+  message: string;
+  count: number;
+  total_pages: number;
+  current_page: number;
+  page_size: number;
+  data: SupplierDetail[];
+}
+
+export interface MySupplierRequestsResponse {
+  message: string;
+  summary: {
+    approved: number;
+    pending: number;
+    rejected: number;
+  };
+  count: number;
+  total_pages: number;
+  current_page: number;
+  page_size: number;
+  data: SupplierDetail[];
+}
+
+export interface SupplierOverviewResponse {
+  message: string;
+  summary: {
+    active_suppliers: number;
+    price_alerts: number;
+  };
+  count: number;
+  data: SupplierDetail[];
+}
+
+export interface SupplierQueryParams {
+  page?: number;
+  page_size?: number;
+  search_term?: string;
+  approval_status?: "pending" | "approved" | "rejected";
+  outlet_type?: "bar" | "restaurant";
+}
+
+export interface SupplierPayload {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  contract_start_date?: string;
+  contract_end_date?: string;
   notes?: string;
+  rating?: number;
+  is_active?: boolean;
+  outlet_type?: "bar" | "restaurant";
 }
 
-export interface PriceComparisonItem {
-  id: string;
-  supplierName: string;
+// ── Purchase ──────────────────────────────────────────────────────────────────
+
+export interface PurchaseItem {
+  id: number;
+  supplier_id: number;
+  supplier_name: string;
+  product_name: string;
+  category_name: string;
+  unit: string;
+  price: string;
+  quantity: string;
+  purchase_date: string;
+  is_special: boolean;
+  approval_status: "pending" | "approved" | "rejected";
+  approved_by: string | null;
+  approved_by_name: string | null;
+  approved_at: string | null;
+  rejected_by: string | null;
+  rejected_by_name: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  product_file: string | null;
+  report_file: string | null;
+  remarks: string;
+  outlet_type: "bar" | "restaurant";
+  created_by: string;
+  created_by_name: string;
+  updated_by: string;
+  updated_by_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseListResponse {
+  message: string;
+  count: number;
+  total_pages: number;
+  current_page: number;
+  page_size: number;
+  data: PurchaseItem[];
+}
+
+export interface MyPurchaseRequestsResponse {
+  message: string;
+  summary: {
+    approved: number;
+    pending: number;
+    rejected: number;
+  };
+  count: number;
+  total_pages: number;
+  current_page: number;
+  page_size: number;
+  data: PurchaseItem[];
+}
+
+export interface PurchaseQueryParams {
+  page?: number;
+  page_size?: number;
+  search_term?: string;
+  approval_status?: "pending" | "approved" | "rejected";
+  supplier_id?: number;
+  is_special?: boolean;
+  outlet_type?: "bar" | "restaurant";
+}
+
+export interface CreatePurchasePayload {
+  supplier_name: string;
+  product_name: string;
+  category_name: string;
+  unit: string;
   price: number;
-  isBestPrice: boolean;
-  trend: "up" | "down" | "stable";
+  quantity: number;
+  purchase_date: string;
+  is_special: boolean;
+  remarks?: string;
+  outlet_type: "bar" | "restaurant";
 }
 
-export interface ProductPriceComparison {
-  productName: string;
+// ── Price Comparison ──────────────────────────────────────────────────────────
+
+export interface PriceComparisonSupplier {
+  supplier_id: number;
+  supplier_name: string;
+  category_name: string;
+  latest_price: string;
+  previous_price: string | null;
+  trend: "increasing" | "decreasing" | "no_change";
   unit: string;
-  comparisons: PriceComparisonItem[];
+  purchase_date: string;
+  is_best_price: boolean;
 }
 
-export interface PriceAlert {
+export interface PriceComparisonProduct {
+  product_name: string;
+  supplier_name: string;
+  best_price: string;
+  suppliers: PriceComparisonSupplier[];
+}
+
+export interface PriceComparisonResponse {
+  message: string;
+  count: number;
+  data: PriceComparisonProduct[];
+}
+
+// ── Price History ─────────────────────────────────────────────────────────────
+
+export interface PriceHistorySupplier {
+  supplier_id: number;
+  supplier_name: string;
+  unit: string;
+  latest_price: string;
+  previous_price: string;
+  change_amount: string;
+  change_percentage: number;
+  trend: "increase" | "decrease" | "stable";
+  prices: string[];
+}
+
+export interface PriceHistoryResponse {
+  message: string;
+  product_name: string;
+  start_date: string;
+  end_date: string;
+  labels: string[];
+  count: number;
+  data: PriceHistorySupplier[];
+}
+
+// ── Price Alerts ──────────────────────────────────────────────────────────────
+
+export interface PriceAlertItem {
+  supplier_id: number;
+  supplier_name: string;
+  product_name: string;
+  category_name: string;
+  previous_price: string;
+  current_price: string;
+  change_amount: string;
+  change_percentage: string;
+  alert_type: "increase" | "decrease";
+  purchase_date: string;
+  unit: string;
+}
+
+export interface PriceAlertsResponse {
+  message: string;
+  count: number;
+  data: PriceAlertItem[];
+}
+
+// ── Shopping List ─────────────────────────────────────────────────────────────
+
+export interface ShoppingListResponse {
+  message: string;
+  grouped_data: {
+    regular_items: string[];
+    special_items: string[];
+  };
+}
+
+// ── Pending Staff (re-exported for supplier area) ─────────────────────────────
+
+export interface PendingStaffMember {
   id: string;
-  productName: string;
-  type: "Increase" | "Decrease";
-  supplierName: string;
-  previousPrice: string;
-  currentPrice: string;
-  percentageChange: number;
-  isSuddenChange: boolean;
+  full_name: string;
+  email_address: string;
+  phone_number: string | null;
+  role: string;
+  is_verified: boolean;
+  is_active: boolean;
+  joined_date: string;
 }
 
-export interface SupplierStats {
-  activeSuppliers: number;
-  priceAlerts: number;
+export interface PendingStaffListResponse {
+  message: string;
+  count: number;
+  total_pages: number;
+  current_page: number;
+  page_size: number;
+  data: PendingStaffMember[];
 }
 
-export interface PriceHistoryPoint {
-  date: string;
-  [supplierName: string]: string | number;
-}
-
-export interface ProductHistory {
-  productName: string;
-  unit: string;
-  historyData: PriceHistoryPoint[];
-  suppliers: string[]; // List of supplier names for the legend/lines
-}
-
-// ── All Purchases ──────────────────────────────────────────────────────────
+// ── Legacy UI types (kept for component compatibility) ────────────────────────
 
 export type PurchaseCategory =
   | "Vegetable"
@@ -65,21 +278,3 @@ export type PurchaseCategory =
   | "Beverage"
   | "Spice"
   | "Other";
-
-export interface Purchase {
-  id: string;
-  productName: string;
-  price: string;
-  unit: string;
-  category: PurchaseCategory;
-  quantity: number;
-  supplierName: string;
-  purchaseDate: string;
-  isSelected?: boolean;
-  /** true shows the red X icon in the list */
-  hasProblem?: boolean;
-  fileUrl?: string;
-  reportUrl?: string;
-}
-
-export type OtherProduct = Purchase;

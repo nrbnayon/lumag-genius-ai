@@ -1,12 +1,18 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { Download, Trash2, SquarePen } from "lucide-react";
-import type { Purchase } from "@/types/supplier";
+import { useState, useMemo } from "react";
+import { Download, Trash2, SquarePen, Loader2 } from "lucide-react";
+import type { PurchaseItem } from "@/types/supplier";
 import { TablePagination } from "@/components/Shared/TablePagination";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 import { PurchaseModal } from "./PurchaseModal";
 import { toast } from "sonner";
+import {
+  useGetAllPurchasesQuery,
+  useUpdatePurchaseMutation,
+} from "@/redux/services/suppliersApi";
+import type { PurchaseQueryParams, CreatePurchasePayload } from "@/types/supplier";
+import { cn } from "@/lib/utils";
 
 const COLS = [
   "Product Name",
@@ -14,8 +20,9 @@ const COLS = [
   "Unit",
   "Category",
   "Quantity",
-  "Supplier Name",
-  "Purchase Date",
+  "Supplier",
+  "Date",
+  "Status",
   "Action",
 ];
 const PAGE_SIZE = 6;
@@ -23,99 +30,73 @@ const PAGE_SIZE = 6;
 interface PurchaseTableProps {
   title: string;
   subtitle?: string;
-  initialData: Purchase[];
-  modalType?: "purchase" | "other";
+  queryParams?: PurchaseQueryParams;
+  isSpecial?: boolean;
   externalSearch?: string;
 }
 
 export function PurchaseTable({
   title,
   subtitle,
-  initialData,
-  modalType = "purchase",
+  queryParams = {},
+  isSpecial = false,
   externalSearch = "",
 }: PurchaseTableProps) {
-  const [items, setItems] = useState<Purchase[]>(initialData);
-
-  // Sync with initialData when it changes externally (like searching)
-  useEffect(() => {
-    setItems(initialData);
-  }, [initialData]);
-
   const [page, setPage] = useState(1);
+  const [editTarget, setEditTarget] = useState<PurchaseItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PurchaseItem | null>(null);
 
-  // Modal states
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState<Purchase | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Purchase | null>(null);
+  const { data, isLoading, isFetching } = useGetAllPurchasesQuery({
+    ...queryParams,
+    page,
+    page_size: PAGE_SIZE,
+    search_term: externalSearch || undefined,
+  });
 
-  // Selection state
-  const [selected, setSelected] = useState<Set<string>>(
-    new Set(initialData.filter((i) => i.isSelected).map((i) => i.id)),
-  );
+  const [updatePurchase, { isLoading: isUpdating }] = useUpdatePurchaseMutation();
 
-  // Filtered + paged
-  const filtered = useMemo(
-    () =>
-      items.filter(
-        (i) =>
-          i.productName.toLowerCase().includes(externalSearch.toLowerCase()) ||
-          i.supplierName.toLowerCase().includes(externalSearch.toLowerCase()) ||
-          i.category.toLowerCase().includes(externalSearch.toLowerCase()),
-      ),
-    [items, externalSearch],
-  );
+  const items = data?.data ?? [];
+  const totalItems = data?.count ?? 0;
+  const totalPages = data?.total_pages ?? 1;
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  const toggleSelect = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  };
-
-  // Add
-  const handleAdd = (data: Partial<Purchase>) => {
-    const newItem: Purchase = {
-      id: `${Date.now()}`,
-      productName: data.productName ?? "",
-      price: data.price ?? "$0",
-      unit: data.unit ?? "",
-      category: data.category ?? "Vegetable",
-      quantity: data.quantity ?? 0,
-      supplierName: data.supplierName ?? "",
-      purchaseDate: data.purchaseDate ?? "",
-    };
-    setItems((prev) => [newItem, ...prev]);
-    setIsAddOpen(false);
-    toast.success("Purchase added successfully!");
+  const statusColors = {
+    approved: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    pending: "bg-amber-50 text-amber-700 border-amber-100",
+    rejected: "bg-red-50 text-red-700 border-red-100",
   };
 
   // Edit
-  const handleEdit = (data: Partial<Purchase>) => {
+  const handleEdit = async (formData: Partial<CreatePurchasePayload>) => {
     if (!editTarget) return;
-    setItems((prev) =>
-      prev.map((i) => (i.id === editTarget.id ? { ...i, ...data } : i)),
-    );
-    setEditTarget(null);
-    toast.success("Purchase updated successfully!");
+    try {
+      await updatePurchase({
+        id: editTarget.id,
+        payload: formData,
+      }).unwrap();
+      setEditTarget(null);
+      toast.success("Purchase updated successfully!");
+    } catch (err: any) {
+      toast.error(err?.data?.message ?? "Failed to update purchase.");
+    }
   };
 
-  // Delete
+  // Delete (no API endpoint — show info)
   const handleDelete = () => {
     if (!deleteTarget) return;
-    setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+    toast.info(`Deletion of "${deleteTarget.product_name}" requires admin approval.`);
     setDeleteTarget(null);
-    toast.success("Purchase deleted.");
   };
 
-  // Download (stub)
-  const handleDownload = (item: Purchase) => {
-    toast.info(`Downloading data for "${item.productName}"…`);
+  // Download stub
+  const handleDownload = (item: PurchaseItem) => {
+    if (item.product_file) {
+      window.open(item.product_file, "_blank");
+    } else {
+      toast.info(`No file attached for "${item.product_name}".`);
+    }
   };
+
+  const loading = isLoading || isFetching;
 
   return (
     <div className="space-y-1">
@@ -128,7 +109,7 @@ export function PurchaseTable({
       {/* Table card */}
       <div className="bg-white rounded-2xl p-5 shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[500px]">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="bg-[#EBF5FF]">
                 {COLS.map((col) => (
@@ -142,56 +123,63 @@ export function PurchaseTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {paged.length === 0 ? (
+              {loading ? (
+                Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    {COLS.map((col) => (
+                      <td key={col} className="px-4 py-3.5 first:pl-6">
+                        <div className="h-4 bg-gray-100 rounded w-full max-w-[100px]" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : items.length === 0 ? (
                 <tr>
                   <td
                     colSpan={COLS.length}
                     className="text-center py-10 text-secondary text-sm"
                   >
-                    No purchases found.
+                    No {isSpecial ? "special" : ""} purchases found.
                   </td>
                 </tr>
               ) : (
-                paged.map((item) => (
+                items.map((item) => (
                   <tr
                     key={item.id}
                     className="hover:bg-gray-50/50 transition-colors"
                   >
-                    {/* Checkbox + Product Name */}
+                    {/* Product Name */}
                     <td className="px-4 py-3.5 pl-6">
-                      <div className="flex items-center gap-2">
-                        {item.hasProblem ? (
-                          <div className="w-4 h-4 rounded border border-red-500 bg-white flex items-center justify-center shrink-0">
-                            <span className="text-red-500 text-xs font-black">
-                              ✕
-                            </span>
-                          </div>
-                        ) : (
-                          <input
-                            type="checkbox"
-                            checked={selected.has(item.id)}
-                            onChange={() => toggleSelect(item.id)}
-                            className="w-4 h-4 rounded border-gray-300 accent-primary cursor-pointer shrink-0"
-                          />
-                        )}
-                        <span className="font-medium text-foreground">
-                          {item.productName}
-                        </span>
-                      </div>
+                      <span className="font-medium text-foreground">
+                        {item.product_name}
+                      </span>
                     </td>
-                    <td className="px-4 py-3.5 text-secondary">{item.price}</td>
+                    <td className="px-4 py-3.5 text-secondary">
+                      ${parseFloat(item.price).toFixed(2)}
+                    </td>
                     <td className="px-4 py-3.5 text-secondary">{item.unit}</td>
                     <td className="px-4 py-3.5 text-secondary">
-                      {item.category}
+                      {item.category_name}
                     </td>
                     <td className="px-4 py-3.5 text-secondary">
-                      {item.quantity}
+                      {parseFloat(item.quantity).toFixed(0)}
                     </td>
                     <td className="px-4 py-3.5 text-secondary">
-                      {item.supplierName}
+                      {item.supplier_name}
                     </td>
-                    <td className="px-4 py-3.5 text-secondary">
-                      {item.purchaseDate}
+                    <td className="px-4 py-3.5 text-secondary whitespace-nowrap">
+                      {new Date(item.purchase_date).toLocaleDateString()}
+                    </td>
+                    {/* Approval status badge */}
+                    <td className="px-4 py-3.5">
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold capitalize border",
+                          statusColors[item.approval_status],
+                        )}
+                      >
+                        {item.approval_status}
+                      </span>
                     </td>
                     {/* Actions */}
                     <td className="px-4 py-3.5">
@@ -230,21 +218,12 @@ export function PurchaseTable({
         <TablePagination
           currentPage={page}
           totalPages={totalPages}
-          totalItems={filtered.length}
+          totalItems={totalItems}
           itemsPerPage={PAGE_SIZE}
           onPageChange={setPage}
           className="border-t border-gray-100"
         />
       </div>
-
-      {/* Add Modal */}
-      <PurchaseModal
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        onConfirm={handleAdd}
-        mode="add"
-        type={modalType}
-      />
 
       {/* Edit Modal */}
       <PurchaseModal
@@ -253,16 +232,17 @@ export function PurchaseTable({
         onConfirm={handleEdit}
         purchase={editTarget}
         mode="edit"
-        type={modalType}
+        type={isSpecial ? "other" : "purchase"}
+        isLoading={isUpdating}
       />
 
-      {/* Delete Modal */}
+      {/* Delete confirmation */}
       <DeleteConfirmationModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Delete Purchase"
-        description={`Are you sure you want to delete "${deleteTarget?.productName}"? This action cannot be undone.`}
+        description={`Are you sure you want to delete "${deleteTarget?.product_name}"? This action cannot be undone.`}
       />
     </div>
   );

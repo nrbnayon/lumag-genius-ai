@@ -1,34 +1,49 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X, ChevronDown, ImageUp, Trash2 } from "lucide-react";
+import { X, ChevronDown, ImageUp, Trash2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import type { Purchase, PurchaseCategory } from "@/types/supplier";
-import { SUPPLIER_NAMES, PURCHASE_CATEGORIES } from "@/data/purchaseData";
+import type { PurchaseItem, CreatePurchasePayload } from "@/types/supplier";
 import { readExcel } from "@/lib/excel";
+import { useGetAllSuppliersQuery } from "@/redux/services/suppliersApi";
 
 interface PurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: Partial<Purchase>) => void;
-  purchase?: Purchase | null;
+  onConfirm: (data: Partial<CreatePurchasePayload>) => void;
+  purchase?: PurchaseItem | null;
   mode: "add" | "edit";
-  /** "purchase" renders "+ Add"; "other" renders "+ Add Others" label */
+  /** "purchase" = regular (is_special=false); "other" = special (is_special=true) */
   type?: "purchase" | "other";
+  isLoading?: boolean;
 }
 
-const emptyForm: Partial<Purchase> = {
-  productName: "",
-  price: "",
+const PURCHASE_CATEGORIES = [
+  "Vegetable",
+  "Fruit",
+  "Meat",
+  "Seafood",
+  "Dairy",
+  "Bakery",
+  "Beverage",
+  "Spice",
+  "Other",
+] as const;
+
+const OUTLET_TYPES = ["restaurant", "bar"] as const;
+
+const emptyForm: Partial<CreatePurchasePayload> = {
+  product_name: "",
+  price: 0,
   quantity: 0,
   unit: "",
-  supplierName: SUPPLIER_NAMES[0],
-  category: "Vegetable",
-  purchaseDate: "",
-  fileUrl: "",
-  reportUrl: "",
+  supplier_name: "",
+  category_name: "Vegetable",
+  purchase_date: "",
+  remarks: "",
+  outlet_type: "restaurant",
 };
 
 export function PurchaseModal({
@@ -38,35 +53,51 @@ export function PurchaseModal({
   purchase,
   mode,
   type = "purchase",
+  isLoading = false,
 }: PurchaseModalProps) {
   const excelRef = useRef<HTMLInputElement>(null);
   const reportRef = useRef<HTMLInputElement>(null);
 
-  const [form, setForm] = useState<Partial<Purchase>>(emptyForm);
-  const [errors, setErrors] = useState<Partial<Record<keyof Purchase, string>>>(
-    {},
-  );
+  const [form, setForm] = useState<Partial<CreatePurchasePayload>>(emptyForm);
+  const [errors, setErrors] = useState<Partial<Record<keyof CreatePurchasePayload, string>>>({});
   const [excelFileName, setExcelFileName] = useState<string>("");
+  const [reportPreview, setReportPreview] = useState<string>("");
   const [reportFileName, setReportFileName] = useState<string>("");
+
+  // Fetch real supplier names for the dropdown
+  const { data: suppliersData } = useGetAllSuppliersQuery({ page_size: 100 });
+  const supplierNames = suppliersData?.data?.map((s) => s.name) ?? [];
 
   useEffect(() => {
     if (purchase) {
-      setForm({ ...purchase });
+      setForm({
+        product_name: purchase.product_name,
+        price: parseFloat(purchase.price),
+        quantity: parseFloat(purchase.quantity),
+        unit: purchase.unit,
+        supplier_name: purchase.supplier_name,
+        category_name: purchase.category_name,
+        purchase_date: purchase.purchase_date,
+        remarks: purchase.remarks,
+        outlet_type: purchase.outlet_type,
+        is_special: purchase.is_special,
+      });
     } else {
-      setForm(emptyForm);
+      setForm({ ...emptyForm, is_special: type === "other" });
       setExcelFileName("");
       setReportFileName("");
+      setReportPreview("");
     }
     setErrors({});
-  }, [purchase, isOpen]);
+  }, [purchase, isOpen, type]);
 
   const validate = () => {
-    const e: typeof errors = {};
-    if (!form.productName?.trim()) e.productName = "Required";
-    if (!form.price?.trim()) e.price = "Required";
+    const e: Partial<Record<keyof CreatePurchasePayload, string>> = {};
+    if (!form.product_name?.trim()) e.product_name = "Required";
+    if (!form.price || form.price <= 0) e.price = "Must be > 0";
     if (!form.unit?.trim()) e.unit = "Required";
-    if (!form.supplierName) e.supplierName = "Required";
-    if (!form.purchaseDate) e.purchaseDate = "Required";
+    if (!form.supplier_name?.trim()) e.supplier_name = "Required";
+    if (!form.purchase_date) e.purchase_date = "Required";
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -99,13 +130,13 @@ export function PurchaseModal({
       };
       setForm((prev) => ({
         ...prev,
-        productName: find("product", "name", "item") || prev.productName,
-        price: find("price", "cost") || prev.price,
+        product_name: find("product", "name", "item") || prev.product_name,
+        price: Number(find("price", "cost")) || prev.price,
         unit: find("unit") || prev.unit,
         quantity: Number(find("quantity", "qty")) || prev.quantity,
-        supplierName: find("supplier") || prev.supplierName,
-        category: (find("category") as PurchaseCategory) || prev.category,
-        purchaseDate: find("date", "purchase") || prev.purchaseDate,
+        supplier_name: find("supplier") || prev.supplier_name,
+        category_name: find("category") || prev.category_name,
+        purchase_date: find("date", "purchase") || prev.purchase_date,
       }));
       toast.success("Form auto-filled from Excel!");
     } catch {
@@ -128,8 +159,7 @@ export function PurchaseModal({
     setReportFileName(file.name);
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const dataUrl = evt.target?.result as string;
-      setForm((prev) => ({ ...prev, reportUrl: dataUrl }));
+      setReportPreview(evt.target?.result as string);
       toast.success(`Report "${file.name}" attached.`);
     };
     reader.readAsDataURL(file);
@@ -138,7 +168,7 @@ export function PurchaseModal({
   const handleRemoveReport = (e: React.MouseEvent) => {
     e.stopPropagation();
     setReportFileName("");
-    setForm((prev) => ({ ...prev, reportUrl: "" }));
+    setReportPreview("");
     if (reportRef.current) reportRef.current.value = "";
     toast.success("Report removed.");
   };
@@ -175,22 +205,20 @@ export function PurchaseModal({
           {/* Product Name */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Product Name
+              Product Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
-              value={form.productName ?? ""}
-              onChange={(e) =>
-                setForm({ ...form, productName: e.target.value })
-              }
+              value={form.product_name ?? ""}
+              onChange={(e) => setForm({ ...form, product_name: e.target.value })}
               className={cn(
                 "w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm placeholder:text-gray-300",
-                errors.productName && "border-red-400",
+                errors.product_name && "border-red-400",
               )}
               placeholder="e.g. Tomatoes"
             />
-            {errors.productName && (
-              <p className="text-xs text-red-500 mt-1">{errors.productName}</p>
+            {errors.product_name && (
+              <p className="text-xs text-red-500 mt-1">{errors.product_name}</p>
             )}
           </div>
 
@@ -198,18 +226,23 @@ export function PurchaseModal({
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
-                Price
+                Price <span className="text-red-500">*</span>
               </label>
               <input
-                type="text"
+                type="number"
+                min={0}
+                step="0.01"
                 value={form.price ?? ""}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })}
                 className={cn(
                   "w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm placeholder:text-gray-300",
                   errors.price && "border-red-400",
                 )}
-                placeholder="$20"
+                placeholder="20"
               />
+              {errors.price && (
+                <p className="text-xs text-red-500 mt-1">{errors.price}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
@@ -219,16 +252,14 @@ export function PurchaseModal({
                 type="number"
                 min={0}
                 value={form.quantity ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, quantity: Number(e.target.value) })
-                }
+                onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm placeholder:text-gray-300"
                 placeholder="23"
               />
             </div>
             <div>
               <label className="block text-sm font-semibold text-foreground mb-1.5">
-                Unit
+                Unit <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -246,70 +277,121 @@ export function PurchaseModal({
           {/* Supplier Name */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Supplier Name
+              Supplier Name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <select
-                value={form.supplierName ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, supplierName: e.target.value })
-                }
-                className="w-full appearance-none px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white text-foreground"
-              >
-                {SUPPLIER_NAMES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              {supplierNames.length > 0 ? (
+                <>
+                  <select
+                    value={form.supplier_name ?? ""}
+                    onChange={(e) => setForm({ ...form, supplier_name: e.target.value })}
+                    className={cn(
+                      "w-full appearance-none px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white text-foreground",
+                      errors.supplier_name && "border-red-400",
+                    )}
+                  >
+                    <option value="">Select supplier…</option>
+                    {supplierNames.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </>
+              ) : (
+                <input
+                  type="text"
+                  value={form.supplier_name ?? ""}
+                  onChange={(e) => setForm({ ...form, supplier_name: e.target.value })}
+                  className={cn(
+                    "w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm placeholder:text-gray-300",
+                    errors.supplier_name && "border-red-400",
+                  )}
+                  placeholder="Ocean Fresh"
+                />
+              )}
             </div>
+            {errors.supplier_name && (
+              <p className="text-xs text-red-500 mt-1">{errors.supplier_name}</p>
+            )}
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Category
-            </label>
-            <div className="relative">
-              <select
-                value={form.category ?? "Vegetable"}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    category: e.target.value as PurchaseCategory,
-                  })
-                }
-                className="w-full appearance-none px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white text-foreground"
-              >
-                {PURCHASE_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          {/* Category & Outlet Type */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                Category
+              </label>
+              <div className="relative">
+                <select
+                  value={form.category_name ?? "Vegetable"}
+                  onChange={(e) => setForm({ ...form, category_name: e.target.value })}
+                  className="w-full appearance-none px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white text-foreground"
+                >
+                  {PURCHASE_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
+                Outlet Type
+              </label>
+              <div className="relative">
+                <select
+                  value={form.outlet_type ?? "restaurant"}
+                  onChange={(e) =>
+                    setForm({ ...form, outlet_type: e.target.value as "bar" | "restaurant" })
+                  }
+                  className="w-full appearance-none px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm bg-white text-foreground"
+                >
+                  {OUTLET_TYPES.map((t) => (
+                    <option key={t} value={t} className="capitalize">
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
             </div>
           </div>
 
           {/* Purchase Date */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Purchase Date
+              Purchase Date <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="date"
-                value={form.purchaseDate ?? ""}
-                onChange={(e) =>
-                  setForm({ ...form, purchaseDate: e.target.value })
-                }
-                className={cn(
-                  "w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm",
-                  errors.purchaseDate && "border-red-400",
-                )}
-              />
-            </div>
+            <input
+              type="date"
+              value={form.purchase_date ?? ""}
+              onChange={(e) => setForm({ ...form, purchase_date: e.target.value })}
+              className={cn(
+                "w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm",
+                errors.purchase_date && "border-red-400",
+              )}
+            />
+            {errors.purchase_date && (
+              <p className="text-xs text-red-500 mt-1">{errors.purchase_date}</p>
+            )}
+          </div>
+
+          {/* Remarks */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-1.5">
+              Remarks
+            </label>
+            <input
+              type="text"
+              value={form.remarks ?? ""}
+              onChange={(e) => setForm({ ...form, remarks: e.target.value })}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm placeholder:text-gray-300"
+              placeholder="e.g. Fresh stock for weekly menu"
+            />
           </div>
 
           {/* Divider "Or" */}
@@ -318,14 +400,14 @@ export function PurchaseModal({
               <span className="w-full border-t border-gray-100" />
             </div>
             <div className="relative flex justify-center text-xs font-bold text-gray-400 uppercase tracking-widest">
-              <span className="bg-white px-4">Or</span>
+              <span className="bg-white px-4">Or upload</span>
             </div>
           </div>
 
           {/* Excel Upload */}
           <div>
             <label className="block text-sm font-semibold text-foreground mb-1.5">
-              Upload Product
+              Upload Product (Excel / CSV)
             </label>
             <div
               onClick={() => excelRef.current?.click()}
@@ -376,10 +458,10 @@ export function PurchaseModal({
                 accept="image/*"
                 onChange={handleReportUpload}
               />
-              {form.reportUrl ? (
+              {reportPreview ? (
                 <div className="absolute inset-0 w-full h-full group/preview">
                   <Image
-                    src={form.reportUrl}
+                    src={reportPreview}
                     alt="Report Preview"
                     fill
                     className="object-cover"
@@ -413,14 +495,17 @@ export function PurchaseModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+              disabled={isLoading}
+              className="flex-1 px-6 py-2.5 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+              disabled={isLoading}
+              className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-70"
             >
+              {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === "add" ? "+ Add" : "Save"}
             </button>
           </div>

@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import { X, MessageSquare, Mail, Phone } from "lucide-react";
-import { PriceAlert } from "@/types/supplier";
+import { PriceAlertItem } from "@/types/supplier";
 import { cn } from "@/lib/utils";
 
 interface NegotiateAlertModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (
-    alert: PriceAlert,
+    alert: PriceAlertItem,
     proposedPrice: string,
     message: string,
     method: string,
   ) => void;
-  alert: PriceAlert | null;
+  alert: PriceAlertItem | null;
 }
 
 export function NegotiateAlertModal({
@@ -25,11 +25,11 @@ export function NegotiateAlertModal({
 }: NegotiateAlertModalProps) {
   const [proposedPrice, setProposedPrice] = useState("");
   const [message, setMessage] = useState("");
-  const [contactMethod, setContactMethod] = useState<"Email" | "Phone">(
-    "Email",
-  );
+  const [contactMethod, setContactMethod] = useState<"Email" | "Phone">("Email");
 
   if (!isOpen || !alert) return null;
+
+  const isIncrease = alert.alert_type === "increase";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -61,10 +61,10 @@ export function NegotiateAlertModal({
           <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-4">
             <div>
               <h3 className="text-lg font-bold text-foreground">
-                {alert.productName}
+                {alert.product_name}
               </h3>
               <p className="text-sm text-secondary font-medium">
-                Supplier: {alert.supplierName}
+                Supplier: {alert.supplier_name} &bull; Category: {alert.category_name}
               </p>
             </div>
 
@@ -74,8 +74,14 @@ export function NegotiateAlertModal({
                   Current Price
                 </p>
                 <div className="text-lg font-bold text-foreground">
-                  {alert.currentPrice}
+                  ${parseFloat(alert.current_price).toFixed(2)}
+                  <span className="text-xs font-normal text-secondary ml-1">/{alert.unit}</span>
                 </div>
+                <p className="text-xs text-secondary mt-0.5">
+                  {isIncrease ? "▲" : "▼"}{" "}
+                  {isIncrease ? "+" : ""}
+                  {parseFloat(alert.change_percentage).toFixed(1)}% vs previous
+                </p>
               </div>
               <div className="bg-white p-3 rounded-xl border-2 border-red-100 shadow-sm focus-within:border-primary transition-colors">
                 <p className="text-xs font-bold text-secondary uppercase tracking-wider mb-1">
@@ -85,7 +91,7 @@ export function NegotiateAlertModal({
                   type="text"
                   value={proposedPrice}
                   onChange={(e) => setProposedPrice(e.target.value)}
-                  placeholder={alert.currentPrice}
+                  placeholder={`$${parseFloat(alert.previous_price).toFixed(2)}`}
                   className="w-full bg-transparent border-none outline-none text-lg font-bold text-red-600 placeholder:text-gray-300"
                 />
               </div>
@@ -124,9 +130,7 @@ export function NegotiateAlertModal({
                 <Mail
                   className={cn(
                     "w-5 h-5",
-                    contactMethod === "Email"
-                      ? "text-primary"
-                      : "text-gray-400",
+                    contactMethod === "Email" ? "text-primary" : "text-gray-400",
                   )}
                 />
                 <div className="text-center">
@@ -146,18 +150,12 @@ export function NegotiateAlertModal({
                 <Phone
                   className={cn(
                     "w-5 h-5",
-                    contactMethod === "Phone"
-                      ? "text-emerald-500"
-                      : "text-gray-400",
+                    contactMethod === "Phone" ? "text-emerald-500" : "text-gray-400",
                   )}
                 />
                 <div className="text-center">
-                  <p className="text-sm font-bold text-foreground">
-                    Phone Call
-                  </p>
-                  <p className="text-xs font-medium text-secondary">
-                    Call supplier
-                  </p>
+                  <p className="text-sm font-bold text-foreground">Phone Call</p>
+                  <p className="text-xs font-medium text-secondary">Call supplier</p>
                 </div>
               </button>
             </div>
@@ -173,9 +171,7 @@ export function NegotiateAlertModal({
             Cancel
           </button>
           <button
-            onClick={() =>
-              onConfirm(alert, proposedPrice, message, contactMethod)
-            }
+            onClick={() => onConfirm(alert, proposedPrice, message, contactMethod)}
             className="flex-1 px-6 py-3 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-all shadow-md hover:shadow-lg cursor-pointer"
           >
             Negotiation Request

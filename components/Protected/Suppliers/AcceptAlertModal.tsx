@@ -1,14 +1,14 @@
 "use client";
 
 import { X, Check, TrendingUp, TrendingDown } from "lucide-react";
-import { PriceAlert } from "@/types/supplier";
+import { PriceAlertItem } from "@/types/supplier";
 import { cn } from "@/lib/utils";
 
 interface AcceptAlertModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (alert: PriceAlert) => void;
-  alert: PriceAlert | null;
+  onConfirm: (alert: PriceAlertItem) => void;
+  alert: PriceAlertItem | null;
 }
 
 export function AcceptAlertModal({
@@ -19,7 +19,8 @@ export function AcceptAlertModal({
 }: AcceptAlertModalProps) {
   if (!isOpen || !alert) return null;
 
-  const isIncrease = alert.type === "Increase";
+  const isIncrease = alert.alert_type === "increase";
+  const changePercent = parseFloat(alert.change_percentage);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -35,7 +36,7 @@ export function AcceptAlertModal({
               <Check className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-bold text-foreground">
-              Accept Price {alert.type}
+              Accept Price {isIncrease ? "Increase" : "Decrease"}
             </h2>
           </div>
           <button
@@ -51,10 +52,10 @@ export function AcceptAlertModal({
           <div className="border border-gray-100 rounded-2xl p-6 shadow-sm space-y-8">
             <div className="space-y-1">
               <h3 className="text-xl font-bold text-foreground">
-                {alert.productName}
+                {alert.product_name}
               </h3>
               <p className="text-sm text-secondary font-medium">
-                Supplier: {alert.supplierName}
+                Supplier: {alert.supplier_name} &bull; Category: {alert.category_name}
               </p>
             </div>
 
@@ -64,7 +65,8 @@ export function AcceptAlertModal({
                   Previous Price
                 </p>
                 <p className="text-2xl font-bold text-foreground">
-                  {alert.previousPrice}
+                  ${parseFloat(alert.previous_price).toFixed(2)}
+                  <span className="text-xs font-normal text-secondary ml-1">/{alert.unit}</span>
                 </p>
               </div>
 
@@ -91,7 +93,8 @@ export function AcceptAlertModal({
                     isIncrease ? "text-red-600" : "text-emerald-600",
                   )}
                 >
-                  {alert.currentPrice}
+                  ${parseFloat(alert.current_price).toFixed(2)}
+                  <span className="text-xs font-normal text-secondary ml-1">/{alert.unit}</span>
                 </p>
               </div>
             </div>
@@ -103,11 +106,14 @@ export function AcceptAlertModal({
                   isIncrease ? "text-red-600" : "text-emerald-600",
                 )}
               >
-                {isIncrease ? "+" : "-"}
-                {alert.percentageChange}%
+                {isIncrease ? "+" : ""}
+                {changePercent.toFixed(1)}%
               </div>
               <p className="text-xs font-bold text-secondary uppercase tracking-widest">
                 Price {isIncrease ? "Increase" : "Decrease"}
+              </p>
+              <p className="text-sm text-secondary mt-1">
+                Change amount: {isIncrease ? "+" : ""}${parseFloat(alert.change_amount).toFixed(2)}
               </p>
             </div>
           </div>

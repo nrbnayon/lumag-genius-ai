@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ProductHistory } from "@/types/supplier";
+import { useGetPriceHistoryQuery } from "@/redux/services/suppliersApi";
 import {
   LineChart,
   Line,
@@ -15,175 +15,177 @@ import {
   Legend,
 } from "recharts";
 
-interface PriceHistoryProps {
-  data: ProductHistory[];
-}
+const PALETTE = [
+  "#10B981",
+  "#3B82F6",
+  "#8B5CF6",
+  "#F59E0B",
+  "#EF4444",
+  "#EC4899",
+  "#06B6D4",
+];
 
-export function PriceHistory({ data }: PriceHistoryProps) {
-  const [selectedProduct, setSelectedProduct] = useState(data[0]);
+export function PriceHistory() {
+  const [productName, setProductName] = useState("Tomatoes");
+  const [inputValue, setInputValue] = useState("Tomatoes");
 
-  // Colors mapping synchronized with design image
-  const COLORS: Record<string, string> = {
-    "Ocean Fresh Ltd.": "#10B981", // Green
-    "Coastal Seafood": "#3B82F6", // Blue
-    "Marine Supply Co.": "#8B5CF6", // Purple
-    "Green Valley Farm": "#F59E0B", // Amber
-    "Prime Meats": "#EF4444", // Red
-  };
+  const { data, isLoading } = useGetPriceHistoryQuery(
+    { product_name: productName || undefined },
+    { skip: !productName },
+  );
 
-  const THEMES: Record<string, { bg: string; title: string }> = {
-    "Ocean Fresh Ltd.": { bg: "bg-[#DDF2E8]", title: "text-[#10B981]" },
-    "Coastal Seafood": { bg: "bg-[#EBF5FF]", title: "text-[#3B82F6]" },
-    "Marine Supply Co.": { bg: "bg-[#F5F3FF]", title: "text-[#8B5CF6]" },
-    "Green Valley Farm": { bg: "bg-[#FFFBEB]", title: "text-[#F59E0B]" },
-    "Prime Meats": { bg: "bg-[#FEF2F2]", title: "text-[#EF4444]" },
-  };
+  const labels = data?.labels ?? [];
+  const suppliers = data?.data ?? [];
 
-  // Dynamically calculate summary from latest data
-  const latestData =
-    selectedProduct.historyData[selectedProduct.historyData.length - 1];
-  const previousData =
-    selectedProduct.historyData[selectedProduct.historyData.length - 2];
-
-  const currentSummary = selectedProduct.suppliers.map((supplier) => {
-    const currentPrice = latestData[supplier] as number;
-    const prevPrice = previousData[supplier] as number;
-    const diff = currentPrice - prevPrice;
-    const percentChange = ((Math.abs(diff) / prevPrice) * 100).toFixed(1);
-
-    let status = "Stable (0%)";
-    let statusColor = "text-emerald-500";
-
-    if (diff > 0) {
-      status = `+${percentChange}% increase`;
-      statusColor = "text-red-500";
-    } else if (diff < 0) {
-      status = `-${percentChange}% decrease`;
-      statusColor = "text-emerald-500";
-    }
-
-    const theme = THEMES[supplier] || {
-      bg: "bg-gray-50",
-      title: "text-gray-500",
-    };
-
-    return {
-      name: supplier,
-      price: `$${currentPrice.toFixed(2)}`,
-      status,
-      statusColor,
-      bg: theme.bg,
-      nameColor: theme.title,
-    };
+  // Build chart data: each point is { date, [supplier_name]: price }
+  const chartData = labels.map((label, i) => {
+    const point: Record<string, string | number> = { date: label.slice(5) }; // show MM-DD
+    suppliers.forEach((s) => {
+      const val = parseFloat(s.prices[i]);
+      point[`${s.supplier_name} (${s.unit})`] = val > 0 ? val : 0;
+    });
+    return point;
   });
+
+  const loading = isLoading;
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-[0px_4px_16px_0px_#A9A9A940] space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h4 className="text-lg font-bold text-foreground">
-          {selectedProduct.productName}({selectedProduct.unit}) - Price Trend
-          (Last 30 Days)
+          {data?.product_name || "Product"} — Price Trend (Last 30 Days)
         </h4>
-        <select
-          className="px-4 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-primary/20"
-          value={selectedProduct.productName}
-          onChange={(e) => {
-            const prod = data.find((p) => p.productName === e.target.value);
-            if (prod) setSelectedProduct(prod);
-          }}
-        >
-          {data.map((p) => (
-            <option key={p.productName} value={p.productName}>
-              {p.productName}({p.unit})
-            </option>
-          ))}
-        </select>
+        {/* Search input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") setProductName(inputValue.trim());
+            }}
+            onBlur={() => setProductName(inputValue.trim())}
+            placeholder="Enter product name..."
+            className="pl-9 pr-4 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-primary/20 w-52"
+          />
+        </div>
       </div>
 
-      {/* Dynamic Recharts Chart */}
-      <div className="h-80 w-full bg-white rounded-xl relative overflow-hidden">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={selectedProduct.historyData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid
-              strokeDasharray="3 3"
-              vertical={false}
-              stroke="#F1F5F9"
-            />
-            <XAxis
-              dataKey="date"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: "#94A3B8", fontWeight: 600 }}
-              dy={10}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 10, fill: "#94A3B8", fontWeight: 600 }}
-              domain={[0, 50]}
-            />
-            <Tooltip
-              contentStyle={{
-                borderRadius: "12px",
-                border: "none",
-                boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
-              }}
-            />
-            <Legend
-              verticalAlign="bottom"
-              height={36}
-              iconType="circle"
-              formatter={(value) => (
-                <span className="text-[11px] font-bold text-secondary">
-                  {value}
-                </span>
-              )}
-            />
-            {selectedProduct.suppliers.map((supplier) => (
-              <Line
-                key={supplier}
-                type="monotone"
-                dataKey={supplier}
-                stroke={COLORS[supplier as keyof typeof COLORS] || "#CBD5E1"}
-                strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 2, fill: "white" }}
-                activeDot={{ r: 6, strokeWidth: 0 }}
-              />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {currentSummary.map((item, idx) => (
-          <div
-            key={idx}
-            className={cn(
-              "p-4 rounded-xl transition-all hover:scale-[1.02]",
-              item.bg,
-            )}
-          >
-            <div className={cn("text-xs font-bold mb-1", item.nameColor)}>
-              {item.name}
-            </div>
-            <div className="text-xl font-bold mb-1 text-foreground">
-              {item.price}
-            </div>
-            <div
-              className={cn(
-                "text-xs font-bold flex items-center gap-1",
-                item.statusColor,
-              )}
-            >
-              <TrendingUp className="w-3 h-3" />
-              {item.status}
-            </div>
+      {loading ? (
+        <div className="h-80 w-full bg-gray-50 rounded-xl animate-pulse" />
+      ) : suppliers.length === 0 ? (
+        <div className="h-80 flex items-center justify-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <p className="text-secondary font-medium">No price history found for "{productName}"</p>
+        </div>
+      ) : (
+        <>
+          {/* Dynamic Recharts Chart */}
+          <div className="h-80 w-full bg-white rounded-xl relative overflow-hidden">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#F1F5F9"
+                />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "#94A3B8", fontWeight: 600 }}
+                  dy={10}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "#94A3B8", fontWeight: 600 }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    borderRadius: "12px",
+                    border: "none",
+                    boxShadow: "0 10px 15px -3px rgb(0 0 0 / 0.1)",
+                  }}
+                  formatter={(val: number | undefined) => [
+                    val !== undefined ? `$${val.toFixed(2)}` : "",
+                    undefined,
+                  ]}
+                />
+                <Legend
+                  verticalAlign="bottom"
+                  height={36}
+                  iconType="circle"
+                  formatter={(value) => (
+                    <span className="text-[11px] font-bold text-secondary">
+                      {value}
+                    </span>
+                  )}
+                />
+                {suppliers.map((s, i) => (
+                  <Line
+                    key={s.supplier_id}
+                    type="monotone"
+                    dataKey={`${s.supplier_name} (${s.unit})`}
+                    stroke={PALETTE[i % PALETTE.length]}
+                    strokeWidth={3}
+                    dot={{ r: 4, strokeWidth: 2, fill: "white" }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                    connectNulls={false}
+                  />
+                ))}
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-        ))}
-      </div>
+
+          {/* Summary cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {suppliers.map((s, i) => {
+              const color = PALETTE[i % PALETTE.length];
+              const trendPositive = s.trend === "decrease";
+              const trendNegative = s.trend === "increase";
+
+              return (
+                <div
+                  key={s.supplier_id}
+                  className="p-4 rounded-xl transition-all hover:scale-[1.02] bg-gray-50 border border-gray-100"
+                  style={{ borderLeftColor: color, borderLeftWidth: 3 }}
+                >
+                  <div className="text-xs font-bold mb-1" style={{ color }}>
+                    {s.supplier_name}
+                  </div>
+                  <div className="text-xl font-bold mb-1 text-foreground">
+                    ${parseFloat(s.latest_price).toFixed(2)}
+                    <span className="text-xs font-normal text-secondary ml-1">/{s.unit}</span>
+                  </div>
+                  <div
+                    className={cn(
+                      "text-xs font-bold flex items-center gap-1",
+                      trendPositive
+                        ? "text-emerald-500"
+                        : trendNegative
+                        ? "text-red-500"
+                        : "text-gray-400",
+                    )}
+                  >
+                    {trendNegative && <TrendingUp className="w-3 h-3" />}
+                    {trendPositive && <TrendingDown className="w-3 h-3" />}
+                    {!trendNegative && !trendPositive && <Minus className="w-3 h-3" />}
+                    {s.change_percentage > 0
+                      ? `+${s.change_percentage.toFixed(1)}%`
+                      : `${s.change_percentage.toFixed(1)}%`}{" "}
+                    ({s.trend})
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
