@@ -1,15 +1,15 @@
 "use client";
 
 import { SquarePen, Eye, Trash2, FileText } from "lucide-react";
-import { Staff } from "@/types/staff";
+import { StaffMember } from "@/types/staff";
 import Image from "next/image";
 
 interface StaffCardProps {
-  staff: Staff;
-  onEdit: (staff: Staff) => void;
-  onView: (staff: Staff) => void;
-  onDelete: (staff: Staff) => void;
-  onGenerateReport: (staff: Staff) => void;
+  staff: StaffMember;
+  onEdit: (staff: StaffMember) => void;
+  onView: (staff: StaffMember) => void;
+  onDelete: (staff: StaffMember) => void;
+  onGenerateReport: (staff: StaffMember) => void;
 }
 
 export function StaffCard({
@@ -25,16 +25,16 @@ export function StaffCard({
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden border border-gray-100">
             <Image
-              src={staff.avatar || "https://i.pravatar.cc/150"}
-              alt={staff.name}
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(staff.full_name)}&background=random`}
+              alt={staff.full_name}
               fill
               className="object-cover"
             />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-bold text-foreground truncate">{staff.name}</h3>
+            <h3 className="text-sm font-bold text-foreground truncate">{staff.full_name}</h3>
             <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate">
-              {staff.position}
+              {staff.role_display}
             </p>
           </div>
         </div>
@@ -64,13 +64,13 @@ export function StaffCard({
         <div className="flex justify-between items-center text-xs">
           <span className="text-secondary font-medium">Shift</span>
           <span className="text-foreground font-bold">
-            {staff.shift.split(" (")[0]}
+            {staff.shift_display.split(" (")[0]}
           </span>
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-secondary font-medium">Email</span>
-          <span className="text-foreground font-bold truncate max-w-[140px]">
-            {staff.email_address}
+          <span className="text-foreground font-bold truncate max-w-[140px]" title={staff.email}>
+            {staff.email}
           </span>
         </div>
       </div>

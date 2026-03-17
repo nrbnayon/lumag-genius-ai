@@ -9,6 +9,7 @@ import {
   LeaveRequest,
   SupplierRequest,
   ReportRequest,
+  StaffRequest,
 } from "@/types/approvals";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,33 @@ export function ApprovalDetailModal({
                     <td className="px-4 py-4">{data.currentStock}</td>
                     <td className="px-4 py-4">{data.minimumStock}</td>
                     <td className="px-4 py-4">{data.category}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+      case "Staff": {
+        const data = request.data as StaffRequest;
+        return (
+          <div className="space-y-3">
+            <div className="overflow-x-auto border border-gray-100 rounded-xl">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-secondary font-medium">
+                    <th className="px-4 py-3 text-left">Full Name</th>
+                    <th className="px-4 py-3 text-left">Email Address</th>
+                    <th className="px-4 py-3 text-left">Phone Number</th>
+                    <th className="px-4 py-3 text-left">Job Title</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="text-foreground">
+                    <td className="px-4 py-4 font-bold">{data.name}</td>
+                    <td className="px-4 py-4">{data.email}</td>
+                    <td className="px-4 py-4">{data.phone || "N/A"}</td>
+                    <td className="px-4 py-4 uppercase text-xs font-black tracking-wider text-blue-500">{data.role.replace("_", " ")}</td>
                   </tr>
                 </tbody>
               </table>

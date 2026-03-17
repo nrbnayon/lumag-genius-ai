@@ -1,13 +1,13 @@
 "use client";
 
 import { X, FileText, Download } from "lucide-react";
-import { Staff } from "@/types/staff";
+import { StaffMember } from "@/types/staff";
 import { cn } from "@/lib/utils";
 
 interface StaffReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  staff: Staff | null;
+  staff: StaffMember | null;
   onViewCV: () => void;
   onExport: () => void;
 }
@@ -66,7 +66,7 @@ export function StaffReportModal({
 }: StaffReportModalProps) {
   if (!isOpen || !staff) return null;
 
-  const initials = staff.name
+  const initials = staff.full_name
     .split(" ")
     .map((n) => n[0])
     .join("");
@@ -93,13 +93,13 @@ export function StaffReportModal({
               </div>
               <div>
                 <h2 className="md:text-2xl text-xl font-bold text-foreground">
-                  {staff.name}'s Schedule
+                  {staff.full_name}'s Schedule
                 </h2>
                 <p className="md:text-sm text-xs font-medium text-secondary">
-                  {staff.position}
+                  {staff.role_display}
                 </p>
                 <p className="md:text-sm text-xs font-medium text-secondary">
-                  {staff.email_address}
+                  {staff.email}
                 </p>
               </div>
             </div>
@@ -111,7 +111,7 @@ export function StaffReportModal({
                 View CV
               </button>
               <a
-                href={staff.cvUrl?.replace("/view", "/download") || "#"}
+                href={"#"} // cvUrl mockup placeholder (no URL provided from generic REST /api/staff)
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-500 text-xs font-bold rounded-sm hover:bg-blue-100 transition-colors cursor-pointer"
@@ -127,10 +127,10 @@ export function StaffReportModal({
               Current Shift
             </p>
             <p className="text-base font-bold text-foreground">
-              {staff.shift.split(" (")[0]} (
-              {staff.shift.includes("Morning")
+              {staff.shift_display.split(" (")[0]} (
+              {staff.shift_display.includes("Morning")
                 ? "6:00 AM - 2:00 PM"
-                : staff.shift.includes("Evening")
+                : staff.shift_display.includes("Evening")
                   ? "2:00 PM - 10:00 PM"
                   : "10:00 PM - 6:00 AM"}
               )

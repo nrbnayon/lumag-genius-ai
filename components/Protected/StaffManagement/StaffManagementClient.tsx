@@ -6,9 +6,9 @@ import { StatsCard } from "@/components/Shared/StatsCard";
 import { Users, UserCheck, UserMinus, Clock, Plus, Search } from "lucide-react";
 import SearchBar from "@/components/Shared/SearchBar";
 import { Pagination } from "@/components/Shared/Pagination";
-import { staffData } from "@/data/staffData";
-import { Staff } from "@/types/staff";
+import { StaffMember } from "@/types/staff";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Components
 import { StaffCard } from "./StaffCard";
@@ -20,29 +20,26 @@ import { HolidayCalendarModal } from "./HolidayCalendarModal";
 import { HolidayNotifications } from "./HolidayNotifications";
 import { ScheduleOverview } from "./ScheduleOverview";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
-
-import { exportToExcel } from "@/lib/excel";
-import { useEffect } from "react";
 import { StaffGridSkeleton } from "@/components/Skeleton/StaffSkeleton";
 
+import { exportToExcel } from "@/lib/excel";
+import {
+  useGetAllStaffQuery,
+  useCreateStaffMutation,
+  useUpdateStaffMutation,
+  useGetPendingStaffRequestsQuery,
+} from "@/redux/services/staffApi";
+
 export default function StaffManagementClient() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [staffList, setStaffList] = useState<Staff[]>(staffData);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchTerm = useDebounce(searchQuery, 300);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Modal states
+  // Modals state
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [staffModalMode, setStaffModalMode] = useState<"add" | "edit">("add");
-  const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isEmployeeReportOpen, setIsEmployeeReportOpen] = useState(false);
@@ -50,20 +47,26 @@ export default function StaffManagementClient() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // Filters
-  const filteredStaff = staffList.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.email_address.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  // Queries
+  const { data: staffData, isLoading, isError } = useGetAllStaffQuery({
+    page: currentPage,
+    page_size: itemsPerPage,
+    search_term: debouncedSearchTerm,
+  });
 
-  const paginatedStaff = filteredStaff.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  const { data: pendingData } = useGetPendingStaffRequestsQuery();
+  
+  const [createStaff, { isLoading: isCreating }] = useCreateStaffMutation();
+  const [updateStaff, { isLoading: isUpdating }] = useUpdateStaffMutation();
 
-  const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
+  const handleSearch = (term: string) => {
+    setSearchQuery(term);
+    setCurrentPage(1); // Reset page on search
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // Handlers
   const handleAddStaff = () => {
@@ -72,77 +75,71 @@ export default function StaffManagementClient() {
     setIsStaffModalOpen(true);
   };
 
-  const handleEditStaff = (staff: Staff) => {
+  const handleEditStaff = (staff: StaffMember) => {
     setStaffModalMode("edit");
     setSelectedStaff(staff);
     setIsStaffModalOpen(true);
   };
 
-  const handleViewStaff = (staff: Staff) => {
+  const handleViewStaff = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setIsReportModalOpen(true);
   };
 
-  const handleGenerateReport = (staff: Staff) => {
+  const handleGenerateReport = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setIsEmployeeReportOpen(true);
   };
 
-  const handleDeleteStaff = (staff: Staff) => {
+  const handleDeleteStaff = (staff: StaffMember) => {
     setSelectedStaff(staff);
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedStaff) {
-      setStaffList(staffList.filter((s) => s.id !== selectedStaff.id));
-      toast.success(
-        `Staff member "${selectedStaff.name}" removed successfully`,
-      );
+      toast.info("Delete staff feature currently mocked as it's missing from generic endpoint mappings.");
+      // Would normally be e.g. await deleteStaff(selectedStaff.id) here
       setIsDeleteModalOpen(false);
     }
   };
 
-  const handleModalConfirm = (data: Partial<Staff>) => {
-    if (staffModalMode === "add") {
-      const newStaff: Staff = {
-        id: Math.random().toString(36).substr(2, 9),
-        name: data.name!,
-        position: data.position!,
+  const handleModalConfirm = async (data: Partial<StaffMember>) => {
+    try {
+      const payload = {
+        full_name: data.full_name!,
+        email: data.email!,
+        phone_number: data.phone_number!,
+        position: data.role!, // We fallback UI `role` dropdown value to API `position` requirement
         shift: data.shift!,
-        email_address: data.email_address!,
-        phone: data.phone!,
-        avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
-        cvUrl:
-          "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link",
-        presentDays: 28,
-        offDays: 2,
       };
-      setStaffList([newStaff, ...staffList]);
-      toast.success("Staff member added successfully");
-    } else if (selectedStaff) {
-      setStaffList(
-        staffList.map((s) =>
-          s.id === selectedStaff.id ? { ...s, ...data } : s,
-        ),
-      );
-      toast.success("Staff member updated successfully");
+
+      if (staffModalMode === "add") {
+        await createStaff(payload).unwrap();
+        toast.success("Staff member created successfully. Login credentials sent to email.");
+      } else if (selectedStaff) {
+        await updateStaff({ id: selectedStaff.id, payload }).unwrap();
+        toast.success("Staff member updated successfully.");
+      }
+      setIsStaffModalOpen(false);
+    } catch (error: any) {
+      toast.error(error?.data?.message || "Failed to save staff data");
+      console.error(error);
     }
-    setIsStaffModalOpen(false);
   };
 
   const handleExportReport = async () => {
+    if (!staffData?.data) return;
     toast.info("Preparing Full Staff Report...");
 
-    // Prepare data for export
-    const exportData = staffList.map((item) => ({
-      "Full Name": item.name,
-      Position: item.position,
-      Shift: item.shift,
-      email_address: item.email_address,
-      Phone: item.phone,
-      "Present Days": item.presentDays || 0,
-      "Off Days": item.offDays || 0,
+    const exportData = staffData.data.map((item) => ({
+      "Full Name": item.full_name,
+      Position: item.role_display,
+      Shift: item.shift_display.split(" (")[0],
+      email_address: item.email,
+      Phone: item.phone_number,
+      "Present Days": 0, // Mocked properties placeholder
+      "Off Days": 0,
     }));
 
     await exportToExcel(
@@ -153,28 +150,27 @@ export default function StaffManagementClient() {
     toast.success("Full Staff Report exported to Excel!");
   };
 
-  const handleDownloadReport = async (staff: Staff) => {
-    toast.info(`Generating Excel report for ${staff.name}...`);
+  const handleDownloadReport = async (staff: StaffMember) => {
+    toast.info(`Generating Excel report for ${staff.full_name}...`);
 
-    // Prepare single staff data
     const exportData = [
       {
-        "Full Name": staff.name,
-        Position: staff.position,
-        Shift: staff.shift,
-        email_address: staff.email_address,
-        Phone: staff.phone,
-        "Present Days": staff.presentDays || 0,
-        "Off Days": staff.offDays || 0,
+        "Full Name": staff.full_name,
+        Position: staff.role_display,
+        Shift: staff.shift_display.split(" (")[0],
+        email_address: staff.email,
+        Phone: staff.phone_number,
+        "Present Days": 0,
+        "Off Days": 0,
       },
     ];
 
     await exportToExcel(
       exportData,
-      `${staff.name.replace(/\s+/g, "_")}_Report.xlsx`,
+      `${staff.full_name.replace(/\s+/g, "_")}_Report.xlsx`,
       "Employee Report",
     );
-    toast.success(`Excel report for ${staff.name} downloaded!`);
+    toast.success(`Excel report for ${staff.full_name} downloaded!`);
     setIsEmployeeReportOpen(false);
   };
 
@@ -190,62 +186,63 @@ export default function StaffManagementClient() {
       />
 
       <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
-        {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatsCard
             title="Total Staff"
-            value={staffList.length}
+            value={staffData?.statistics?.total_staff || 0}
             icon={Users}
             iconColor="#3B82F6"
             iconBgColor="#DBEAFE"
           />
           <StatsCard
             title="On Duty Today"
-            value={12}
+            value={staffData?.statistics?.on_duty_today || 0}
             icon={UserCheck}
             iconColor="#10B981"
             iconBgColor="#D1FAE5"
           />
           <StatsCard
             title="On Leave"
-            value={5}
+            value={staffData?.statistics?.on_leave_today || 0}
             icon={UserMinus}
             iconColor="#EF4444"
             iconBgColor="#FEE2E2"
           />
           <StatsCard
             title="Pending Approval"
-            value={2}
+            value={staffData?.statistics?.pending_approval || 0}
             icon={Clock}
             iconColor="#F59E0B"
             iconBgColor="#FEF3C7"
           />
         </div>
 
-        {/* Search and Add */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <SearchBar
             placeholder="Search Staff"
             className="max-w-xl bg-white border border-gray-100 shadow-sm"
-            onSearch={setSearchQuery}
+            onSearch={handleSearch}
           />
           <button
             onClick={handleAddStaff}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xs font-bold hover:bg-blue-600 transition-all cursor-pointer text-sm shadow-sm active:scale-95"
+            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xs font-bold hover:bg-blue-600 transition-all cursor-pointer text-sm shadow-sm active:scale-95 shrink-0"
           >
             <Plus className="w-4 h-4" />
             Add Staff
           </button>
         </div>
 
-        {/* Staff Grid */}
         <div className="space-y-6">
           {isLoading ? (
             <StaffGridSkeleton />
-          ) : paginatedStaff.length > 0 ? (
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-red-100 shadow-sm">
+              <p className="text-secondary">Error loading staff data. Please try again.</p>
+            </div>
+          ) : staffData?.data && staffData.data.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4 gap-4 xl:gap-6">
-                {paginatedStaff.map((staff) => (
+                {staffData.data.map((staff) => (
                   <StaffCard
                     key={staff.id}
                     staff={staff}
@@ -258,12 +255,12 @@ export default function StaffManagementClient() {
               </div>
               <div className="flex justify-center pt-3">
                 <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  totalItems={filteredStaff.length}
-                  itemsPerPage={itemsPerPage}
-                  currentItemsCount={paginatedStaff.length}
+                  currentPage={staffData.current_page}
+                  totalPages={staffData.total_pages}
+                  onPageChange={handlePageChange}
+                  totalItems={staffData.count}
+                  itemsPerPage={staffData.page_size}
+                  currentItemsCount={staffData.data.length}
                 />
               </div>
             </>
@@ -278,7 +275,6 @@ export default function StaffManagementClient() {
           )}
         </div>
 
-        {/* Holiday Notifications and Schedule Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
           <HolidayNotifications
             onViewCalendar={() => setIsCalendarOpen(true)}
@@ -294,6 +290,7 @@ export default function StaffManagementClient() {
         onConfirm={handleModalConfirm}
         staff={selectedStaff}
         mode={staffModalMode}
+        isSubmitting={isCreating || isUpdating}
       />
 
       <StaffReportModal
@@ -314,11 +311,8 @@ export default function StaffManagementClient() {
       <StaffCVModal
         isOpen={isCVModalOpen}
         onClose={() => setIsCVModalOpen(false)}
-        cvUrl={
-          selectedStaff?.cvUrl ||
-          "https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link"
-        }
-        staffName={selectedStaff?.name}
+        cvUrl={"https://drive.google.com/file/d/1-EDqp7nAMLGNI8IwAIpdFVpyS39C-Kyz/view?usp=drive_link"}
+        staffName={selectedStaff?.full_name}
       />
 
       <HolidayCalendarModal
@@ -331,7 +325,7 @@ export default function StaffManagementClient() {
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={confirmDelete}
         title="Remove Staff Member"
-        description={`Are you sure you want to remove ${selectedStaff?.name} from the team? This action cannot be undone.`}
+        description={`Are you sure you want to remove ${selectedStaff?.full_name} from the team? This action cannot be undone.`}
       />
     </div>
   );

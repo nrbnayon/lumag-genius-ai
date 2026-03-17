@@ -1,33 +1,34 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { X } from "lucide-react";
-import { Staff, StaffPosition, StaffShift } from "@/types/staff";
+import { X, Loader2 } from "lucide-react";
+import { StaffMember } from "@/types/staff";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { toast } from "sonner";
+import { readExcel } from "@/lib/excel";
 
 interface StaffModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (data: Partial<Staff>) => void;
-  staff?: Staff | null;
+  onConfirm: (data: Partial<StaffMember>) => void;
+  staff?: StaffMember | null;
   mode: "add" | "edit";
+  isSubmitting?: boolean;
 }
 
-const POSITIONS: StaffPosition[] = [
-  "Bar Chef",
-  "Restaurant Chef",
-  "Junior Chef",
-  "Head Chef",
-];
-const SHIFTS: StaffShift[] = [
-  "7.00AM-3.00PM (Morning)",
-  "3.00PM-11.00PM (Evening)",
-  "11.00PM-7.00AM (Night)",
+const POSITIONS = [
+  { label: "Bar Chef", value: "bar_chef" },
+  { label: "Restaurant Chef", value: "restaurant_chef" },
+  // { label: "Junior Chef", value: "junior_chef" },
+  // { label: "Head Chef", value: "head_chef" },
 ];
 
-import { readExcel } from "@/lib/excel";
+const SHIFTS = [
+  { label: "7.00AM-3.00PM (Morning)", value: "MORNING" },
+  { label: "3.00PM-11.00PM (Evening)", value: "EVENING" },
+  { label: "11.00PM-7.00AM (Night)", value: "NIGHT" },
+];
 
 export function StaffModal({
   isOpen,
@@ -35,39 +36,48 @@ export function StaffModal({
   onConfirm,
   staff,
   mode,
+  isSubmitting = false,
 }: StaffModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<Partial<Staff>>({
-    name: "",
-    position: "Bar Chef",
-    shift: "7.00AM-3.00PM (Morning)",
-    phone: "",
-    email_address: "",
+  const [formData, setFormData] = useState<Partial<StaffMember>>({
+    full_name: "",
+    role: "bar_chef", // Used equivalently as position during creation mapping
+    shift: "MORNING",
+    phone_number: "",
+    email: "",
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof Staff, string>>>(
+  const [errors, setErrors] = useState<Partial<Record<keyof StaffMember, string>>>(
     {},
   );
 
   useEffect(() => {
     if (staff) {
-      setFormData({ ...staff });
+      setFormData({ 
+        full_name: staff.full_name,
+        role: staff.role, // role equivalent to position for mapped request.
+        shift: staff.shift,
+        phone_number: staff.phone_number || "",
+        email: staff.email,
+        position_display: staff.role // storing temporary string value to bypass type matching
+       });
     } else {
       setFormData({
-        name: "",
-        position: "Bar Chef",
-        shift: "7.00AM-3.00PM (Morning)",
-        phone: "",
-        email_address: "",
+        full_name: "",
+        role: "bar_chef",
+        shift: "MORNING",
+        phone_number: "",
+        email: "",
+        position_display: "bar_chef"
       });
     }
   }, [staff, isOpen]);
 
   const validate = () => {
     const newErrors: any = {};
-    if (!formData.name) newErrors.name = "Required";
-    if (!formData.phone) newErrors.phone = "Required";
-    if (!formData.email_address) newErrors.email_address = "Required";
+    if (!formData.full_name) newErrors.full_name = "Required";
+    if (!formData.phone_number) newErrors.phone_number = "Required";
+    if (!formData.email) newErrors.email = "Required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -101,13 +111,10 @@ export function StaffModal({
 
           setFormData((prev) => ({
             ...prev,
-            name: findValue(["name", "full name", "stuff name", "employee"]),
-            phone: findValue(["phone", "tel", "contact", "mobile"]),
-            email_address: findValue(["email", "mail"]),
-            position:
-              (findValue(["position", "role", "job"]) as StaffPosition) ||
-              prev.position,
-            shift: (findValue(["shift", "timing"]) as StaffShift) || prev.shift,
+            full_name: findValue(["name", "full name", "stuff name", "employee"]),
+            phone_number: findValue(["phone", "tel", "contact", "mobile"]),
+            email: findValue(["email", "mail"]),
+            // Assuming fallback dropdown parsing correctly limits scope values from EXCEL sheets
           }));
 
           toast.success("Form auto-filled from file successfully!");
@@ -141,6 +148,7 @@ export function StaffModal({
           <button
             onClick={onClose}
             className="p-2 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+            disabled={isSubmitting}
           >
             <X className="w-6 h-6" />
           </button>
@@ -153,15 +161,16 @@ export function StaffModal({
             </label>
             <input
               type="text"
-              value={formData.name}
+              value={formData.full_name}
               onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
+                setFormData({ ...formData, full_name: e.target.value })
               }
               className={cn(
                 "w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                errors.name && "border-red-500",
+                errors.full_name && "border-red-500",
               )}
               placeholder="Full Name"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -170,18 +179,19 @@ export function StaffModal({
               Position <span className="text-red-500">*</span>
             </label>
             <select
-              value={formData.position}
+              value={formData.role} // maps to position later
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  position: e.target.value as StaffPosition,
+                  role: e.target.value,
                 })
               }
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium bg-white"
+              disabled={isSubmitting}
             >
               {POSITIONS.map((pos) => (
-                <option key={pos} value={pos}>
-                  {pos}
+                <option key={pos.value} value={pos.value}>
+                  {pos.label}
                 </option>
               ))}
             </select>
@@ -196,14 +206,15 @@ export function StaffModal({
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  shift: e.target.value as StaffShift,
+                  shift: e.target.value,
                 })
               }
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium bg-white"
+              disabled={isSubmitting}
             >
               {SHIFTS.map((shift) => (
-                <option key={shift} value={shift}>
-                  {shift}
+                <option key={shift.value} value={shift.value}>
+                  {shift.label}
                 </option>
               ))}
             </select>
@@ -215,15 +226,16 @@ export function StaffModal({
             </label>
             <input
               type="text"
-              value={formData.phone}
+              value={formData.phone_number || ""}
               onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
+                setFormData({ ...formData, phone_number: e.target.value })
               }
               className={cn(
                 "w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                errors.phone && "border-red-500",
+                errors.phone_number && "border-red-500",
               )}
               placeholder="Phone"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -233,15 +245,16 @@ export function StaffModal({
             </label>
             <input
               type="email"
-              value={formData.email_address}
+              value={formData.email}
               onChange={(e) =>
-                setFormData({ ...formData, email_address: e.target.value })
+                setFormData({ ...formData, email: e.target.value })
               }
               className={cn(
                 "w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all font-medium placeholder:text-gray-300",
-                errors.email_address && "border-red-500",
+                errors.email && "border-red-500",
               )}
               placeholder="Email"
+              disabled={isSubmitting}
             />
           </div>
 
@@ -255,8 +268,11 @@ export function StaffModal({
           </div>
 
           <div
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-blue-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 bg-blue-50/10 hover:bg-blue-50/30 transition-all cursor-pointer group"
+            onClick={() => !isSubmitting && fileInputRef.current?.click()}
+            className={cn(
+              "border-2 border-dashed border-blue-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 bg-blue-50/10 hover:bg-blue-50/30 transition-all cursor-pointer group",
+              isSubmitting && "opacity-50 pointer-events-none cursor-not-allowed"
+            )}
           >
             <input
               type="file"
@@ -264,6 +280,7 @@ export function StaffModal({
               className="hidden"
               accept=".xlsx,.xls,.csv"
               onChange={handleFileUpload}
+              disabled={isSubmitting}
             />
             <div className="w-10 h-10 bg-transparent flex items-center justify-center group-hover:scale-110 transition-transform">
               <Image
@@ -291,15 +308,26 @@ export function StaffModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={isSubmitting}
               className="flex-1 px-6 py-2.5 border border-gray-200 rounded-full text-foreground font-bold hover:bg-gray-50 transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="flex-1 flex items-center justify-center px-6 py-2.5 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition-colors cursor-pointer disabled:opacity-50"
             >
-              {mode === "add" ? "+ Add" : "Save"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : mode === "add" ? (
+                "+ Add"
+              ) : (
+                "Save"
+              )}
             </button>
           </div>
         </form>

@@ -1,8 +1,32 @@
 "use client";
 
-import { weeklySchedule } from "@/data/staffData";
+import { useGetAllStaffQuery } from "@/redux/services/staffApi";
 
 export function ScheduleOverview() {
+  const { data: staffData } = useGetAllStaffQuery({
+    page: 1,
+    page_size: 1, // just fetch a minimal load to get the overview object
+  });
+
+  const overview = staffData?.weekly_schedule_overview;
+  const morning = overview?.morning || 0;
+  const evening = overview?.evening || 0;
+  const night = overview?.night || 0;
+  const total = morning + evening + night;
+
+  // Since the API only returns a flat object without the day map, we map today for now 
+  // or wrap it in a single row logic based on what was provided.
+  const scheduleArray = [
+    {
+      day: "Today",
+      date: new Date().toLocaleDateString("en-GB"),
+      morning,
+      evening,
+      night,
+      total,
+    }
+  ];
+
   return (
     <div className="bg-white rounded-lg shadow-[0px_4px_16px_0px_#A9A9A940] overflow-hidden md:p-6 p-3">
       <div className="pb-4 border-b border-gray-100">
@@ -32,7 +56,7 @@ export function ScheduleOverview() {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E9E9E9]">
-            {weeklySchedule.map((item, idx) => (
+            {scheduleArray.map((item, idx) => (
               <tr key={idx} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
                   <p className="text-sm font-bold text-foreground">
@@ -64,7 +88,7 @@ export function ScheduleOverview() {
                   </div>
                 </td>
                 <td className="px-6 py-4 text-center text-sm font-bold text-secondary">
-                  24
+                  {item.total}
                 </td>
               </tr>
             ))}

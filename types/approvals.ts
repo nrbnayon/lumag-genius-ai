@@ -1,11 +1,12 @@
-export type ApprovalStatus = "Pending" | "Approved" | "Rejected";
+export type ApprovalStatus = "Pending" | "Approved" | "Rejected" | "APPROVED" | "REJECTED";
 export type ApprovalType =
   | "Ingredient"
   | "Recipe"
   | "Leave"
   | "Menu"
   | "Supplier"
-  | "Report";
+  | "Report"
+  | "Staff";
 
 export interface IngredientRequest {
   id: string;
@@ -69,6 +70,15 @@ export interface ReportRequest {
   purchaseDate: string;
 }
 
+export interface StaffRequest {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  role: string;
+  joined_date: string;
+}
+
 export interface ApprovalRequest {
   id: string;
   type: ApprovalType;
@@ -85,5 +95,6 @@ export interface ApprovalRequest {
     | LeaveRequest
     | MenuRequest
     | SupplierRequest
-    | ReportRequest;
+    | ReportRequest
+    | StaffRequest;
 }

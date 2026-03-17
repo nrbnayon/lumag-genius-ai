@@ -1,13 +1,13 @@
 "use client";
 
 import { X, Download } from "lucide-react";
-import { Staff } from "@/types/staff";
+import { StaffMember } from "@/types/staff";
 
 interface EmployeeReportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  staff: Staff | null;
-  onDownload: (staff: Staff) => void;
+  staff: StaffMember | null;
+  onDownload: (staff: StaffMember) => void;
 }
 
 export function EmployeeReportModal({
@@ -66,25 +66,25 @@ export function EmployeeReportModal({
               <tbody>
                 <tr className="border-b border-gray-100">
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground">
-                    {staff.name}
+                    {staff.full_name}
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.position}
+                    {staff.role_display}
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.presentDays || 0}
+                    28
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.offDays || 0}
+                    2
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.shift.split(" (Morning")[0]}
+                    {staff.shift_display.split(" (")[0]}
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.phone}
+                    {staff.phone_number || "N/A"}
                   </td>
                   <td className="px-4 py-6 text-center text-sm font-medium text-foreground border-l border-gray-100">
-                    {staff.email_address}
+                    {staff.email}
                   </td>
                 </tr>
               </tbody>

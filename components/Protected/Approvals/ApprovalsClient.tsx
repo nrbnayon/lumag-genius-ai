@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   ApprovalRequest,
   ApprovalStatus,
   LeaveRequest,
   MenuRequest,
+  StaffRequest,
 } from "@/types/approvals";
 import { approvalsData } from "@/data/approvalsData";
 import { cn } from "@/lib/utils";
@@ -17,20 +18,30 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  UserPlus
 } from "lucide-react";
 import { ApprovalDetailModal } from "./ApprovalDetailModal";
 import { toast } from "sonner";
 import DashboardHeader from "@/components/Shared/DashboardHeader";
 import { StatsCard } from "@/components/Shared/StatsCard";
 import { Pagination } from "@/components/Shared/Pagination";
-import { useEffect } from "react";
 import { ApprovalListSkeleton } from "@/components/Skeleton/ApprovalSkeleton";
 import { ConfirmationModal } from "@/components/Shared/ConfirmationModal";
 
+import {
+  useGetPendingStaffRequestsQuery,
+  useApprovePendingStaffMutation,
+  useGetLeaveRequestsQuery,
+  useApproveLeaveRequestMutation,
+} from "@/redux/services/staffApi";
+
 export default function ApprovalsClient() {
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ApprovalStatus | "All">("All");
-  const [requests, setRequests] = useState<ApprovalRequest[]>(approvalsData);
+
+  const [localRequests, setLocalRequests] = useState<ApprovalRequest[]>(
+    approvalsData.filter(r => r.type !== "Leave") // remove mock Leave
+  );
+
   const [selectedRequest, setSelectedRequest] =
     useState<ApprovalRequest | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -41,31 +52,97 @@ export default function ApprovalsClient() {
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
   const [requestToReject, setRequestToReject] = useState<string | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Queries
+  const { data: pendingStaffReq, isLoading: isLoadingStaff } = useGetPendingStaffRequestsQuery();
+  const { data: leaveReqs, isLoading: isLoadingLeaves } = useGetLeaveRequestsQuery({});
+
+  // Mutations
+  const [approvePendingStaff] = useApprovePendingStaffMutation();
+  const [approveLeaveRequest] = useApproveLeaveRequestMutation();
+
+  const isLoading = isLoadingStaff || isLoadingLeaves;
+
+  const combinedRequests = useMemo(() => {
+    const mappedStaffRequests: ApprovalRequest[] = (pendingStaffReq?.data || []).map((s) => ({
+      id: "staff_" + s.id,
+      type: "Staff",
+      status: "Pending",
+      readStatus: "unread",
+      addedBy: s.full_name,
+      timestamp: new Date(s.joined_date).toLocaleDateString(),
+      title: "Staff Registration",
+      description: `Pending approval for ${s.full_name}`,
+      data: {
+        id: s.id,
+        name: s.full_name,
+        email: s.email_address,
+        phone: s.phone_number,
+        role: s.role,
+        joined_date: s.joined_date,
+      } as StaffRequest,
+    }));
+
+    const mappedLeaveRequests: ApprovalRequest[] = (leaveReqs?.data || []).map((l) => {
+      let status: ApprovalStatus = "Pending";
+      if (l.status === "APPROVED") status = "Approved";
+      else if (l.status === "REJECTED") status = "Rejected";
+
+      return {
+        id: "leave_" + l.id,
+        type: "Leave",
+        status: status,
+        readStatus: "unread",
+        addedBy: l.full_name,
+        timestamp: new Date(l.created_at).toLocaleDateString(),
+        title: `${l.leave_type_display} Leave Request`,
+        description: l.reason,
+        data: {
+          id: l.id.toString(),
+          employeeName: l.full_name,
+          leaveType: l.leave_type_display,
+          startDate: l.start_date,
+          endDate: l.end_date,
+          reason: l.reason,
+        } as LeaveRequest,
+      }
+    });
+
+    // Merge API streams with the local mocked non-staff UI rows mapping standard statuses
+    return [...mappedStaffRequests, ...mappedLeaveRequests, ...localRequests];
+  }, [pendingStaffReq, leaveReqs, localRequests]);
+
 
   const filteredRequests =
     activeTab === "All"
-      ? requests
-      : requests.filter((r) => r.status === activeTab);
+      ? combinedRequests
+      : combinedRequests.filter((r) => r.status === activeTab);
 
-  const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / itemsPerPage));
   const currentItems = filteredRequests.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage,
   );
 
-  const handleApprove = (id: string) => {
-    setRequests((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, status: "Approved" as ApprovalStatus } : r,
-      ),
-    );
-    toast.success("Request approved successfully");
+  const handleApprove = async (id: string) => {
+    try {
+      if (id.startsWith("staff_")) {
+        await approvePendingStaff({ id: id.replace("staff_", ""), action: "approved" }).unwrap();
+        toast.success("Staff approved successfully");
+      } else if (id.startsWith("leave_")) {
+        await approveLeaveRequest({ id: Number(id.replace("leave_", "")), status: "APPROVED" }).unwrap();
+        toast.success("Leave approved successfully");
+      } else {
+        setLocalRequests((prev) =>
+          prev.map((r) =>
+            r.id === id ? { ...r, status: "Approved" as ApprovalStatus } : r,
+          ),
+        );
+        toast.success("Request approved successfully");
+      }
+    } catch(err) {
+      toast.error("Failed to approve request.");
+      console.error(err);
+    }
   };
 
   const handleRejectInitiate = (id: string) => {
@@ -73,18 +150,30 @@ export default function ApprovalsClient() {
     setIsRejectConfirmOpen(true);
   };
 
-  const handleRejectConfirm = () => {
+  const handleRejectConfirm = async () => {
     if (requestToReject) {
-      setRequests((prev) =>
-        prev.map((r) =>
-          r.id === requestToReject
-            ? { ...r, status: "Rejected" as ApprovalStatus }
-            : r,
-        ),
-      );
-      toast.error("Request rejected successfully");
-      setIsRejectConfirmOpen(false);
-      setRequestToReject(null);
+      try {
+        if (requestToReject.startsWith("staff_")) {
+          await approvePendingStaff({ id: requestToReject.replace("staff_", ""), action: "rejected" }).unwrap();
+        } else if (requestToReject.startsWith("leave_")) {
+          await approveLeaveRequest({ id: Number(requestToReject.replace("leave_", "")), status: "REJECTED" }).unwrap();
+        } else {
+          setLocalRequests((prev) =>
+            prev.map((r) =>
+              r.id === requestToReject
+                ? { ...r, status: "Rejected" as ApprovalStatus }
+                : r,
+            ),
+          );
+        }
+        toast.error("Request rejected successfully");
+      } catch(err) {
+        toast.error("Failed to reject request.");
+        console.error(err);
+      } finally {
+        setIsRejectConfirmOpen(false);
+        setRequestToReject(null);
+      }
     }
   };
 
@@ -98,6 +187,8 @@ export default function ApprovalsClient() {
         return User;
       case "Menu":
         return BookOpen;
+      case "Staff":
+        return UserPlus;
       default:
         return BookOpen;
     }
@@ -113,6 +204,8 @@ export default function ApprovalsClient() {
         return "bg-amber-50 text-amber-500";
       case "Menu":
         return "bg-pink-50 text-pink-500";
+      case "Staff":
+        return "bg-emerald-50 text-emerald-500";
       default:
         return "bg-blue-50 text-blue-500";
     }
@@ -123,7 +216,12 @@ export default function ApprovalsClient() {
       return (request.data as MenuRequest).title;
     }
     if (request.type === "Leave") {
-      return (request.data as LeaveRequest).employeeName;
+      const data = request.data as LeaveRequest;
+      return `${data.employeeName} - ${data.leaveType}`;
+    }
+    if (request.type === "Staff") {
+      const data = request.data as StaffRequest;
+      return `${data.name} - ${data.role.replace("_", " ").toUpperCase()}`;
     }
     return (request.data as any).name;
   };
@@ -132,7 +230,7 @@ export default function ApprovalsClient() {
     <div className="pb-10 bg-[#F9FAFB] min-h-screen">
       <DashboardHeader
         title="Approvals"
-        description="Review and approve Ingredient additions, recipes, and leave requests"
+        description="Review and approve Staff, Leave, Ingredient additions, recipes requests"
       />
 
       <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -140,21 +238,21 @@ export default function ApprovalsClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatsCard
             title="Pending Approval"
-            value={requests.filter((r) => r.status === "Pending").length}
+            value={combinedRequests.filter((r) => r.status === "Pending").length}
             icon={Clock}
             iconColor="#F59E0B"
             iconBgColor="#FFFBEB"
           />
           <StatsCard
             title="Approved"
-            value={requests.filter((r) => r.status === "Approved").length}
+            value={combinedRequests.filter((r) => r.status === "Approved").length}
             icon={CheckCircle2}
             iconColor="#10B981"
             iconBgColor="#ECFDF5"
           />
           <StatsCard
             title="Rejected"
-            value={requests.filter((r) => r.status === "Rejected").length}
+            value={combinedRequests.filter((r) => r.status === "Rejected").length}
             icon={XCircle}
             iconColor="#EF4444"
             iconBgColor="#FEF2F2"
@@ -196,7 +294,7 @@ export default function ApprovalsClient() {
                   <div className="flex items-start gap-4 flex-1">
                     <div
                       className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center shadow-none",
+                        "w-10 h-10 rounded-lg flex items-center justify-center shadow-none shrink-0 mt-1",
                         getIconBg(request.type),
                       )}
                     >
@@ -254,7 +352,7 @@ export default function ApprovalsClient() {
                           }}
                           className="px-6 py-2 bg-emerald-50 text-emerald-600 text-sm font-black rounded-lg hover:bg-emerald-100 transition-all cursor-pointer active:scale-95 border"
                         >
-                          Approve
+                          Review
                         </button>
                       </div>
                     ) : (
