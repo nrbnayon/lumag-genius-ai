@@ -1,310 +1,290 @@
+// components\Protected\Approvals\ApprovalDetailModal.tsx
 "use client";
 
 import Image from "next/image";
 import { X } from "lucide-react";
 import {
-  ApprovalRequest,
-  IngredientRequest,
-  RecipeRequest,
-  LeaveRequest,
-  SupplierRequest,
-  ReportRequest,
-  StaffRequest,
+  ApprovalItem,
+  ApprovalType,
+  StaffApprovalItem,
+  SupplierApprovalItem,
+  MenuApprovalItem,
 } from "@/types/approvals";
 import { cn } from "@/lib/utils";
 
 interface ApprovalDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  request: ApprovalRequest | null;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
+  item: ApprovalItem | null;
+  onApprove: (id: string | number, type: ApprovalType) => void;
+  onReject: (id: string | number, type: ApprovalType) => void;
 }
 
 export function ApprovalDetailModal({
   isOpen,
   onClose,
-  request,
+  item,
   onApprove,
   onReject,
 }: ApprovalDetailModalProps) {
-  if (!isOpen || !request) return null;
+  if (!isOpen || !item) return null;
 
   const renderContent = () => {
-    switch (request.type) {
-      case "Ingredient": {
-        const data = request.data as IngredientRequest;
+    switch (item.type) {
+      case "ingredient": {
         return (
-          <div className="space-y-3">
-            <div className="overflow-x-auto border border-gray-100 rounded-xl">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-secondary font-medium">
-                    <th className="px-4 py-3 text-left">Ingredient name</th>
-                    <th className="px-4 py-3 text-left">Unit</th>
-                    <th className="px-4 py-3 text-left">Price</th>
-                    {data.quantityNeeded !== undefined && (
-                      <th className="px-4 py-3 text-left">Quantity Needed</th>
-                    )}
-                    <th className="px-4 py-3 text-left">Current Stock</th>
-                    <th className="px-4 py-3 text-left">Minimum Stock</th>
-                    <th className="px-4 py-3 text-left">Category</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="text-foreground">
-                    <td className="px-4 py-4">{data.name}</td>
-                    <td className="px-4 py-4">{data.unit}</td>
-                    <td className="px-4 py-4">{data.price}</td>
-                    {data.quantityNeeded !== undefined && (
-                      <td className="px-4 py-4">{data.quantityNeeded}</td>
-                    )}
-                    <td className="px-4 py-4">{data.currentStock}</td>
-                    <td className="px-4 py-4">{data.minimumStock}</td>
-                    <td className="px-4 py-4">{data.category}</td>
-                  </tr>
-                </tbody>
-              </table>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Ingredient Name
+                </p>
+                <p className="text-sm font-bold text-foreground">{item.name}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Created At
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {new Date(item.created_at).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <div className="p-8 text-center text-gray-400 border border-dashed border-gray-200 rounded-3xl">
+              Additional ingredient details will be shown here.
             </div>
           </div>
         );
       }
-      case "Staff": {
-        const data = request.data as StaffRequest;
+      case "staff": {
+        const staff = item as StaffApprovalItem;
         return (
-          <div className="space-y-3">
-            <div className="overflow-x-auto border border-gray-100 rounded-xl">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-secondary font-medium">
-                    <th className="px-4 py-3 text-left">Full Name</th>
-                    <th className="px-4 py-3 text-left">Email Address</th>
-                    <th className="px-4 py-3 text-left">Phone Number</th>
-                    <th className="px-4 py-3 text-left">Job Title</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="text-foreground">
-                    <td className="px-4 py-4 font-bold">{data.name}</td>
-                    <td className="px-4 py-4">{data.email}</td>
-                    <td className="px-4 py-4">{data.phone || "N/A"}</td>
-                    <td className="px-4 py-4 uppercase text-xs font-black tracking-wider text-blue-500">{data.role.replace("_", " ")}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-      case "Recipe": {
-        const data = request.data as RecipeRequest;
-        return (
-          <div className="space-y-3">
-            <div className="overflow-x-auto border border-gray-100 rounded-xl">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-secondary font-medium border-b border-gray-100">
-                    <th className="px-4 py-3 text-left border-r border-gray-100">
-                      Recipe name
-                    </th>
-                    <th className="px-4 py-3 text-left border-r border-gray-100">
-                      Avg. Time
-                    </th>
-                    <th className="px-4 py-3 text-left border-r border-gray-100">
-                      Selling Price
-                    </th>
-                    <th className="px-4 py-3 text-left border-r border-gray-100">
-                      Instruction
-                    </th>
-                    <th className="px-0 py-0" colSpan={4}>
-                      <table className="w-full">
-                        <thead>
-                          <tr className="bg-gray-50 text-secondary border-b border-gray-100">
-                            <th className="px-4 py-3 text-left">Name</th>
-                            <th className="px-4 py-3 text-left">Quantity</th>
-                            <th className="px-4 py-3 text-left">Unit</th>
-                            <th className="px-4 py-3 text-left">Cost</th>
-                          </tr>
-                        </thead>
-                      </table>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="text-foreground align-top">
-                    <td className="px-4 py-4 border-r border-gray-100">
-                      {data.name}
-                    </td>
-                    <td className="px-4 py-4 border-r border-gray-100">
-                      {data.avgTime}
-                    </td>
-                    <td className="px-4 py-4 border-r border-gray-100">
-                      {data.sellingPrice}
-                    </td>
-                    <td className="px-4 py-4 border-r border-gray-100 text-xs max-w-[200px]">
-                      {data.instruction}
-                    </td>
-                    <td className="px-0 py-0" colSpan={4}>
-                      <table className="w-full">
-                        <tbody>
-                          {data.ingredients.map((ing, idx) => (
-                            <tr
-                              key={idx}
-                              className={cn(
-                                "border-b border-gray-50 last:border-0",
-                              )}
-                            >
-                              <td className="px-4 py-3 text-xs">{ing.name}</td>
-                              <td className="px-4 py-3 text-xs">
-                                {ing.quantity}
-                              </td>
-                              <td className="px-4 py-3 text-xs">{ing.unit}</td>
-                              <td className="px-4 py-3 text-xs">{ing.cost}</td>
-                            </tr>
-                          ))}
-                          <tr className="bg-gray-50/30">
-                            <td
-                              colSpan={3}
-                              className="px-4 py-3 text-xs font-bold text-right"
-                            >
-                              Total Cost
-                            </td>
-                            <td className="px-4 py-3 text-xs font-black text-primary">
-                              $20
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-      case "Leave": {
-        const data = request.data as LeaveRequest;
-        return (
-          <div className="space-y-4 max-w-lg mx-auto">
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-secondary">
-                Leave Type
-              </label>
-              <div className="px-4 py-3 bg-gray-50 rounded-xl text-foreground font-medium border border-gray-100">
-                {data.leaveType}
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Full Name
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {staff.name}
+                </p>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-secondary">
-                Start Date
-              </label>
-              <div className="px-4 py-3 bg-gray-50 rounded-xl text-foreground font-medium border border-gray-100">
-                {data.startDate}
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Email Address
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {staff.email}
+                </p>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-secondary">
-                End Date
-              </label>
-              <div className="px-4 py-3 bg-gray-50 rounded-xl text-foreground font-medium border border-gray-100">
-                {data.endDate}
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Phone Number
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {staff.phone_number || "N/A"}
+                </p>
               </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-secondary">Reason</label>
-              <div className="px-4 py-3 bg-gray-50 rounded-xl text-foreground font-medium border border-gray-100 min-h-[100px] text-xs leading-relaxed">
-                {data.reason}
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Role
+                </p>
+                <p className="text-sm font-bold text-primary uppercase tracking-wider">
+                  {staff.role.replace("_", " ")}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Verified Status
+                </p>
+                <p
+                  className={cn(
+                    "text-sm font-bold",
+                    staff.is_verified ? "text-emerald-500" : "text-amber-500",
+                  )}
+                >
+                  {staff.is_verified ? "Verified" : "Not Verified"}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Created Account At
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {new Date(staff.created_at).toLocaleString()}
+                </p>
               </div>
             </div>
           </div>
         );
       }
-      case "Supplier": {
-        const data = request.data as SupplierRequest;
+      case "recipe": {
         return (
-          <div className="space-y-3">
-            <div className="overflow-x-auto border border-gray-100 rounded-xl">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-secondary font-medium">
-                    <th className="px-4 py-3 text-left">Supplier name</th>
-                    <th className="px-4 py-3 text-left">Phone</th>
-                    <th className="px-4 py-3 text-left">Email</th>
-                    <th className="px-4 py-3 text-left">Address</th>
-                    <th className="px-4 py-3 text-left">Contract Start</th>
-                    <th className="px-4 py-3 text-left">Contract End</th>
-                    <th className="px-4 py-3 text-left">Notes & Comments</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="text-foreground">
-                    <td className="px-4 py-4">{data.name}</td>
-                    <td className="px-4 py-4">{data.phone}</td>
-                    <td className="px-4 py-4">{data.email_address}</td>
-                    <td className="px-4 py-4">{data.address}</td>
-                    <td className="px-4 py-4">{data.contractStart}</td>
-                    <td className="px-4 py-4">{data.contractEnd}</td>
-                    <td className="px-4 py-4 max-w-[200px] truncate">
-                      {data.notes}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Recipe Name
+                </p>
+                <p className="text-sm font-bold text-foreground">{item.name}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Chef Name
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {item.created_by_name}
+                </p>
+              </div>
+            </div>
+            <div className="p-8 text-center text-gray-400 border border-dashed border-gray-200 rounded-3xl">
+              Recipe details and instructions will be shown here.
             </div>
           </div>
         );
       }
-      case "Report": {
-        const data = request.data as ReportRequest;
+      case "menu": {
+        const menu = item as MenuApprovalItem;
         return (
-          <div className="space-y-3">
-            <div className="overflow-x-auto border border-gray-100 rounded-xl">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 text-secondary font-medium">
-                    <th className="px-4 py-3 text-left">Product Name</th>
-                    <th className="px-4 py-3 text-left">Price</th>
-                    <th className="px-4 py-3 text-left">Quantity</th>
-                    <th className="px-4 py-3 text-left">Unit</th>
-                    <th className="px-4 py-3 text-left">Supplier Name</th>
-                    <th className="px-4 py-3 text-left">Report(If any)</th>
-                    <th className="px-4 py-3 text-left">Purchase Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="text-foreground">
-                    <td className="px-4 py-4">{data.productName}</td>
-                    <td className="px-4 py-4">{data.price}</td>
-                    <td className="px-4 py-4">{data.quantity}</td>
-                    <td className="px-4 py-4">{data.unit}</td>
-                    <td className="px-4 py-4">{data.supplierName}</td>
-                    <td className="px-4 py-4">
-                      {data.reportImage ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-gray-100 relative">
-                          <Image
-                            src={data.reportImage}
-                            alt="Report"
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
-                        </div>
-                      ) : (
-                        <span className="text-gray-300">No Image</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-4">{data.purchaseDate}</td>
-                  </tr>
-                </tbody>
-              </table>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Menu Title
+                </p>
+                <p className="text-sm font-bold text-foreground">{menu.name}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Menu Type
+                </p>
+                <p className="text-sm font-bold text-foreground uppercase">
+                  {menu.menu_type}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Outlet Type
+                </p>
+                <p className="text-sm font-bold text-foreground uppercase">
+                  {menu.outlet_type}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Total Cost
+                </p>
+                <p className="text-lg font-black text-primary">
+                  ${menu.total_cost}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      case "supplier": {
+        const supplier = item as SupplierApprovalItem;
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Supplier Name
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {supplier.name}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Email
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {supplier.email}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Phone
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {supplier.phone}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Outlet Type
+                </p>
+                <p className="text-sm font-bold text-foreground uppercase">
+                  {supplier.outlet_type}
+                </p>
+              </div>
+              <div className="col-span-1 md:col-span-2 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Address
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {supplier.address}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Contract Start
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {supplier.contract_start_date}
+                </p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Contract End
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {supplier.contract_end_date}
+                </p>
+              </div>
+              <div className="col-span-1 md:col-span-2 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Notes
+                </p>
+                <p className="text-sm font-medium text-foreground">
+                  {supplier.notes || "No notes provided."}
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      case "purchase": {
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Purchase Item
+                </p>
+                <p className="text-sm font-bold text-foreground">{item.name}</p>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black uppercase text-secondary tracking-widest mb-1">
+                  Created By
+                </p>
+                <p className="text-sm font-bold text-foreground">
+                  {item.created_by_name}
+                </p>
+              </div>
+            </div>
+            <div className="p-8 text-center text-gray-400 border border-dashed border-gray-200 rounded-3xl">
+              Purchase order details will be shown here.
             </div>
           </div>
         );
       }
       default:
         return (
-          <div className="p-8 text-center text-secondary">Coming Soon</div>
+          <div className="p-8 text-center text-secondary border border-dashed border-gray-200 rounded-3xl">
+            Coming Soon: Detailed view for {(item as any)?.type}
+          </div>
         );
     }
   };
@@ -315,42 +295,46 @@ export function ApprovalDetailModal({
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl animate-in fade-in zoom-in duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl animate-in fade-in zoom-in duration-300 overflow-hidden flex flex-col max-h-[90vh]">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-red-500 transition-colors z-10"
+          className="absolute right-6 top-6 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all z-10"
         >
           <X className="w-6 h-6" />
         </button>
 
-        <div className="md:p-6 p-4 pb-4 shrink-0">
-          <h2 className="text-2xl font-black text-foreground">
-            Request Details
+        <div className="p-8 pb-4 shrink-0">
+          <p className="text-[10px] font-black uppercase text-primary tracking-[0.2em] mb-1">
+            Workflow Management
+          </p>
+          <h2 className="text-3xl font-black text-foreground">
+            {item.type.charAt(0).toUpperCase() + item.type.slice(1)} Approval
+            Details
           </h2>
         </div>
 
-        <div className="p-4 pt-2 overflow-y-auto custom-scrollbar">
+        <div className="px-8 py-4 overflow-y-auto custom-scrollbar flex-1">
           {renderContent()}
         </div>
 
-        <div className="md:p-6 p-4 flex gap-4 shrink-0 bg-gray-50/50">
+        <div className="p-8 flex gap-4 shrink-0 bg-gray-50/50 border-t border-gray-100">
           <button
             onClick={() => {
-              onReject(request.id);
+              onReject(item.id, item.type);
               onClose();
             }}
-            className="flex-1 py-2.5 bg-red-600 text-white rounded-full font-black text-sm uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg active:scale-95 cursor-pointer"
+            className="flex-1 py-4 bg-white border border-red-200 text-red-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
           >
-            Reject
+            Reject Request
           </button>
           <button
             onClick={() => {
-              onApprove(request.id);
+              onApprove(item.id, item.type);
               onClose();
             }}
-            className="flex-1 py-2.5 bg-white border-2 border-gray-200 text-foreground rounded-full font-black text-sm uppercase tracking-widest hover:border-primary hover:text-primary transition-all active:scale-95 cursor-pointer"
+            className="flex-1 py-4 bg-emerald-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200 active:scale-95 cursor-pointer"
           >
-            Accept
+            Approve & Finalize
           </button>
         </div>
       </div>

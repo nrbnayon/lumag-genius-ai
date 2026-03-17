@@ -402,13 +402,13 @@ export default function AiAssistantClient() {
                     </span>
                   )}
                 </div>
-                <button
+                {/* <button
                   onClick={(e) => handleRemovePendingFile(file.id, e)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
                   title="Remove file"
                 >
                   <Plus className="w-3 h-3 rotate-45" />
-                </button>
+                </button> */}
               </div>
             ))}
           </div>

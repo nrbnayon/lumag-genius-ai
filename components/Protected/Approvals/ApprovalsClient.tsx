@@ -1,14 +1,12 @@
+// d:\Nayon xD\Running Projects\Web Design Phase\lumag-genius-ai-admin-dashboard\components\Protected\Approvals\ApprovalsClient.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
-  ApprovalRequest,
+  ApprovalItem,
   ApprovalStatus,
-  LeaveRequest,
-  MenuRequest,
-  StaffRequest,
+  ApprovalType,
 } from "@/types/approvals";
-import { approvalsData } from "@/data/approvalsData";
 import { cn } from "@/lib/utils";
 import {
   ShoppingBag,
@@ -18,7 +16,9 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  UserPlus
+  UserPlus,
+  Search,
+  Truck
 } from "lucide-react";
 import { ApprovalDetailModal } from "./ApprovalDetailModal";
 import { toast } from "sonner";
@@ -27,168 +27,82 @@ import { StatsCard } from "@/components/Shared/StatsCard";
 import { Pagination } from "@/components/Shared/Pagination";
 import { ApprovalListSkeleton } from "@/components/Skeleton/ApprovalSkeleton";
 import { ConfirmationModal } from "@/components/Shared/ConfirmationModal";
-
-import {
-  useGetPendingStaffRequestsQuery,
-  useApprovePendingStaffMutation,
-  useGetLeaveRequestsQuery,
-  useApproveLeaveRequestMutation,
-} from "@/redux/services/staffApi";
+import { 
+  useGetApprovalsQuery, 
+  useApproveActionMutation 
+} from "@/redux/services/approvalsApi";
+import { Input } from "@/components/ui/input";
 
 export default function ApprovalsClient() {
-  const [activeTab, setActiveTab] = useState<ApprovalStatus | "All">("All");
-
-  const [localRequests, setLocalRequests] = useState<ApprovalRequest[]>(
-    approvalsData.filter(r => r.type !== "Leave") // remove mock Leave
-  );
-
-  const [selectedRequest, setSelectedRequest] =
-    useState<ApprovalRequest | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ApprovalStatus | "all">("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const perPage = 10;
+
+  const [selectedItem, setSelectedItem] = useState<ApprovalItem | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   // Confirmation Modal State
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
-  const [requestToReject, setRequestToReject] = useState<string | null>(null);
+  const [itemToReject, setItemToReject] = useState<{ id: string | number, type: ApprovalType } | null>(null);
 
   // Queries
-  const { data: pendingStaffReq, isLoading: isLoadingStaff } = useGetPendingStaffRequestsQuery();
-  const { data: leaveReqs, isLoading: isLoadingLeaves } = useGetLeaveRequestsQuery({});
+  const { data: response, isLoading, isFetching } = useGetApprovalsQuery({
+    status: activeTab === "all" ? undefined : activeTab,
+    search: searchTerm,
+    page: currentPage,
+    per_page: perPage
+  });
 
   // Mutations
-  const [approvePendingStaff] = useApprovePendingStaffMutation();
-  const [approveLeaveRequest] = useApproveLeaveRequestMutation();
+  const [approveAction, { isLoading: isActing }] = useApproveActionMutation();
 
-  const isLoading = isLoadingStaff || isLoadingLeaves;
-
-  const combinedRequests = useMemo(() => {
-    const mappedStaffRequests: ApprovalRequest[] = (pendingStaffReq?.data || []).map((s) => ({
-      id: "staff_" + s.id,
-      type: "Staff",
-      status: "Pending",
-      readStatus: "unread",
-      addedBy: s.full_name,
-      timestamp: new Date(s.joined_date).toLocaleDateString(),
-      title: "Staff Registration",
-      description: `Pending approval for ${s.full_name}`,
-      data: {
-        id: s.id,
-        name: s.full_name,
-        email: s.email_address,
-        phone: s.phone_number,
-        role: s.role,
-        joined_date: s.joined_date,
-      } as StaffRequest,
-    }));
-
-    const mappedLeaveRequests: ApprovalRequest[] = (leaveReqs?.data || []).map((l) => {
-      let status: ApprovalStatus = "Pending";
-      if (l.status === "APPROVED") status = "Approved";
-      else if (l.status === "REJECTED") status = "Rejected";
-
-      return {
-        id: "leave_" + l.id,
-        type: "Leave",
-        status: status,
-        readStatus: "unread",
-        addedBy: l.full_name,
-        timestamp: new Date(l.created_at).toLocaleDateString(),
-        title: `${l.leave_type_display} Leave Request`,
-        description: l.reason,
-        data: {
-          id: l.id.toString(),
-          employeeName: l.full_name,
-          leaveType: l.leave_type_display,
-          startDate: l.start_date,
-          endDate: l.end_date,
-          reason: l.reason,
-        } as LeaveRequest,
-      }
-    });
-
-    // Merge API streams with the local mocked non-staff UI rows mapping standard statuses
-    return [...mappedStaffRequests, ...mappedLeaveRequests, ...localRequests];
-  }, [pendingStaffReq, leaveReqs, localRequests]);
-
-
-  const filteredRequests =
-    activeTab === "All"
-      ? combinedRequests
-      : combinedRequests.filter((r) => r.status === activeTab);
-
-  const totalPages = Math.max(1, Math.ceil(filteredRequests.length / itemsPerPage));
-  const currentItems = filteredRequests.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  const handleApprove = async (id: string) => {
+  const handleApprove = async (id: string | number, type: ApprovalType) => {
     try {
-      if (id.startsWith("staff_")) {
-        await approvePendingStaff({ id: id.replace("staff_", ""), action: "approved" }).unwrap();
-        toast.success("Staff approved successfully");
-      } else if (id.startsWith("leave_")) {
-        await approveLeaveRequest({ id: Number(id.replace("leave_", "")), status: "APPROVED" }).unwrap();
-        toast.success("Leave approved successfully");
-      } else {
-        setLocalRequests((prev) =>
-          prev.map((r) =>
-            r.id === id ? { ...r, status: "Approved" as ApprovalStatus } : r,
-          ),
-        );
-        toast.success("Request approved successfully");
-      }
-    } catch(err) {
-      toast.error("Failed to approve request.");
-      console.error(err);
+      await approveAction({ id, type, action: "approved" }).unwrap();
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} approved successfully`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to approve request.");
     }
   };
 
-  const handleRejectInitiate = (id: string) => {
-    setRequestToReject(id);
+  const handleRejectInitiate = (id: string | number, type: ApprovalType) => {
+    setItemToReject({ id, type });
     setIsRejectConfirmOpen(true);
   };
 
   const handleRejectConfirm = async () => {
-    if (requestToReject) {
+    if (itemToReject) {
       try {
-        if (requestToReject.startsWith("staff_")) {
-          await approvePendingStaff({ id: requestToReject.replace("staff_", ""), action: "rejected" }).unwrap();
-        } else if (requestToReject.startsWith("leave_")) {
-          await approveLeaveRequest({ id: Number(requestToReject.replace("leave_", "")), status: "REJECTED" }).unwrap();
-        } else {
-          setLocalRequests((prev) =>
-            prev.map((r) =>
-              r.id === requestToReject
-                ? { ...r, status: "Rejected" as ApprovalStatus }
-                : r,
-            ),
-          );
-        }
-        toast.error("Request rejected successfully");
-      } catch(err) {
-        toast.error("Failed to reject request.");
-        console.error(err);
+        await approveAction({ 
+          id: itemToReject.id, 
+          type: itemToReject.type, 
+          action: "rejected" 
+        }).unwrap();
+        toast.error(`${itemToReject.type.charAt(0).toUpperCase() + itemToReject.type.slice(1)} rejected successfully`);
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Failed to reject request.");
       } finally {
         setIsRejectConfirmOpen(false);
-        setRequestToReject(null);
+        setItemToReject(null);
       }
     }
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "Ingredient":
+      case "ingredient":
         return ShoppingBag;
-      case "Recipe":
+      case "recipe":
         return Utensils;
-      case "Leave":
-        return User;
-      case "Menu":
+      case "menu":
         return BookOpen;
-      case "Staff":
+      case "staff":
         return UserPlus;
+      case "supplier":
+        return Truck;
+      case "purchase":
+        return ShoppingBag;
       default:
         return BookOpen;
     }
@@ -196,41 +110,32 @@ export default function ApprovalsClient() {
 
   const getIconBg = (type: string) => {
     switch (type) {
-      case "Ingredient":
+      case "ingredient":
         return "bg-red-50 text-red-500";
-      case "Recipe":
+      case "recipe":
         return "bg-blue-50 text-blue-500";
-      case "Leave":
-        return "bg-amber-50 text-amber-500";
-      case "Menu":
+      case "menu":
         return "bg-pink-50 text-pink-500";
-      case "Staff":
+      case "staff":
         return "bg-emerald-50 text-emerald-500";
+      case "supplier":
+        return "bg-amber-50 text-amber-500";
+      case "purchase":
+        return "bg-indigo-50 text-indigo-500";
       default:
-        return "bg-blue-50 text-blue-500";
+        return "bg-gray-50 text-gray-500";
     }
   };
 
-  const getRequestLabel = (request: ApprovalRequest) => {
-    if (request.type === "Menu") {
-      return (request.data as MenuRequest).title;
-    }
-    if (request.type === "Leave") {
-      const data = request.data as LeaveRequest;
-      return `${data.employeeName} - ${data.leaveType}`;
-    }
-    if (request.type === "Staff") {
-      const data = request.data as StaffRequest;
-      return `${data.name} - ${data.role.replace("_", " ").toUpperCase()}`;
-    }
-    return (request.data as any).name;
-  };
+  const items = response?.data?.items || [];
+  const summary = response?.data?.summary || { pending: 0, approved: 0, rejected: 0 };
+  const pagination = response?.data?.pagination;
 
   return (
     <div className="pb-10 bg-[#F9FAFB] min-h-screen">
       <DashboardHeader
         title="Approvals"
-        description="Review and approve Staff, Leave, Ingredient additions, recipes requests"
+        description="Review and manage workflow approvals for staff, suppliers, ingredients, and more."
       />
 
       <main className="p-4 md:p-8 space-y-8 animate-in fade-in duration-500">
@@ -238,156 +143,178 @@ export default function ApprovalsClient() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatsCard
             title="Pending Approval"
-            value={combinedRequests.filter((r) => r.status === "Pending").length}
+            value={summary.pending}
             icon={Clock}
             iconColor="#F59E0B"
             iconBgColor="#FFFBEB"
           />
           <StatsCard
             title="Approved"
-            value={combinedRequests.filter((r) => r.status === "Approved").length}
+            value={summary.approved}
             icon={CheckCircle2}
             iconColor="#10B981"
             iconBgColor="#ECFDF5"
           />
           <StatsCard
             title="Rejected"
-            value={combinedRequests.filter((r) => r.status === "Rejected").length}
+            value={summary.rejected}
             icon={XCircle}
             iconColor="#EF4444"
             iconBgColor="#FEF2F2"
           />
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 overflow-x-auto no-scrollbar">
-          {["All", "Approved", "Rejected", "Pending"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab as any);
-                setCurrentPage(1);
-              }}
-              className={cn(
-                "px-8 py-4 text-sm font-bold transition-all border-b-2 shrink-0 cursor-pointer",
-                activeTab === tab
-                  ? "border-primary text-primary"
-                  : "border-transparent text-secondary hover:text-foreground",
-              )}
-            >
-              {tab}
-            </button>
-          ))}
+        {/* Filters and Actions */}
+        <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Tabs */}
+                <div className="flex bg-gray-50 p-1 rounded-2xl w-fit">
+                {["all", "approved", "rejected", "pending"].map((tab) => (
+                    <button
+                        key={tab}
+                        onClick={() => {
+                            setActiveTab(tab as any);
+                            setCurrentPage(1);
+                        }}
+                        className={cn(
+                            "px-6 py-2 text-xs font-black uppercase tracking-wider transition-all rounded-xl cursor-pointer",
+                            activeTab === tab
+                            ? "bg-white text-primary shadow-sm"
+                            : "text-secondary hover:text-foreground",
+                        )}
+                    >
+                        {tab}
+                    </button>
+                ))}
+                </div>
+
+                {/* Search */}
+                <div className="relative w-full md:w-80">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input 
+                        placeholder="Search by name..." 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-11 rounded-2xl border-gray-200 outline-none focus:ring-primary/20"
+                    />
+                </div>
+            </div>
         </div>
 
         {/* List */}
         <div className="space-y-4">
-          {isLoading ? (
+          {(isLoading || isFetching) && items.length === 0 ? (
             <ApprovalListSkeleton />
           ) : (
             <>
-              {currentItems.map((request) => (
+              {items.map((item) => (
                 <div
-                  key={request.id}
-                  className="bg-white p-5 rounded-xl border-border shadow-[0px_4px_16px_0px_#A9A9A940] flex items-center justify-between group hover:shadow-sm transition-all animate-in slide-in-from-bottom-2 duration-300"
+                  key={`${item.type}_${item.id}`}
+                  className="bg-white p-5 rounded-2xl border-border shadow-[0px_4px_16px_0px_#A9A9A940] flex flex-col md:flex-row md:items-center justify-between group hover:shadow-md transition-all animate-in slide-in-from-bottom-2 duration-300 gap-4"
                 >
                   <div className="flex items-start gap-4 flex-1">
                     <div
                       className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center shadow-none shrink-0 mt-1",
-                        getIconBg(request.type),
+                        "w-12 h-12 rounded-xl flex items-center justify-center shadow-sm shrink-0",
+                        getIconBg(item.type),
                       )}
                     >
                       {(() => {
-                        const IconComponent = getIcon(request.type);
-                        return <IconComponent className="w-5 h-5" />;
+                        const IconComponent = getIcon(item.type);
+                        return <IconComponent className="w-6 h-6" />;
                       })()}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span
                           className={cn(
-                            "px-2 py-0.5 rounded text-xs font-black uppercase tracking-wider",
-                            request.status === "Pending"
+                            "px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider",
+                            item.approval_status === "pending"
                               ? "bg-orange-100 text-orange-600"
-                              : request.status === "Approved"
+                              : item.approval_status === "approved"
                                 ? "bg-emerald-100 text-emerald-600"
                                 : "bg-red-100 text-red-600",
                           )}
                         >
-                          {request.status}
+                          {item.approval_status}
                         </span>
-                        <h4 className="text-base font-bold text-foreground">
-                          {getRequestLabel(request)}
+                        <h4 className="text-base font-bold text-foreground truncate">
+                          {item.name}
                         </h4>
+                        <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">
+                           {item.type}
+                        </span>
                       </div>
                       <p className="text-sm font-medium text-secondary">
-                        Added by {request.addedBy}
+                        Created by <span className="text-foreground">{item.created_by_name}</span> ({item.created_by_role.replace("_", " ")})
                       </p>
-                      {request.type === "Leave" && (
-                        <p className="text-xs text-secondary mt-1 font-medium italic">
-                          {(request.data as any).reason}
-                        </p>
-                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <p className="text-xs font-bold text-gray-400">
-                      {request.timestamp}
-                    </p>
+                  <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-0 pt-4 md:pt-0">
+                    <div className="text-right">
+                       <p className="text-[10px] font-black uppercase text-gray-400 tracking-wider">Created Date</p>
+                       <p className="text-xs font-bold text-secondary">
+                        {new Date(item.created_at).toLocaleDateString(undefined, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                        })}
+                       </p>
+                    </div>
 
-                    {request.status === "Pending" ? (
+                    {item.approval_status === "pending" ? (
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => handleRejectInitiate(request.id)}
-                          className="px-6 py-2 bg-red-50 text-red-600 text-sm font-black rounded-lg hover:bg-red-100 transition-all cursor-pointer active:scale-95 border"
+                          onClick={() => handleRejectInitiate(item.id, item.type)}
+                          disabled={isActing}
+                          className="px-6 py-2 bg-red-50 text-red-600 text-xs font-black rounded-xl hover:bg-red-600 hover:text-white transition-all cursor-pointer active:scale-95 border border-red-100 uppercase tracking-widest"
                         >
                           Reject
                         </button>
                         <button
                           onClick={() => {
-                            setSelectedRequest(request);
+                            setSelectedItem(item);
                             setIsDetailModalOpen(true);
                           }}
-                          className="px-6 py-2 bg-emerald-50 text-emerald-600 text-sm font-black rounded-lg hover:bg-emerald-100 transition-all cursor-pointer active:scale-95 border"
+                          className="px-6 py-2 bg-emerald-600 text-white text-xs font-black rounded-xl hover:bg-emerald-700 transition-all cursor-pointer active:scale-95 shadow-lg shadow-emerald-200 uppercase tracking-widest"
                         >
-                          Review
+                           Review
                         </button>
                       </div>
                     ) : (
                       <button
                         onClick={() => {
-                          setSelectedRequest(request);
-                          setIsDetailModalOpen(true);
+                           setSelectedItem(item);
+                           setIsDetailModalOpen(true);
                         }}
-                        className="p-2 text-gray-300 hover:text-primary transition-colors cursor-pointer"
+                        className="p-3 bg-gray-50 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-xl transition-all cursor-pointer"
                       >
-                        <Clock className="w-5 h-5" />
+                         <Search className="w-5 h-5" />
                       </button>
                     )}
                   </div>
                 </div>
               ))}
 
-              {currentItems.length === 0 && (
+              {items.length === 0 && (
                 <div className="py-20 flex flex-col items-center justify-center bg-white rounded-3xl border border-dashed border-gray-200">
                   <Clock className="w-12 h-12 text-gray-200 mb-4" />
                   <h3 className="text-lg font-bold text-secondary">
-                    No {activeTab.toLowerCase()} requests found
+                    No {activeTab} requests found
                   </h3>
                 </div>
               )}
 
-              {totalPages > 1 && (
+              {pagination && pagination.total_pages > 1 && (
                 <div className="flex justify-center mt-8">
                   <Pagination
                     currentPage={currentPage}
-                    totalPages={totalPages}
+                    totalPages={pagination.total_pages}
                     onPageChange={setCurrentPage}
-                    totalItems={filteredRequests.length}
-                    itemsPerPage={itemsPerPage}
-                    currentItemsCount={currentItems.length}
+                    totalItems={pagination.total_items}
+                    itemsPerPage={perPage}
+                    currentItemsCount={items.length}
                   />
                 </div>
               )}
@@ -399,7 +326,7 @@ export default function ApprovalsClient() {
       <ApprovalDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        request={selectedRequest}
+        item={selectedItem}
         onApprove={handleApprove}
         onReject={handleRejectInitiate}
       />
