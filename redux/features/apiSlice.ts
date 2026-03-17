@@ -14,23 +14,11 @@ export const getCookie = (name: string): string | null => {
   return null;
 };
 
-/**
- * @param days  – omit / undefined for a session cookie
- *               pass a positive number for a persistent cookie
- */
-export const setCookie = (
-  name: string,
-  value: string,
-  days?: number
-): void => {
+
+export const setCookie = (name: string, value: string): void => {
   if (typeof document === "undefined") return;
-  let cookieStr = `${name}=${value}; path=/; SameSite=Lax`;
-  if (days && days > 0) {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    cookieStr += `; expires=${expires.toUTCString()}`;
-  }
-  document.cookie = cookieStr;
+
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; SameSite=None; Secure`;
 };
 
 export const deleteCookie = (name: string): void => {
@@ -121,18 +109,20 @@ const baseQueryWithReauth: typeof baseQuery = async (
           })
         );
 
-        const rememberMe = getCookie("rememberMe") === "true";
-        setCookie("accessToken", newAccessToken, rememberMe ? 10 : undefined);
+        // const rememberMe = getCookie("rememberMe") === "true";
+        setCookie("accessToken", newAccessToken);
 
         // Retry the original request with the refreshed token
         result = await baseQuery(args, api, extraOptions);
       } else {
-        api.dispatch(logout());
-        clearAuthCookies();
+        // api.dispatch(logout());
+        // clearAuthCookies();
+        console.log("Token refresh failed");
       }
     } else {
-      api.dispatch(logout());
-      clearAuthCookies();
+      // api.dispatch(logout());
+      // clearAuthCookies();
+      console.log("Token refresh failed");
     }
   }
 

@@ -109,9 +109,9 @@ const VerifyOtp = () => {
       }).unwrap();
 
       // Store secret_key in a session cookie for the next (reset-password) step
-      setCookie("reset_secretKey", result.secret_key, undefined);
+      setCookie("reset_secretKey", result.secret_key);
       // Mark OTP as verified
-      setCookie("reset_verified", "true", undefined);
+      setCookie("reset_verified", "true");
 
       toast.success(result.message || "Verification successful!");
       router.push("/reset-password");

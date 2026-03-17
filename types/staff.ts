@@ -28,6 +28,7 @@ export interface StaffMember {
   role: string;
   status: boolean;
   role_display: string;
+  avatar?: string;
   shift: string;
   shift_display: string;
   created_at: string;
@@ -112,10 +113,7 @@ export type StaffPosition =
   | "Restaurant Chef"
   | "Junior Chef"
   | "Head Chef";
-export type StaffShift =
-  | "Morning"
-  | "Evening"
-  | "Night";
+export type StaffShift = "Morning" | "Evening" | "Night";
 
 export interface HolidayNotification {
   id: string;

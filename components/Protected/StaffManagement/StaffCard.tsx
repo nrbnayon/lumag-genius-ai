@@ -25,14 +25,19 @@ export function StaffCard({
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden border border-gray-100">
             <Image
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(staff.full_name)}&background=random`}
+              src={
+                staff?.avatar ||
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(staff.full_name)}&background=random`
+              }
               alt={staff.full_name}
               fill
               className="object-cover"
             />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-bold text-foreground truncate">{staff.full_name}</h3>
+            <h3 className="text-sm font-bold text-foreground truncate">
+              {staff.full_name}
+            </h3>
             <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate">
               {staff.role_display}
             </p>
@@ -69,7 +74,10 @@ export function StaffCard({
         </div>
         <div className="flex justify-between items-center text-xs">
           <span className="text-secondary font-medium">Email</span>
-          <span className="text-foreground font-bold truncate max-w-[140px]" title={staff.email}>
+          <span
+            className="text-foreground font-bold truncate max-w-[140px]"
+            title={staff.email}
+          >
             {staff.email}
           </span>
         </div>

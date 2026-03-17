@@ -89,25 +89,23 @@ export const SignInForm = () => {
 
       // ── Persist to browser cookies ────────────────────────────────────────
       // Calculate cookie lifetime from the API's expires_in (ms)
-      const daysFromMs = tokens.expires_in / (1000 * 60 * 60 * 24);
-      const cookieDays = data.rememberMe ? daysFromMs : undefined; // undefined = session cookie
+      // const daysFromMs = tokens.expires_in / (1000 * 60 * 60 * 24);
+      // const cookieDays = data.rememberMe ? daysFromMs : undefined; // undefined = session cookie
 
-      setCookie("accessToken", tokens.access_token, cookieDays);
-      setCookie("refreshToken", tokens.refresh_token, cookieDays);
-      setCookie("userRole", user.role, cookieDays);
-      setCookie("userId", user.id, cookieDays);
+      setCookie("accessToken", tokens.access_token);
+      setCookie("refreshToken", tokens.refresh_token);
+      setCookie("userRole", user.role);
+      setCookie("userId", user.id);
       setCookie(
         "userEmail",
-        encodeURIComponent(user.email_address),
-        cookieDays
+        encodeURIComponent(user.email_address)
       );
       setCookie(
         "userName",
-        encodeURIComponent(user.full_name),
-        cookieDays
+        encodeURIComponent(user.full_name)
       );
       if (data.rememberMe) {
-        setCookie("rememberMe", "true", cookieDays);
+        setCookie("rememberMe", "true");
       }
 
       toast.success(`Welcome back, ${user.full_name}! 🎉`);

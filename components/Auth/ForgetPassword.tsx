@@ -45,7 +45,7 @@ const ForgetPassword = () => {
 
       // Store user_id in a short-lived cookie so the next steps can use it
       // (better than passing it in the URL)
-      setCookie("reset_userId", result.user_id, undefined); // session cookie
+      setCookie("reset_userId", result.user_id); // session cookie
 
       toast.success(
         result.message ||
