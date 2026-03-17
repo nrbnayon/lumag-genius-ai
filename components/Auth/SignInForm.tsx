@@ -7,7 +7,7 @@ import * as z from "zod";
 import { Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ type FormValues = z.infer<typeof loginValidationSchema>;
 export const SignInForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
   const [login, { isLoading }] = useLoginMutation();
 
@@ -110,8 +111,12 @@ export const SignInForm = () => {
       }
 
       toast.success(`Welcome back, ${user.full_name}! 🎉`);
+      
+      // Honour the ?redirect= param set by the middleware, fall back to "/dashboard"
+      const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+      
       // Use a hard navigation so the browser re-sends all cookies on the next request.
-      window.location.replace("/dashboard");
+      window.location.replace(redirectTo);
     } catch (error: any) {
       // Handle structured API errors
       const message =

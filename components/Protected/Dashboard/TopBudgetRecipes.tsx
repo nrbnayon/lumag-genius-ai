@@ -1,8 +1,13 @@
 "use client";
 
-import { topRecipes } from "@/data/dashboardData";
+import type { TopBudgetRecipe } from "@/types/dashboard";
+import { cn } from "@/lib/utils";
 
-export function TopBudgetRecipes() {
+interface TopBudgetRecipesProps {
+  data: TopBudgetRecipe[];
+}
+
+export function TopBudgetRecipes({ data }: TopBudgetRecipesProps) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-[0px_4px_16px_0px_rgba(169,169,169,0.25)] border-none">
       <div className="mb-6">
@@ -10,15 +15,32 @@ export function TopBudgetRecipes() {
         <p className="text-sm text-secondary">Based on this month</p>
       </div>
       <div className="space-y-4">
-        {topRecipes.map((recipe, index) => (
+        {data.map((recipe) => (
           <div key={recipe.id} className="flex items-center justify-between py-2">
             <div className="flex items-center gap-4">
-              <div className="w-8 h-8 rounded-lg bg-[#E0F2FE] text-[#0EA5E9] flex items-center justify-center font-bold text-sm">
-                {index + 1}
+              <div className="w-8 h-8 rounded-lg bg-[#E0F2FE] text-[#0EA5E9] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                {recipe.rank}
               </div>
-              <span className="text-foreground font-medium">{recipe.name}</span>
+              <div className="flex flex-col">
+                <span className="text-foreground font-medium text-sm leading-tight">
+                  {recipe.name}
+                </span>
+                <span className="text-xs text-secondary capitalize">{recipe.outlet_type}</span>
+              </div>
             </div>
-            <span className="text-foreground font-bold">{recipe.amount}</span>
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-foreground font-bold text-sm">
+                ${recipe.total_cost.toLocaleString()}
+              </span>
+              <span
+                className={cn(
+                  "text-xs font-medium",
+                  recipe.profit >= 0 ? "text-green-500" : "text-red-500"
+                )}
+              >
+                {recipe.profit >= 0 ? "+" : ""}${recipe.profit.toLocaleString()} profit
+              </span>
+            </div>
           </div>
         ))}
       </div>

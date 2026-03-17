@@ -1,47 +1,81 @@
-export interface DashboardStats {
-  totalRevenue: {
-    value: string;
-    percentage: string;
-    trend: 'up' | 'down';
-  };
-  foodCost: {
-    value: string;
-    percentage: string;
-    trend: 'up' | 'down';
-  };
-  activeRecipes: {
-    value: string;
-    percentage: string;
-    trend: 'up' | 'down';
-  };
-  staffOnDuty: {
-    value: number;
-    onLeave: number;
-  };
+// ─── Summary Cards ────────────────────────────────────────────────────────────
+
+export interface SummaryCardBase {
+  title: string;
+  value: number;
+  change_percent: number;
+  trend: "increase" | "decrease";
+  compare_text: string;
 }
 
-export interface ChartDataPoint {
+export interface StaffOnDutyCard {
+  title: string;
+  value: number;
+  staff_on_leave: number;
+  sub_text: string;
+}
+
+export interface SummaryCards {
+  total_revenue: SummaryCardBase;
+  food_cost: SummaryCardBase;
+  profit: SummaryCardBase;
+  active_recipes: SummaryCardBase;
+  staff_on_duty: StaffOnDutyCard;
+}
+
+// ─── Revenue Cost Trend ───────────────────────────────────────────────────────
+
+export interface RevenueCostTrendPoint {
   month: string;
   revenue: number;
   cost: number;
+  profit: number;
 }
 
-export interface FoodCostDistribution {
-  name: string;
-  value: number;
-  percentage: string;
-  color: string;
+// ─── Food Cost Distribution ───────────────────────────────────────────────────
+
+export interface FoodCostDistributionPoint {
+  month: string;
+  food_cost: number;
+  growth_percent: number;
 }
 
-export interface TopRecipe {
+// ─── Top Budget Recipes ───────────────────────────────────────────────────────
+
+export interface TopBudgetRecipe {
+  rank: number;
   id: number;
   name: string;
-  amount: string;
+  total_cost: number;
+  selling_cost: number;
+  profit: number;
+  outlet_type: string;
 }
 
-export interface Alert {
-  id: number;
-  title: string;
+// ─── Recent Alerts ────────────────────────────────────────────────────────────
+
+export interface RecentAlert {
+  type: string;
+  reference_id: number;
+  message: string;
+  severity: "success" | "warning" | "error" | "info";
+  status: string;
   time: string;
-  type: 'warning' | 'info' | 'error';
+}
+
+// ─── Full Dashboard Overview ──────────────────────────────────────────────────
+
+export interface DashboardOverviewData {
+  year: number;
+  month: number;
+  summary_cards: SummaryCards;
+  revenue_cost_trend: RevenueCostTrendPoint[];
+  food_cost_distribution: FoodCostDistributionPoint[];
+  top_budget_recipes: TopBudgetRecipe[];
+  recent_alerts: RecentAlert[];
+}
+
+export interface DashboardOverviewResponse {
+  message: string;
+  data: DashboardOverviewData;
 }
