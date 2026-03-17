@@ -78,7 +78,7 @@ export default function DashboardClient() {
           />
 
           {/* Profit */}
-          <DashboardStatsCard
+          {/* <DashboardStatsCard
             title={profit.title}
             value={`$${profit.value.toLocaleString()}`}
             icon={profit.trend === "increase" ? TrendingUp : TrendingDown}
@@ -87,7 +87,7 @@ export default function DashboardClient() {
             percentage={`${profit.change_percent}%`}
             trend={profit.trend === "increase" ? "up" : "down"}
             subtitleText={profit.compare_text}
-          />
+          /> */}
 
           {/* Active Recipes */}
           <DashboardStatsCard
