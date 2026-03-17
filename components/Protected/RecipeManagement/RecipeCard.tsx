@@ -30,7 +30,7 @@ export function RecipeCard({
 
   return (
     <div className="bg-white rounded-2xl p-5 shadow-[0px_4px_24px_rgba(149,157,165,0.1)] border border-gray-100 flex flex-col gap-3 relative group hover:shadow-lg transition-all duration-300">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <span
           className={cn(
             "px-4 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider",
@@ -39,7 +39,7 @@ export function RecipeCard({
         >
           {recipe?.approval_status || "Pending"}
         </span>
-        <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
           <button
             onClick={() => onEdit(recipe)}
             className="p-2 bg-[#FEF3C7] text-[#F59E0B] rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"
@@ -66,7 +66,7 @@ export function RecipeCard({
 
       <div className="space-y-3">
         <div>
-          <h3 className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2">
+          <h3 className="text-lg font-bold text-foreground leading-tight group-hover:text-primary transition-colors line-clamp-2 break-words">
             {recipe?.name}
           </h3>
           <p className="text-[10px] font-bold text-secondary uppercase tracking-widest mt-3">

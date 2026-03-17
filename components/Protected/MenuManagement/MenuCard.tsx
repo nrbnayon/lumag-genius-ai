@@ -14,7 +14,7 @@ interface MenuCardProps {
 export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-[0px_4px_16px_0px_#A9A9A940] border-none flex flex-col gap-4 relative group hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-2">
           <span
             className={cn(

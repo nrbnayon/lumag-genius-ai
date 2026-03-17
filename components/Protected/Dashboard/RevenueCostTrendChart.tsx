@@ -25,7 +25,7 @@ export function RevenueCostTrendChart({ data }: RevenueCostTrendChartProps) {
   }, []);
 
   // Compute a nice Y-axis max from data
-  const maxVal = Math.max(...data.map((d) => Math.max(d.revenue, d.cost, d.profit)), 0);
+  const maxVal = Math.max(...data.map((d) => Math.max(d.revenue, d.cost ?? 0, d.profit)), 0);
   const yMax = maxVal === 0 ? 100 : Math.ceil((maxVal * 1.25) / 50) * 50;
 
   return (

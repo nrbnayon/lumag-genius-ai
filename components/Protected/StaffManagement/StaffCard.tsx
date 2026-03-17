@@ -21,9 +21,9 @@ export function StaffCard({
 }: StaffCardProps) {
   return (
     <div className="bg-white rounded-xl p-5 shadow-[0px_4px_16px_0px_#A9A9A940] border-none group hover:shadow-sm transition-all duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-100">
+      <div className="flex items-start justify-between mb-6 gap-2">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-10 h-10 shrink-0 rounded-full overflow-hidden border border-gray-100">
             <Image
               src={staff.avatar || "https://i.pravatar.cc/150"}
               alt={staff.name}
@@ -31,14 +31,14 @@ export function StaffCard({
               className="object-cover"
             />
           </div>
-          <div>
-            <h3 className="text-sm font-bold text-foreground">{staff.name}</h3>
-            <p className="text-xs text-secondary font-medium uppercase tracking-wider">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-bold text-foreground truncate">{staff.name}</h3>
+            <p className="text-xs text-secondary font-medium uppercase tracking-wider truncate">
               {staff.position}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => onView(staff)}
             className="p-1.5 text-secondary hover:text-blue-500 transition-colors cursor-pointer"

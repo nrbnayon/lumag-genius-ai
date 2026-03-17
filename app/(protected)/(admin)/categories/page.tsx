@@ -152,13 +152,18 @@ export default function CategoriesPage() {
               <Tag size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-800">All Categories</h2>
+              <h2 className="text-lg font-bold text-gray-800">
+                All Categories
+              </h2>
               <p className="text-sm text-gray-500">
                 {categories.length} item{categories.length !== 1 && "s"} total
               </p>
             </div>
           </div>
-          <Button onClick={openCreateDialog} className="flex items-center gap-2">
+          <Button
+            onClick={openCreateDialog}
+            className="flex items-center gap-2"
+          >
             <Plus size={16} />
             <span className="hidden sm:inline">Add Category</span>
           </Button>
@@ -177,29 +182,40 @@ export default function CategoriesPage() {
               <div className="bg-gray-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Tag size={24} className="text-gray-400" />
               </div>
-              <p className="text-lg font-medium text-gray-800 mb-1">No categories found</p>
+              <p className="text-lg font-medium text-gray-800 mb-1">
+                No categories found
+              </p>
               <p className="text-sm">Get started by creating a new category.</p>
-              <Button onClick={openCreateDialog} variant="outline" className="mt-4">
+              <Button
+                onClick={openCreateDialog}
+                variant="outline"
+                className="mt-4"
+              >
                 Add your first category
               </Button>
             </div>
           ) : (
             <div className="overflow-x-auto w-full">
               <Table className="min-w-[500px]">
-                <TableHeader className="bg-gray-50/50">
+                <TableHeader className="bg-primary/30">
                   <TableRow>
-                    <TableHead className="w-20 text-center">ID</TableHead>
-                    <TableHead>Category Name</TableHead>
+                    {/* <TableHead className="w-20 text-center">ID</TableHead> */}
+                    <TableHead className="w-20 text-center pl-10 font-bold py-4">
+                      Category Name
+                    </TableHead>
                     <TableHead className="text-right pr-6">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {categories.map((category: Category) => (
-                    <TableRow key={category.id} className="hover:bg-slate-50 transition-colors">
-                      <TableCell className="text-center font-medium text-gray-600">
+                    <TableRow
+                      key={category.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      {/* <TableCell className="text-center font-medium text-gray-600">
                         {category.id}
-                      </TableCell>
-                      <TableCell className="font-semibold text-gray-800">
+                      </TableCell> */}
+                      <TableCell className="font-semibold text-gray-800 pl-10">
                         {category.name}
                       </TableCell>
                       <TableCell className="text-right pr-6 space-x-2">
@@ -235,7 +251,9 @@ export default function CategoriesPage() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{selectedCategory ? "Edit Category" : "Add New Category"}</DialogTitle>
+            <DialogTitle>
+              {selectedCategory ? "Edit Category" : "Add New Category"}
+            </DialogTitle>
             <DialogDescription>
               {selectedCategory
                 ? "Update the name of your ingredient category below."
@@ -245,18 +263,27 @@ export default function CategoriesPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
             <div className="">
-              <label htmlFor="name" className="text-sm font-medium text-foreground mb-2 block">
+              <label
+                htmlFor="name"
+                className="text-sm font-medium text-foreground mb-2 block"
+              >
                 Category Name <span className="text-red-500">*</span>
               </label>
               <Input
                 id="name"
                 placeholder="e.g. Vegetables, Meat, Dairy"
                 {...register("name")}
-                className={errors.name ? "border-red-500 focus-visible:ring-red-500" : "rounded"}
+                className={
+                  errors.name
+                    ? "border-red-500 focus-visible:ring-red-500"
+                    : "rounded"
+                }
                 autoFocus
               />
               {errors.name && (
-                <p className="text-sm text-red-500 font-medium">{errors.name.message}</p>
+                <p className="text-sm text-red-500 font-medium">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -275,7 +302,7 @@ export default function CategoriesPage() {
                 disabled={isCreating || isUpdating}
                 className="w-full sm:w-auto"
               >
-                {(isCreating || isUpdating) ? (
+                {isCreating || isUpdating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
@@ -290,13 +317,21 @@ export default function CategoriesPage() {
       </Dialog>
 
       {/* DELETE CONFIRMATION ALER-DIALOG */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category
-              <span className="font-bold text-gray-800"> "{selectedCategory?.name}"</span>.
+              This action cannot be undone. This will permanently delete the
+              category
+              <span className="font-bold text-gray-800">
+                {" "}
+                "{selectedCategory?.name}"
+              </span>
+              .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
