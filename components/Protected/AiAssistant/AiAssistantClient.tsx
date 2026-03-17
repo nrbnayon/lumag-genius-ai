@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
+import { getCookie } from "@/redux/features/apiSlice";
 
 type MessageRole = "user" | "assistant";
 
@@ -134,28 +135,66 @@ export default function AiAssistantClient() {
     setIsLoading(true);
 
     try {
-      // Create a prompt that includes file names if applicable
-      const apiMessages = newMessages.map((msg) => ({
-        role: msg.role,
-        content:
-          msg.type === "file"
-            ? `[Attached file: ${msg.fileName}]`
-            : msg.content,
-      }));
+      let aiContent = "";
+      let success = false;
+      const token = getCookie("accessToken");
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL || "http://10.10.12.62:6005/";
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: apiMessages }),
-      });
+      // Try new AI chat API first
+      try {
+        // Construct the question string including info about attached files if any
+        let fullQuestion = inputValue;
+        if (pendingFiles.length > 0) {
+          const fileNames = pendingFiles.map((f) => f.name).join(", ");
+          fullQuestion = `${inputValue} [Attached files: ${fileNames}]`.trim();
+        }
 
-      const data = await response.json();
+        const response = await fetch(`${baseUrl}api/ai/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ question: fullQuestion }),
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to get response");
+        if (response.ok) {
+          const result = await response.json();
+          // Based on user provided res format: result.data.ai_response.data.answer
+          if (result.data?.ai_response?.success) {
+            aiContent = result.data.ai_response.data.answer;
+            success = true;
+          }
+        }
+      } catch (err) {
+        console.warn("New AI Chat API failed, falling back to legacy API", err);
       }
 
-      const aiContent = data.choices?.[0]?.message?.content || "";
+      // Fallback if the first one failed or didn't return a success response
+      if (!success) {
+        const apiMessages = newMessages.map((msg) => ({
+          role: msg.role,
+          content:
+            msg.type === "file"
+              ? `[Attached file: ${msg.fileName}]`
+              : msg.content,
+        }));
+
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: apiMessages }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to get response");
+        }
+
+        aiContent = data.choices?.[0]?.message?.content || "";
+      }
 
       // Add actual assistant message but mark it as typing
       const aiResponse: Message = {
@@ -426,13 +465,13 @@ export default function AiAssistantClient() {
               className="w-full bg-[#F3F4F6] border-none rounded-full py-4 px-8 pr-16 font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 transition-all disabled:opacity-50"
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <button
+              {/* <button
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
                 title="Upload file"
               >
                 <Plus className="w-5 h-5" />
-              </button>
+              </button> */}
               {/* <button
                 className="p-2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
                 title="Voice input"

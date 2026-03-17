@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { notificationsData } from "@/data/notificationsData";
-import { ApprovalRequest } from "@/types/approvals";
+import { useState } from "react";
+import { ApprovalItem, ApprovalType } from "@/types/approvals";
 import { cn } from "@/lib/utils";
 import { Pagination } from "@/components/Shared/Pagination";
 import { Bell } from "lucide-react";
@@ -11,77 +10,71 @@ import { ApprovalDetailModal } from "../Protected/Approvals/ApprovalDetailModal"
 import { ConfirmationModal } from "../Shared/ConfirmationModal";
 import { toast } from "sonner";
 import { NotificationListSkeleton } from "../Skeleton/ApprovalSkeleton";
+import {
+  useGetApprovalsQuery,
+  useApproveActionMutation,
+} from "@/redux/services/approvalsApi";
 
 export default function NotificationsClient() {
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"All" | "Unread">("All");
-  const [notifications, setNotifications] =
-    useState<ApprovalRequest[]>(notificationsData);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // We map "Unread" to "pending" status if required, or simply fetch all based on the tab.
+  const { data: response, isLoading, isFetching } = useGetApprovalsQuery({
+    status: activeTab === "Unread" ? "pending" : undefined,
+    page: currentPage,
+    per_page: itemsPerPage,
+  });
+
+  const [approveAction] = useApproveActionMutation();
+
+  const notifications: ApprovalItem[] = response?.data?.items || [];
+  const pagination = response?.data?.pagination;
+
   const [selectedNotification, setSelectedNotification] =
-    useState<ApprovalRequest | null>(null);
+    useState<ApprovalItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
-  const [notificationToReject, setNotificationToReject] = useState<
-    string | null
-  >(null);
+  const [notificationToReject, setNotificationToReject] = useState<{
+    id: string | number;
+    type: ApprovalType;
+  } | null>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const filteredNotifications = useMemo(() => {
-    if (activeTab === "Unread") {
-      return notifications.filter((n) => n.readStatus === "unread");
-    }
-    return notifications;
-  }, [activeTab, notifications]);
-
-  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
-  const currentItems = filteredNotifications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
-  const handleMarkAsRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, readStatus: "read" } : n)),
-    );
-  };
-
-  const handleViewDetails = (notification: ApprovalRequest) => {
+  const handleViewDetails = (notification: ApprovalItem) => {
     setSelectedNotification(notification);
     setIsDetailModalOpen(true);
-    handleMarkAsRead(notification.id);
   };
 
-  const handleApprove = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, status: "Approved" } : n)),
-    );
-    toast.success("Request approved successfully");
+  const handleApprove = async (id: string | number, type: ApprovalType) => {
+    try {
+      await approveAction({ id, type, action: "approved" }).unwrap();
+      toast.success("Request approved successfully");
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to approve request.");
+    }
   };
 
-  const handleRejectInitiate = (id: string) => {
-    setNotificationToReject(id);
+  const handleRejectInitiate = (id: string | number, type: ApprovalType) => {
+    setNotificationToReject({ id, type });
     setIsRejectConfirmOpen(true);
   };
 
-  const handleRejectConfirm = () => {
+  const handleRejectConfirm = async () => {
     if (notificationToReject) {
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === notificationToReject ? { ...n, status: "Rejected" } : n,
-        ),
-      );
-      toast.error("Request rejected successfully");
-      setIsRejectConfirmOpen(false);
-      setNotificationToReject(null);
+      try {
+        await approveAction({
+          id: notificationToReject.id,
+          type: notificationToReject.type,
+          action: "rejected",
+        }).unwrap();
+        toast.error("Request rejected successfully");
+      } catch (err: any) {
+        toast.error(err?.data?.message || "Failed to reject request.");
+      } finally {
+        setIsRejectConfirmOpen(false);
+        setNotificationToReject(null);
+      }
     }
   };
 
@@ -113,58 +106,88 @@ export default function NotificationsClient() {
 
       {/* List */}
       <div className="space-y-4 mb-8">
-        {isLoading ? (
+        {isLoading || isFetching ? (
           <NotificationListSkeleton />
-        ) : currentItems.length > 0 ? (
-          currentItems.map((notification) => (
+        ) : notifications.length > 0 ? (
+          notifications.map((notification) => (
             <div
-              key={notification.id}
+              key={`${notification.type}_${notification.id}`}
               className={cn(
-                "p-5 rounded-2xl border transition-all flex items-center justify-between group",
-                notification.readStatus === "unread"
+                "p-5 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between group gap-4",
+                notification.approval_status === "pending"
                   ? "bg-blue-50/10 border-blue-100/50"
                   : "bg-white border-gray-50",
               )}
             >
               <div className="flex items-center gap-4 flex-1">
-                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-100 relative">
+                <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-gray-100 relative bg-gray-100">
                   <Image
-                    src={
-                      notification.avatar ||
-                      `https://i.pravatar.cc/150?u=${notification.addedBy}`
-                    }
-                    alt={notification.addedBy}
+                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      notification.created_by_name || "User",
+                    )}&background=random`}
+                    alt={notification.created_by_name}
                     fill
                     className="object-cover"
                     unoptimized
                   />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground mb-0.5">
-                    {notification.title}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="text-sm font-bold text-foreground">
+                      {notification.type.charAt(0).toUpperCase() +
+                        notification.type.slice(1)}{" "}
+                      Approval Request
+                    </h3>
+                    <span
+                      className={cn(
+                        "text-[10px] font-black uppercase px-2 py-0.5 rounded tracking-wider",
+                        notification.approval_status === "pending"
+                          ? "bg-orange-100 text-orange-600"
+                          : notification.approval_status === "approved"
+                            ? "bg-emerald-100 text-emerald-600"
+                            : "bg-red-100 text-red-600",
+                      )}
+                    >
+                      {notification.approval_status}
+                    </span>
+                  </div>
                   <p className="text-xs font-medium text-secondary">
-                    {notification.description}
+                    {notification.created_by_name} wants to add a{" "}
+                    {notification.type}: <strong>{notification.name}</strong>
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() => handleViewDetails(notification)}
-                      className="px-4 py-1.5 bg-green-50 text-green-600 text-xs font-black uppercase tracking-wider rounded border border-green-100 hover:bg-green-100 transition-all cursor-pointer"
+                      className="px-4 py-1.5 bg-gray-50 text-gray-600 text-[10px] font-black uppercase tracking-wider rounded border border-gray-200 hover:bg-gray-100 transition-all cursor-pointer"
                     >
-                      View
+                      View Details
                     </button>
-                    <button
-                      onClick={() => handleRejectInitiate(notification.id)}
-                      className="px-4 py-1.5 bg-red-50 text-red-600 text-xs font-black uppercase tracking-wider rounded border border-red-100 hover:bg-red-100 transition-all cursor-pointer"
-                    >
-                      Reject
-                    </button>
+                    {notification.approval_status === "pending" && (
+                      <>
+                        <button
+                          onClick={() =>
+                            handleApprove(notification.id, notification.type)
+                          }
+                          className="px-4 py-1.5 bg-green-50 text-green-600 text-[10px] font-black uppercase tracking-wider rounded border border-green-100 hover:bg-green-100 transition-all cursor-pointer"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleRejectInitiate(notification.id, notification.type)
+                          }
+                          className="px-4 py-1.5 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-wider rounded border border-red-100 hover:bg-red-100 transition-all cursor-pointer"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold text-secondary">
-                  {notification.timestamp}
+                <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">
+                  {new Date(notification.created_at).toLocaleString()}
                 </span>
               </div>
             </div>
@@ -178,14 +201,14 @@ export default function NotificationsClient() {
       </div>
 
       {/* Pagination */}
-      {!isLoading && totalPages > 1 && (
+      {pagination && pagination.total_pages > 1 && (
         <Pagination
           currentPage={currentPage}
-          totalPages={totalPages}
+          totalPages={pagination.total_pages}
           onPageChange={setCurrentPage}
-          totalItems={filteredNotifications.length}
+          totalItems={pagination.total_items}
           itemsPerPage={itemsPerPage}
-          currentItemsCount={currentItems.length}
+          currentItemsCount={notifications.length}
         />
       )}
 
@@ -193,13 +216,13 @@ export default function NotificationsClient() {
       <ApprovalDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        request={selectedNotification}
-        onApprove={(id) => {
-          handleApprove(id);
+        item={selectedNotification}
+        onApprove={(id, type) => {
+          handleApprove(id, type);
           setIsDetailModalOpen(false);
         }}
-        onReject={(id) => {
-          handleRejectInitiate(id);
+        onReject={(id, type) => {
+          handleRejectInitiate(id, type);
           setIsDetailModalOpen(false);
         }}
       />
