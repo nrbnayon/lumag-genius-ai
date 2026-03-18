@@ -167,16 +167,33 @@ export type StaffPosition =
   | "Head Chef";
 export type StaffShift = "Morning" | "Evening" | "Night";
 
-export interface HolidayNotification {
-  id: string;
-  name: string;
-  position: string;
-  date: string;
-  noticeType:
-    | "1 Week Notice"
-    | "2 Week Notice"
-    | "3 Week Notice"
-    | "1 Month Notice";
+/* -- Holiday Notifications -- */
+export interface HolidayNotificationItem {
+  leave_request_id: number;
+  user_id: string;
+  employee_name: string;
+  employee_role: string;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  date_display: string;
+  days_until_leave: number;
+  notice_key: string;
+  notice_label: string;
+  theme: string;
+  reason: string;
+  is_single_day: boolean;
+}
+
+export interface HolidayNotificationsData {
+  today: string;
+  total_notifications: number;
+  notifications: HolidayNotificationItem[];
+}
+
+export interface HolidayNotificationsResponse {
+  message: string;
+  data: HolidayNotificationsData;
 }
 
 export interface DailySchedule {

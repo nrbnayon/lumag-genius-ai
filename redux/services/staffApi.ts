@@ -9,11 +9,18 @@ import type {
   LeaveQueryParams,
   HolidayCalendarResponse,
   HolidayCalendarParams,
+  HolidayNotificationsResponse,
 } from "@/types/staff";
 
 export const staffApi = apiSlice.injectEndpoints({
   overrideExisting: true,
   endpoints: (builder) => ({
+    // ── 0. HOLIDAY OVERVIEW ───────────────────────────────────────────
+    getHolidayNotifications: builder.query<HolidayNotificationsResponse, void>({
+      query: () => "/api/staff/holiday-notifications",
+      providesTags: ["HolidayCalendar"],
+    }),
+    
     // ── 0. TEAM HOLIDAY CALENDAR ───────────────────────────────────────────
     getTeamHolidayCalendar: builder.query<HolidayCalendarResponse, HolidayCalendarParams>({
       query: (params) => {
@@ -130,4 +137,5 @@ export const {
   useApprovePendingStaffMutation,
   useGetLeaveRequestsQuery,
   useApproveLeaveRequestMutation,
+  useGetHolidayNotificationsQuery,
 } = staffApi;

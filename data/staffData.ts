@@ -1,4 +1,4 @@
-import { HolidayNotification,  } from "@/types/staff";
+// File intentionally left empty as data now comes from APIs
 
 // export const staffData: Staff[] = [
 //   {
@@ -107,50 +107,4 @@ import { HolidayNotification,  } from "@/types/staff";
 //   },
 // ];
 
-export const holidayNotifications: HolidayNotification[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    position: "Bar Chef",
-    date: "Feb 20, 2026",
-    noticeType: "1 Week Notice",
-  },
-  {
-    id: "2",
-    name: "John Smith",
-    position: "Restaurant Chef",
-    date: "Feb 21 - Feb 23, 2026",
-    noticeType: "1 Week Notice",
-  },
-  {
-    id: "3",
-    name: "John Smith",
-    position: "Restaurant Chef",
-    date: "Feb 21 - Feb 23, 2026",
-    noticeType: "2 Week Notice",
-  },
-  {
-    id: "4",
-    name: "John Smith",
-    position: "Restaurant Chef",
-    date: "Feb 21 - Feb 23, 2026",
-    noticeType: "3 Week Notice",
-  },
-  {
-    id: "5",
-    name: "John Smith",
-    position: "Restaurant Chef",
-    date: "Feb 21 - Feb 23, 2026",
-    noticeType: "1 Month Notice",
-  },
-];
-
-// export const weeklySchedule: DailySchedule[] = [
-//   { day: "Monday", date: "May 27", morning: 8, evening: 8, night: 8 },
-//   { day: "Tuesday", date: "May 28", morning: 8, evening: 8, night: 8 },
-//   { day: "Wednesday", date: "May 29", morning: 8, evening: 8, night: 8 },
-//   { day: "Thursday", date: "May 30", morning: 8, evening: 8, night: 8 },
-//   { day: "Friday", date: "May 31", morning: 8, evening: 8, night: 8 },
-//   { day: "Saturday", date: "June 01", morning: 8, evening: 8, night: 8 },
-//   { day: "Sunday", date: "June 02", morning: 8, evening: 8, night: 8 },
-// ];
+// No longer needed since data is coming from the API
