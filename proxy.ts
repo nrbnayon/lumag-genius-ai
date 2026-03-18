@@ -225,9 +225,9 @@ export async function proxy(request: NextRequest) {
 
   // 6e. Authenticated but role does NOT have access to this path
   //     → redirect to that role's default page (safe fallback)
-  console.warn(
-    `🚫 Access denied: role="${userRole}" tried to access "${pathname}"`,
-  );
+  // console.warn(
+  //   `🚫 Access denied: role="${userRole}" tried to access "${pathname}"`,
+  // );
   return NextResponse.redirect(
     new URL(getRoleDefaultPath(userRole), request.url),
   );
