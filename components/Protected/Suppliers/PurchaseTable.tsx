@@ -13,6 +13,7 @@ import {
 } from "@/redux/services/suppliersApi";
 import type { PurchaseQueryParams, CreatePurchasePayload } from "@/types/supplier";
 import { cn } from "@/lib/utils";
+import { exportToExcel } from "@/lib/excel";
 
 const COLS = [
   "Product Name",
@@ -87,12 +88,31 @@ export function PurchaseTable({
     setDeleteTarget(null);
   };
 
-  // Download stub
-  const handleDownload = (item: PurchaseItem) => {
-    if (item.product_file) {
-      window.open(item.product_file, "_blank");
-    } else {
-      toast.info(`No file attached for "${item.product_name}".`);
+  // Download the selected purchase item as Excel
+  const handleDownload = async (item: PurchaseItem) => {
+    try {
+      const worksheetData = [
+        {
+          ID: item.id,
+          "Product Name": item.product_name,
+          Price: item.price,
+          Unit: item.unit,
+          Category: item.category_name,
+          Quantity: item.quantity,
+          Supplier: item.supplier_name,
+          Date: new Date(item.purchase_date).toLocaleDateString(),
+          Status: item.approval_status,
+          "Outlet Type": item.outlet_type,
+          Remarks: item.remarks,
+          IsSpecial: item.is_special ? "Yes" : "No",
+        },
+      ];
+
+      const fileName = `${item.product_name.toLowerCase().replace(/\s+/g, "_")}_purchase.xlsx`;
+      await exportToExcel(worksheetData, fileName, "Purchase");
+      toast.success("Purchase exported successfully.");
+    } catch (err) {
+      toast.error("Failed to export purchase.");
     }
   };
 
