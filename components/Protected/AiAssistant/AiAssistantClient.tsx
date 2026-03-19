@@ -2,19 +2,25 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-  Plus,
   Send,
   FileSpreadsheet,
   Copy,
   Share2,
   Download,
   MoreVertical,
+  Utensils,
+  TrendingUp,
+  Users,
+  Sparkles,
+  MessageSquareOff,
+  Bot
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 import { getCookie } from "@/redux/features/apiSlice";
+import { ConfirmationModal } from "@/components/Shared/ConfirmationModal";
 
 type MessageRole = "user" | "assistant";
 
@@ -36,43 +42,19 @@ interface PendingFile {
   progress: number;
 }
 
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: "1",
-    role: "user",
-    content: "How to cook chicken fry?",
-    type: "text",
-    timestamp: new Date(Date.now() - 100000),
-  },
-  {
-    id: "2",
-    role: "assistant",
-    content:
-      "Lorem ipsum dolor sit amet consectetur. Sed hendrerit ullamcorper elit adipiscing urna. Ut ipsum orci libero, consectetur at.",
-    type: "text",
-    timestamp: new Date(Date.now() - 90000),
-  },
-  //   {
-  //     id: "3",
-  //     role: "user",
-  //     content: "Give me the ingredient List for this recipe",
-  //     type: "text",
-  //     timestamp: new Date(Date.now() - 80000),
-  //   },
-  //   {
-  //     id: "4",
-  //     role: "assistant",
-  //     content: "",
-  //     type: "file",
-  //     fileName: "ingredient.xlsx",
-  //     timestamp: new Date(Date.now() - 70000),
-  //   },
+const SUGGESTED_QUESTIONS = [
+  { icon: Utensils, label: "Menu Planning", text: "Suggest a profitable 3-course menu for a fine dining restaurant" },
+  { icon: TrendingUp, label: "Cost Optimization", text: "How can I reduce food waste and optimize ingredient costs?" },
+  { icon: Users, label: "Staff Management", text: "Create an efficient weekly shift schedule for 5 bar chefs" },
+  { icon: Sparkles, label: "Recipe Ideas", text: "Give me an innovative recipe for a signature cocktail" },
 ];
 
 export default function AiAssistantClient() {
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
@@ -83,18 +65,63 @@ export default function AiAssistantClient() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const confirmClearChat = () => {
+    setMessages([]);
+    localStorage.removeItem("ai_chat_history");
+    setIsClearModalOpen(false);
+    toast.success("Chat history cleared. Starting fresh!");
+  };
+
+  // Load chat history from localStorage on mount
+  useEffect(() => {
+    const savedMessages = localStorage.getItem("ai_chat_history");
+    if (savedMessages) {
+      try {
+        const parsed = JSON.parse(savedMessages);
+        const mapped = parsed.map((m: any) => ({
+          ...m,
+          timestamp: new Date(m.timestamp)
+        }));
+        setMessages(mapped);
+      } catch (e) {
+        console.error("Failed to parse chat history");
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem("ai_chat_history", JSON.stringify(messages));
+    }
+  }, [messages, isInitialized]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isLoading, typingText, pendingFiles]);
 
-  const handleSendMessage = async () => {
-    const isFileOnly = pendingFiles.length > 0 && !inputValue.trim();
+  const clearChat = () => {
+    setIsClearModalOpen(true);
+  };
+
+  const executeWaitAndSend = async (question: string) => {
+    setInputValue(question);
+    // Allow React state to update before sending
+    setTimeout(() => {
+      handleSendMessage(question);
+    }, 50);
+  };
+
+  const handleSendMessage = async (overrideValue?: string) => {
+    const valueToSend = overrideValue || inputValue;
+    const isFileOnly = pendingFiles.length > 0 && !valueToSend.trim();
     const hasReadyFiles = pendingFiles.every((pf) => pf.status === "ready");
 
     if (
-      (!inputValue.trim() && pendingFiles.length === 0) ||
+      (!valueToSend.trim() && pendingFiles.length === 0) ||
       isLoading ||
       !hasReadyFiles
     ) {
@@ -119,11 +146,11 @@ export default function AiAssistantClient() {
     });
 
     // Add text as user message if present
-    if (inputValue.trim()) {
+    if (valueToSend.trim()) {
       newMessages.push({
         id: Date.now().toString(),
         role: "user",
-        content: inputValue,
+        content: valueToSend,
         type: "text",
         timestamp: new Date(),
       });
@@ -144,10 +171,10 @@ export default function AiAssistantClient() {
       // Try new AI chat API first
       try {
         // Construct the question string including info about attached files if any
-        let fullQuestion = inputValue;
+        let fullQuestion = valueToSend;
         if (pendingFiles.length > 0) {
           const fileNames = pendingFiles.map((f) => f.name).join(", ");
-          fullQuestion = `${inputValue} [Attached files: ${fileNames}]`.trim();
+          fullQuestion = `${valueToSend} [Attached files: ${fileNames}]`.trim();
         }
 
         const response = await fetch(`${baseUrl}api/ai/chat`, {
@@ -161,10 +188,12 @@ export default function AiAssistantClient() {
 
         if (response.ok) {
           const result = await response.json();
-          // Based on user provided res format: result.data.ai_response.data.answer
-          if (result.data?.ai_response?.success) {
-            aiContent = result.data.ai_response.data.answer;
+          if (result.data?.ai_response?.success || result.data?.answer) {
+            aiContent = result.data.ai_response ? result.data.ai_response.data.answer : result.data.answer;
             success = true;
+          } else if (result.answer) {
+             aiContent = result.answer; 
+             success = true;
           }
         }
       } catch (err) {
@@ -193,7 +222,7 @@ export default function AiAssistantClient() {
           throw new Error(data.error || "Failed to get response");
         }
 
-        aiContent = data.choices?.[0]?.message?.content || "";
+        aiContent = data.choices?.[0]?.message?.content || "I couldn't process your request.";
       }
 
       // Add actual assistant message but mark it as typing
@@ -223,7 +252,7 @@ export default function AiAssistantClient() {
     let currentIndex = 0;
 
     typingIntervalRef.current = setInterval(() => {
-      currentIndex += 1; // You can do a slightly random step here or fixed step.
+      currentIndex += 1;
       setTypingText(fullText.slice(0, currentIndex));
 
       if (currentIndex >= fullText.length) {
@@ -232,7 +261,7 @@ export default function AiAssistantClient() {
           prev.map((m) => (m.id === messageId ? { ...m, isTyping: false } : m)),
         );
       }
-    }, 15); // Adjust typing speed here
+    }, 15);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -251,7 +280,6 @@ export default function AiAssistantClient() {
 
     const allowedFiles = files.slice(0, availableSlots);
 
-    // Create new pending files with "uploading" state
     const newPendingFiles: PendingFile[] = allowedFiles.map((file) => ({
       id: Math.random().toString(36).substring(7),
       file,
@@ -262,7 +290,6 @@ export default function AiAssistantClient() {
 
     setPendingFiles((prev) => [...prev, ...newPendingFiles]);
 
-    // Simulate upload progress for each file
     newPendingFiles.forEach((pf) => {
       let progress = 0;
       const interval = setInterval(() => {
@@ -283,17 +310,12 @@ export default function AiAssistantClient() {
           clearInterval(interval);
           toast.success(`${pf.name} uploaded successfully`);
         }
-      }, 300); // Simulated delay
+      }, 300);
     });
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
-
-  const handleRemovePendingFile = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setPendingFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
   const toggleActionMenu = (id: string, e: React.MouseEvent) => {
@@ -307,106 +329,154 @@ export default function AiAssistantClient() {
     return () => window.removeEventListener("click", handleClickOutside);
   }, []);
 
+  // Avoid rendering anything until initialized to prevent hydration mismatch with localStorage
+  if (!isInitialized) return null;
+
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)] bg-white rounded-3xl overflow-hidden w-2/3 mx-auto">
+    <div className="flex flex-col h-[calc(100vh-100px)] bg-white rounded-3xl overflow-hidden w-full lg:w-3/4 mx-auto border border-gray-100 shadow-sm relative">
+      
+      {/* Header with Clear Chat */}
+      {messages.length > 0 && (
+         <div className="absolute top-4 right-6 z-10 flex items-center justify-end">
+          <button 
+            onClick={clearChat}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-full font-bold text-xs transition-colors shadow-sm"
+          >
+            <MessageSquareOff className="w-3.5 h-3.5" /> Clear Chat
+          </button>
+        </div>
+      )}
+
       {/* Chat Area */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-6 md:px-16 py-8 space-y-6 scroll-smooth"
+        className="flex-1 overflow-y-auto px-6 md:px-16 py-8 space-y-6 scroll-smooth custom-scrollbar"
       >
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex flex-col w-full",
-              message.role === "user" ? "items-end" : "items-start",
-            )}
-          >
-            <div className="relative group max-w-[85%] md:max-w-[70%] mb-2">
-              {/* Message Bubble */}
-              <div
-                className={cn(
-                  "p-3.5 px-6 rounded-3xl font-medium leading-relaxed shadow-sm",
-                  message.role === "user"
-                    ? "bg-primary text-white rounded-tr-none"
-                    : "bg-white border border-gray-100 text-[#4B5563] rounded-tl-none",
-                )}
-              >
-                {message.type === "text" ? (
-                  message.role === "assistant" && message.isTyping ? (
-                    <div className="prose prose-sm prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-white max-w-none break-words">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {typingText + " ▋"}
-                      </ReactMarkdown>
+        {messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full animate-in fade-in zoom-in duration-500">
+             <div className="w-20 h-20 bg-blue-50 text-primary rounded-full flex items-center justify-center mb-6 shadow-sm border border-blue-100">
+               <Bot className="w-10 h-10" />
+             </div>
+             <h2 className="text-2xl font-bold text-foreground mb-2 text-center">Hello! How can I assist you today?</h2>
+             <p className="text-secondary text-base mb-10 text-center max-w-md font-medium">I'm your intelligent F&B assistant. Ask me anything to help streamline your operations.</p>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl px-4">
+                {SUGGESTED_QUESTIONS.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => executeWaitAndSend(suggestion.text)}
+                    className="flex flex-col items-start gap-2 p-4 text-left border border-gray-100 bg-white rounded-2xl hover:bg-blue-50/50 hover:border-blue-100 transition-all cursor-pointer group shadow-sm hover:shadow"
+                  >
+                    <div className="flex items-center gap-2 text-foreground font-bold text-sm">
+                      <suggestion.icon className="w-4 h-4 text-primary" /> {suggestion.label}
                     </div>
-                  ) : message.role === "assistant" ? (
-                    <div className="prose prose-sm prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-white max-w-none break-words">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {message.content}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    message.content
-                  )
-                ) : (
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-gray-100">
-                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
-                    </div>
-                    <span className="text-current font-bold text-xs">
-                      {message.fileName}
-                    </span>
-                  </div>
-                )}
-              </div>
-              {/* Context Menu */}
-              {activeMenuId === message.id && message.role === "assistant" && (
-                <div
-                  className="absolute left-[-10px] top-full mt-2 w-[140px] bg-[#E8F4FF] rounded-2xl shadow-[0px_4px_24px_rgba(0,0,0,0.08)] border border-white/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex flex-col p-1.5 gap-0.5">
-                    {[
-                      { icon: Copy, label: "Copy" },
-                      //   { icon: Edit2, label: "Edit" },
-                      { icon: Share2, label: "Share" },
-                      { icon: Download, label: "Download" },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        className="flex items-center gap-3 px-3 py-2 text-[11px] font-black text-secondary hover:bg-white/80 rounded-xl transition-all active:scale-95 cursor-pointer"
-                      >
-                        <item.icon className="w-3.5 h-3.5 text-secondary" />{" "}
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                    <p className="text-xs text-secondary font-medium leading-relaxed group-hover:text-foreground transition-colors">
+                      "{suggestion.text}"
+                    </p>
+                  </button>
+                ))}
+             </div>
+          </div>
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={cn(
+                "flex flex-col w-full",
+                message.role === "user" ? "items-end" : "items-start",
               )}
-              {/* Menu Trigger */}
-              {message.role === "assistant" && (
-                <button
-                  onClick={(e) => toggleActionMenu(message.id, e)}
+            >
+              <div className="relative group max-w-[85%] md:max-w-[70%] mb-2">
+                {/* Message Bubble */}
+                <div
                   className={cn(
-                    "absolute -left-10 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full transition-all cursor-pointer hidden",
-                    activeMenuId === message.id
-                      ? "bg-gray-100 opacity-100"
-                      : "opacity-0 group-hover:opacity-100",
+                    "p-4 px-6 rounded-3xl font-medium leading-relaxed shadow-sm",
+                    message.role === "user"
+                      ? "bg-primary text-white rounded-tr-none"
+                      : "bg-gray-50 border border-gray-100 text-[#4B5563] rounded-tl-none",
                   )}
                 >
-                  <MoreVertical className="w-4 h-4 text-gray-400" />
-                </button>
-              )}
+                  {message.type === "text" ? (
+                    message.role === "assistant" && message.isTyping ? (
+                      <div className="prose prose-sm prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-white max-w-none break-words">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {typingText + " ▋"}
+                        </ReactMarkdown>
+                      </div>
+                    ) : message.role === "assistant" ? (
+                      <div className="prose prose-sm prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-white max-w-none break-words">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {message.content}
+                        </ReactMarkdown>
+                      </div>
+                    ) : (
+                      message.content
+                    )
+                  ) : (
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-gray-100">
+                        <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                      </div>
+                      <span className="text-current font-bold text-xs">
+                        {message.fileName}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {/* Context Menu */}
+                {activeMenuId === message.id && message.role === "assistant" && (
+                  <div
+                    className="absolute left-[-10px] top-full mt-2 w-[140px] bg-[#E8F4FF] rounded-2xl shadow-[0px_4px_24px_rgba(0,0,0,0.08)] border border-white/50 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex flex-col p-1.5 gap-0.5">
+                      {[
+                        { icon: Copy, label: "Copy", onClick: () => {
+                            navigator.clipboard.writeText(message.content);
+                            toast.success("Copied to clipboard");
+                            setActiveMenuId(null);
+                        } },
+                        { icon: Share2, label: "Share", onClick: () => {} },
+                        { icon: Download, label: "Download", onClick: () => {} },
+                      ].map((item) => (
+                        <button
+                          key={item.label}
+                          onClick={item.onClick}
+                          className="flex items-center gap-3 px-3 py-2 text-[11px] font-black text-secondary hover:bg-white/80 rounded-xl transition-all active:scale-95 cursor-pointer"
+                        >
+                          <item.icon className="w-3.5 h-3.5 text-secondary" />{" "}
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Menu Trigger */}
+                {message.role === "assistant" && (
+                  <button
+                    onClick={(e) => toggleActionMenu(message.id, e)}
+                    className={cn(
+                      "absolute -right-10 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-100 rounded-full transition-all cursor-pointer hidden",
+                      activeMenuId === message.id
+                        ? "bg-gray-100 opacity-100"
+                        : "opacity-0 group-hover:opacity-100",
+                    )}
+                  >
+                    <MoreVertical className="w-4 h-4 text-gray-400" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
+        
         {isLoading && (
           <div className="flex flex-col items-start w-full">
-            <div className="bg-gray-50 border border-gray-100 p-3.5 px-6 rounded-[24px] rounded-tl-none animate-pulse">
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" />
-                <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0.2s]" />
-                <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0.4s]" />
+            <div className="bg-gray-50 border border-gray-100 p-4 px-6 rounded-[24px] rounded-tl-none animate-pulse">
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]" />
               </div>
             </div>
           </div>
@@ -414,7 +484,7 @@ export default function AiAssistantClient() {
       </div>
 
       {/* Input Area */}
-      <div className="p-4 md:p-8 bg-white border-t border-gray-50 flex flex-col gap-3">
+      <div className="p-4 md:p-6 bg-white border-t border-gray-100 flex flex-col gap-3 rounded-b-3xl shrink-0">
         {/* Pending Files Preview */}
         {pendingFiles.length > 0 && (
           <div className="max-w-4xl mx-auto w-full flex flex-wrap gap-2 mb-2 px-2">
@@ -441,43 +511,24 @@ export default function AiAssistantClient() {
                     </span>
                   )}
                 </div>
-                {/* <button
-                  onClick={(e) => handleRemovePendingFile(file.id, e)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-200 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Remove file"
-                >
-                  <Plus className="w-3 h-3 rotate-45" />
-                </button> */}
               </div>
             ))}
           </div>
         )}
 
-        <div className="max-w-4xl mx-auto w-full flex items-center gap-4">
+        <div className="max-w-4xl mx-auto w-full flex items-center gap-3">
           <div className="flex-1 relative">
             <input
               type="text"
-              placeholder="Type your message or attach a file..."
+              placeholder="Ask me anything..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
               disabled={isLoading}
-              className="w-full bg-[#F3F4F6] border-none rounded-full py-4 px-8 pr-16 font-medium focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 transition-all disabled:opacity-50"
+              className="w-full bg-[#f8fafc] border border-gray-200 rounded-full py-4 px-6 pr-16 font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/30 outline-none placeholder:text-gray-400 transition-all disabled:opacity-50"
             />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              {/* <button
-                onClick={() => fileInputRef.current?.click()}
-                className="p-2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
-                title="Upload file"
-              >
-                <Plus className="w-5 h-5" />
-              </button> */}
-              {/* <button
-                className="p-2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
-                title="Voice input"
-              >
-                <Mic className="w-5 h-5" />
-              </button> */}
+               {/* Place input tools here if needed */}
             </div>
             <input
               type="file"
@@ -489,18 +540,29 @@ export default function AiAssistantClient() {
             />
           </div>
           <button
-            onClick={handleSendMessage}
+            onClick={() => handleSendMessage()}
             disabled={
               isLoading ||
               (!inputValue.trim() && pendingFiles.length === 0) ||
               pendingFiles.some((f) => f.status === "uploading")
             }
-            className="w-14 h-14 rounded-full bg-white border border-border flex items-center justify-center text-primary shadow-[0px_2px_8px_rgba(0,0,0,0.05)] hover:shadow-md hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shrink-0"
+            className="w-[54px] h-[54px] rounded-full bg-primary flex items-center justify-center text-white shadow-md shadow-primary/20 hover:bg-blue-600 transition-all active:scale-95 disabled:opacity-50 disabled:bg-gray-300 disabled:shadow-none cursor-pointer shrink-0"
           >
-            <Send className="w-6 h-6" />
+            <Send className="w-5 h-5 ml-0.5" />
           </button>
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={isClearModalOpen}
+        onClose={() => setIsClearModalOpen(false)}
+        onConfirm={confirmClearChat}
+        title="Clear Chat History"
+        message="Are you sure you want to clear your chat history? This action cannot be undone."
+        confirmText="Yes, Clear"
+        cancelText="Cancel"
+        isDestructive={true}
+      />
     </div>
   );
 }
