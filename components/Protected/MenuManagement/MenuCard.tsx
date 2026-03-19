@@ -1,17 +1,17 @@
 "use client";
 
-import { SquarePen, Download, Trash2, Utensils, DollarSign, Layers, Store } from "lucide-react";
+import { SquarePen, Download, Trash2, Utensils, DollarSign, Layers, Store, Eye } from "lucide-react";
 import { Menu } from "@/types/menu";
 import { cn } from "@/lib/utils";
 
 interface MenuCardProps {
   menu: Menu;
-  onEdit: (menu: Menu) => void;
+  onView: (menu: Menu) => void;
   onDelete: (menu: Menu) => void;
   onExport: (menu: Menu) => void;
 }
 
-export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
+export function MenuCard({ menu, onView, onDelete, onExport }: MenuCardProps) {
   return (
     <div className="bg-white rounded-2xl p-6 shadow-[0px_4px_16px_0px_#A9A9A940] border-none flex flex-col gap-4 relative group hover:shadow-md transition-shadow">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -32,10 +32,10 @@ export function MenuCard({ menu, onEdit, onDelete, onExport }: MenuCardProps) {
         </div>
         <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={() => onEdit(menu)}
+            onClick={() => onView(menu)}
             className="p-2 bg-[#FEF3C7] text-[#F59E0B] rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"
           >
-            <SquarePen className="w-4 h-4" />
+            <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={() => onExport(menu)}

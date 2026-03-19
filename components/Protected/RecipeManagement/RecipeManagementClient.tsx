@@ -9,6 +9,7 @@ import { StatsCard } from "@/components/Shared/StatsCard";
 import { RecipeCard } from "./RecipeCard";
 import { RecipeModal } from "./RecipeModal";
 import { RecipeExportModal } from "./RecipeExportModal";
+import { RecipeDetailsModal } from "./RecipeDetailsModal";
 import { DeleteConfirmationModal } from "@/components/Shared/DeleteConfirmationModal";
 import { Recipe } from "@/types/recipes.types";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ const RecipeManagementClient = () => {
   const [pageSize, setPageSize] = useState(12);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -60,11 +62,18 @@ const RecipeManagementClient = () => {
   const handleEditRecipe = (recipe: Recipe) => {
     setModalMode("edit");
     setSelectedRecipe(recipe);
+    setIsDetailsModalOpen(false);
     setIsModalOpen(true);
+  };
+
+  const handleViewRecipe = (recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+    setIsDetailsModalOpen(true);
   };
 
   const handleDeleteClick = (recipe: Recipe) => {
     setRecipeToDelete(recipe);
+    setIsDetailsModalOpen(false);
     setIsDeleteModalOpen(true);
   };
 
@@ -213,7 +222,7 @@ const RecipeManagementClient = () => {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  onEdit={() => handleEditRecipe(recipe)}
+                  onView={() => handleViewRecipe(recipe)}
                   onDelete={() => handleDeleteClick(recipe)}
                   onExport={() => handleExportRecipe(recipe)}
                 />
@@ -270,6 +279,14 @@ const RecipeManagementClient = () => {
         title="Delete Recipe"
         description={`Are you sure you want to delete "${recipeToDelete?.name}"? This action cannot be undone.`}
         isLoading={isDeleting}
+      />
+
+      <RecipeDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        recipe={selectedRecipe}
+        onEdit={handleEditRecipe}
+        onDelete={handleDeleteClick}
       />
 
       <RecipeExportModal

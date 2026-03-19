@@ -48,7 +48,7 @@ export const clearAuthCookies = (): void => {
 
 const baseQuery = fetchBaseQuery({
   // The API base URL – endpoints already include /api/...
-  baseUrl: process.env.NEXT_PUBLIC_APP_URL || "http://10.10.12.11:6005/",
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://10.10.12.11:6005/",
   credentials: "include",
   prepareHeaders: (headers, { getState }) => {
     const state = getState() as RootState;

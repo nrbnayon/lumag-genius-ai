@@ -1,19 +1,19 @@
 "use client";
 
-import { SquarePen, Download, Trash2, Clock, ListChecks, DollarSign } from "lucide-react";
+import { SquarePen, Download, Trash2, Clock, ListChecks, DollarSign, Eye } from "lucide-react";
 import { Recipe } from "@/types/recipes.types";
 import { cn } from "@/lib/utils";
 
 interface RecipeCardProps {
   recipe: Recipe;
-  onEdit: (recipe: Recipe) => void;
+  onView: (recipe: Recipe) => void;
   onDelete: (recipe: Recipe) => void;
   onExport: (recipe: Recipe) => void;
 }
 
 export function RecipeCard({
   recipe,
-  onEdit,
+  onView,
   onDelete,
   onExport,
 }: RecipeCardProps) {
@@ -41,11 +41,11 @@ export function RecipeCard({
         </span>
         <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity shrink-0">
           <button
-            onClick={() => onEdit(recipe)}
+            onClick={() => onView(recipe)}
             className="p-2 bg-[#FEF3C7] text-[#F59E0B] rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"
-            title="Edit Recipe"
+            title="View Details"
           >
-            <SquarePen className="w-4 h-4" />
+            <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={() => onExport(recipe)}

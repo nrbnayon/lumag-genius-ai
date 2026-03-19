@@ -20,6 +20,7 @@ import { Menu, MenuFormData } from "@/types/menu";
 import { MenuCard } from "./MenuCard";
 import { MenuModal } from "./MenuModal";
 import { MenuExportModal } from "./MenuExportModal";
+import { MenuDetailsModal } from "./MenuDetailsModal";
 import { MenuGridSkeleton } from "@/components/Skeleton/MenuSkeleton";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
@@ -38,6 +39,7 @@ export default function MenuManagementClient() {
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"add" | "edit">("add");
@@ -69,11 +71,18 @@ export default function MenuManagementClient() {
   const handleEditClick = (menu: Menu) => {
     setModalMode("edit");
     setSelectedMenu(menu);
+    setIsDetailsModalOpen(false);
     setIsModalOpen(true);
+  };
+
+  const handleViewClick = (menu: Menu) => {
+    setSelectedMenu(menu);
+    setIsDetailsModalOpen(true);
   };
 
   const handleDeleteClick = (menu: Menu) => {
     setSelectedMenu(menu);
+    setIsDetailsModalOpen(false);
     setIsDeleteModalOpen(true);
   };
 
@@ -214,7 +223,7 @@ export default function MenuManagementClient() {
                   <MenuCard
                     key={menu.id}
                     menu={menu}
-                    onEdit={handleEditClick}
+                    onView={handleViewClick}
                     onDelete={handleDeleteClick}
                     onExport={handleExportClick}
                   />
@@ -263,6 +272,14 @@ export default function MenuManagementClient() {
         onConfirm={handleConfirmDelete}
         title="Delete Menu"
         description={`Are you sure you want to delete "${selectedMenu?.name}"? This action cannot be undone.`}
+      />
+
+      <MenuDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        menu={selectedMenu}
+        onEdit={handleEditClick}
+        onDelete={handleDeleteClick}
       />
 
       <MenuExportModal
