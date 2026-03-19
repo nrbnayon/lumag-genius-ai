@@ -218,7 +218,7 @@ export default function MenuManagementClient() {
             <MenuGridSkeleton />
           ) : menus.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4 gap-4 xl:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-4 xl:gap-5">
                 {menus.map((menu) => (
                   <MenuCard
                     key={menu.id}

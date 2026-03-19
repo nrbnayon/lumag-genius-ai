@@ -31,6 +31,8 @@ export interface StaffMember {
   avatar?: string;
   shift: string;
   shift_display: string;
+  weekly_schedule?: Record<string, string>;
+  resume_cv_url?: string;
   created_at: string;
   position_display?: string; // used in fallback since post returns position
 }
@@ -47,11 +49,12 @@ export interface StaffListResponse {
 }
 
 export interface CreateStaffPayload {
-  full_name: string;
-  email: string;
-  phone_number: string;
-  position: string; // The api demands position for POST/PATCH
-  shift: string;
+  full_name?: string;
+  email?: string;
+  phone_number?: string;
+  position?: string; // The api demands position for POST/PATCH
+  shift?: string;
+  weekly_schedule?: Record<string, string>;
 }
 
 export interface PendingStaffRequest {
