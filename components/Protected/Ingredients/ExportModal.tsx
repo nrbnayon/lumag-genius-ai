@@ -28,7 +28,7 @@ export function ExportModal({
       "Ingredient Name": item.name,
       Price: item.price_per_unit,
       Unit: item.unit.toUpperCase(),
-      Category: item.category_name,
+      Category: item.category_name || String(item.category || ""),
       "Outlet Type": item.outlet_type,
       "Current Stock": item.current_stock,
       "Minimum Stock": item.minimum_stock,
@@ -115,7 +115,7 @@ export function ExportModal({
             </div>
             <div className="bg-gray-50/50 p-2">
               <p className="text-primary mb-2 font-semibold p-2 border-b border-gray-100">Category</p>
-              <p className="text-foreground">{sample?.category_name || "Others"}</p>
+              <p className="text-foreground">{sample?.category_name || String(sample?.category || "Others")}</p>
             </div>
           </div>
 

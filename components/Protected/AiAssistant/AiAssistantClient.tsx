@@ -139,7 +139,7 @@ export default function AiAssistantClient() {
       let success = false;
       const token = getCookie("accessToken");
       const baseUrl =
-        process.env.NEXT_PUBLIC_API_URL || "http://10.10.12.62:6005/";
+        process.env.NEXT_PUBLIC_API_URL || "http://10.10.12.11:6005/";
 
       // Try new AI chat API first
       try {

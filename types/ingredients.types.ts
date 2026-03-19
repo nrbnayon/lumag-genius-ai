@@ -3,20 +3,28 @@
 export interface Ingredient {
   id: number;
   name: string;
-  category: number; // This is the ID of the category
-  category_name: string;
+  category: number | string;
+  category_name?: string;
   outlet_type: string;
   unit: string;
   price_per_unit: string;
   current_stock: number;
   minimum_stock: number;
   is_special: boolean;
+  review_ingredient?: unknown;
   status: string;
   approval_status: string;
   created_by: string;
   created_at: string;
   updated_by: string | null;
   updated_at: string;
+}
+
+export interface IngredientSummary {
+  total_ingredients: number;
+  low_stock_items: number;
+  purchase_requests: number;
+  pending_approval: number;
 }
 
 export interface PaginatedIngredientsResponse {
@@ -26,6 +34,7 @@ export interface PaginatedIngredientsResponse {
   current_page: number;
   page_size: number;
   data: Ingredient[];
+  summary?: IngredientSummary;
 }
 
 export interface IngredientsApiResponse {

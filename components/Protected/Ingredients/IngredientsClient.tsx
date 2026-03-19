@@ -71,6 +71,7 @@ export default function IngredientsClient() {
   const ingredients = ingredientsResponse?.data || [];
   const totalItems = ingredientsResponse?.count || 0;
   const totalPages = ingredientsResponse?.total_pages || 0;
+  const summary = ingredientsResponse?.summary;
 
   // Modals state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,19 +83,19 @@ export default function IngredientsClient() {
 
   // Stats calculation
   const stats = useMemo(() => {
-    // We only have stats for the current page accurately or via total count.
-    // For a real production app with pagination, these global stats should be fetched
-    // from a dedicated /api/ingredients/stats endpoint.
     return {
-      total: totalItems,
-      lowStock: ingredients.filter(
-        (i) => i.status === "low" || i.current_stock <= i.minimum_stock,
-      ).length,
-      purchaseRequest: "api not done",
-      pending: ingredients.filter((i) => i.approval_status === "pending")
-        .length,
+      total: summary?.total_ingredients ?? totalItems,
+      lowStock:
+        summary?.low_stock_items ??
+        ingredients.filter(
+          (i) => i.status === "low" || i.current_stock <= i.minimum_stock,
+        ).length,
+      purchaseRequest: summary?.purchase_requests ?? 0,
+      pending:
+        summary?.pending_approval ??
+        ingredients.filter((i) => i.approval_status === "pending").length,
     };
-  }, [ingredients, totalItems]);
+  }, [ingredients, summary, totalItems]);
 
   // Handlers
   const handleAddClick = () => {

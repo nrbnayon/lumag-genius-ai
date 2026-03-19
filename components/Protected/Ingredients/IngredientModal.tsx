@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -67,13 +67,27 @@ export function IngredientModal({
 
   const [errors, setErrors] = useState<Partial<IngredientFormData>>({});
 
+  const resolveCategoryId = useCallback(
+    (category: Ingredient["category"]) => {
+      if (typeof category === "number") return category.toString();
+      if (typeof category === "string" && category.trim()) {
+        const byName = categories.find(
+          (c) => c.name.toLowerCase() === category.toLowerCase(),
+        );
+        if (byName) return byName.id.toString();
+      }
+      return categories.length > 0 ? categories[0].id.toString() : "";
+    },
+    [categories],
+  );
+
   useEffect(() => {
     if (ingredient) {
       setFormData({
         name: ingredient.name,
         price: ingredient.price_per_unit || "0",
         unit: ingredient.unit,
-        categoryId: ingredient.category ? ingredient.category.toString() : (categories.length > 0 ? categories[0].id.toString() : ""),
+        categoryId: resolveCategoryId(ingredient.category),
         outletType: ingredient.outlet_type || "restaurant",
         currentStock: ingredient.current_stock.toString(),
         minimumStock: ingredient.minimum_stock.toString(),
@@ -95,7 +109,7 @@ export function IngredientModal({
       setPendingUpdateData([]);
     }
     setErrors({});
-  }, [ingredient, isOpen, categories]);
+  }, [ingredient, isOpen, categories, resolveCategoryId]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -342,7 +356,8 @@ export function IngredientModal({
                   Price/Unit <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="number"
+                  min={0}
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                   className={cn(
