@@ -204,6 +204,11 @@ export const suppliersApi = apiSlice.injectEndpoints({
       query: () => "/api/staff/admin/pending-requests",
       providesTags: ["PendingStaff"],
     }),
+
+    getUniqueProducts: builder.query<{ message: string; data: string[] }, void>({
+      query: () => "/api/suppliers/unique-products",
+      providesTags: [{ type: "Suppliers", id: "UNIQUE_PRODUCTS" }],
+    }),
   }),
 });
 
@@ -225,4 +230,5 @@ export const {
   useUpdateShoppingListMutation,
   useRemoveShoppingListItemMutation,
   useGetPendingStaffForSuppliersQuery,
+  useGetUniqueProductsQuery,
 } = suppliersApi;

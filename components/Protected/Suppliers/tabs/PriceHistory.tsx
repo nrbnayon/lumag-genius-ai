@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGetPriceHistoryQuery } from "@/redux/services/suppliersApi";
+import { 
+  useGetPriceHistoryQuery,
+  useGetUniqueProductsQuery 
+} from "@/redux/services/suppliersApi";
 import {
   LineChart,
   Line,
@@ -27,19 +30,22 @@ const PALETTE = [
 
 export function PriceHistory() {
   const [productName, setProductName] = useState("Tomatoes");
-  const [inputValue, setInputValue] = useState("Tomatoes");
+  const { data: productsData, isLoading: loadingProducts } = useGetUniqueProductsQuery();
+  const productList = productsData?.data ?? [];
 
   const { data, isLoading } = useGetPriceHistoryQuery(
     { product_name: productName || undefined },
     { skip: !productName },
   );
 
-  // Auto-search if data is empty but we have an input (e.g. on mount or after first action)
+  // Auto-select first product if default 'Tomatoes' is not available
   useEffect(() => {
-    if (!productName && inputValue) {
-        setProductName(inputValue);
+    if (!loadingProducts && productList.length > 0) {
+      if (!productList.includes("Tomatoes") && !productName) {
+        setProductName(productList[0]);
+      }
     }
-  }, []);
+  }, [productList, loadingProducts]);
 
   const labels = data?.labels ?? [];
   const suppliers = data?.data ?? [];
@@ -54,28 +60,42 @@ export function PriceHistory() {
     return point;
   });
 
-  const loading = isLoading;
+  const loading = isLoading || loadingProducts;
 
   return (
     <div className="bg-white p-6 rounded-2xl shadow-[0px_4px_16px_0px_#A9A9A940] space-y-6">
       <div className="flex justify-between items-center flex-wrap gap-4">
         <h4 className="text-lg font-bold text-foreground">
-          {data?.product_name || "Product"} — Price Trend (Last 30 Days)
+          {data?.product_name || productName || "Product"} — Price Trend
         </h4>
-        {/* Search input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") setProductName(inputValue.trim());
-            }}
-            onBlur={() => setProductName(inputValue.trim())}
-            placeholder="Enter product name..."
-            className="pl-9 pr-4 py-2 border border-gray-100 rounded-lg text-sm bg-gray-50 outline-none focus:ring-2 focus:ring-primary/20 w-52"
-          />
+        
+        {/* Product Dropdown */}
+        <div className="relative group min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+          <select
+            value={productName}
+            onChange={(e) => setProductName(e.target.value)}
+            disabled={loadingProducts}
+            className="relative w-full pl-9 pr-10 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm font-semibold text-secondary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all cursor-pointer appearance-none"
+          >
+            {productList.length === 0 && !loadingProducts ? (
+              <option value="">No products found</option>
+            ) : (
+              <>
+                {!productList.includes(productName) && productName && (
+                  <option value={productName}>{productName}</option>
+                )}
+                {productList.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 group-hover:text-primary transition-colors z-10">
+            <ChevronDown className="w-5 h-5" />
+          </div>
         </div>
       </div>
 
