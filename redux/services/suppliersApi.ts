@@ -14,7 +14,9 @@ import type {
   PriceComparisonResponse,
   PriceHistoryResponse,
   PriceAlertsResponse,
+  PriceAlertActionPayload,
   ShoppingListResponse,
+  ShoppingListActionPayload,
   PendingStaffListResponse,
 } from "@/types/supplier";
 
@@ -166,6 +168,36 @@ export const suppliersApi = apiSlice.injectEndpoints({
       query: () => "/api/suppliers/shopping-list",
       providesTags: [{ type: "Suppliers", id: "SHOPPING_LIST" }],
     }),
+    
+    updateShoppingList: builder.mutation<{ message: string }, ShoppingListActionPayload>({
+      query: (body) => ({
+        url: "/api/suppliers/shopping-list",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "Suppliers", id: "SHOPPING_LIST" }],
+    }),
+
+    removeShoppingListItem: builder.mutation<{ message: string }, { product_name: string; outlet_type?: string }>({
+      query: (body) => ({
+        url: "/api/suppliers/shopping-list",
+        method: "DELETE",
+        body,
+      }),
+      invalidatesTags: [{ type: "Suppliers", id: "SHOPPING_LIST" }],
+    }),
+
+    handlePriceAlertAction: builder.mutation<{ message: string }, PriceAlertActionPayload>({
+      query: (body) => ({
+        url: "/api/suppliers/price-alerts/action",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [
+        { type: "Suppliers", id: "PRICE_ALERTS" },
+        { type: "Suppliers", id: "OVERVIEW" },
+      ],
+    }),
 
     // ── 14. PENDING STAFF REQUESTS (reused in supplier area) ──────────────
     getPendingStaffForSuppliers: builder.query<PendingStaffListResponse, void>({
@@ -188,6 +220,9 @@ export const {
   useGetPriceComparisonQuery,
   useGetPriceHistoryQuery,
   useGetPriceAlertsQuery,
+  useHandlePriceAlertActionMutation,
   useGetShoppingListQuery,
+  useUpdateShoppingListMutation,
+  useRemoveShoppingListItemMutation,
   useGetPendingStaffForSuppliersQuery,
 } = suppliersApi;

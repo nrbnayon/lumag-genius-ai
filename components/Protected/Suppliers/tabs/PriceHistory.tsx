@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Minus, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useGetPriceHistoryQuery } from "@/redux/services/suppliersApi";
@@ -33,6 +33,13 @@ export function PriceHistory() {
     { product_name: productName || undefined },
     { skip: !productName },
   );
+
+  // Auto-search if data is empty but we have an input (e.g. on mount or after first action)
+  useEffect(() => {
+    if (!productName && inputValue) {
+        setProductName(inputValue);
+    }
+  }, []);
 
   const labels = data?.labels ?? [];
   const suppliers = data?.data ?? [];

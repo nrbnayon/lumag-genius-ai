@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { X, Plus, Trash2, ShoppingCart, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Plus, Trash2, ShoppingCart, Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGetShoppingListQuery } from "@/redux/services/suppliersApi";
+import {
+  useGetShoppingListQuery,
+  useUpdateShoppingListMutation,
+  useRemoveShoppingListItemMutation,
+} from "@/redux/services/suppliersApi";
 import { toast } from "sonner";
 
 interface LocalItem {
@@ -12,20 +16,21 @@ interface LocalItem {
   isMissing: boolean;
   isSpecial: boolean;
   otherValue?: string;
+  isSaving?: boolean;
 }
 
 export function ShoppingList() {
   const { data, isLoading } = useGetShoppingListQuery();
+  const [updateItem] = useUpdateShoppingListMutation();
+  const [removeItem] = useRemoveShoppingListItemMutation();
 
-  // Local "extra" items added by the user in this session
+  // Local "extra" items that haven't been saved yet
   const [localExtras, setLocalExtras] = useState<LocalItem[]>([]);
-
-  // Track missing status for API items
-  const [missingRegular, setMissingRegular] = useState<Set<string>>(new Set());
-  const [missingSpecial, setMissingSpecial] = useState<Set<string>>(new Set());
 
   const regularItems = data?.grouped_data?.regular_items ?? [];
   const specialItems = data?.grouped_data?.special_items ?? [];
+  const missingItems = data?.grouped_data?.missing_items ?? [];
+  const missingItemsSet = new Set(missingItems);
 
   const addExtra = () => {
     const newItem: LocalItem = {
@@ -38,41 +43,49 @@ export function ShoppingList() {
     setLocalExtras((prev) => [...prev, newItem]);
   };
 
-  const removeExtra = (id: string) => {
+  const removeExtra = async (id: string, name?: string) => {
+    if (name) {
+      try {
+        await removeItem({ product_name: name }).unwrap();
+        toast.success("Item removed from special list");
+      } catch (err) {
+        toast.error("Failed to remove item");
+      }
+    }
     setLocalExtras((prev) => prev.filter((item) => item.id !== id));
-    toast.success("Item removed from special list");
   };
 
-  const updateExtraValue = (id: string, value: string) => {
-    setLocalExtras((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, otherValue: value, name: value } : item,
-      ),
-    );
+  const saveExtra = async (localId: string, name: string) => {
+    if (!name.trim()) return;
+    
+    setLocalExtras(prev => prev.map(it => it.id === localId ? { ...it, isSaving: true } : it));
+    
+    try {
+      await updateItem({
+        product_name: name.trim(),
+        is_special: true,
+        is_missing: false,
+      }).unwrap();
+      
+      toast.success("Special item saved");
+      setLocalExtras(prev => prev.filter(it => it.id !== localId));
+    } catch (err) {
+      toast.error("Failed to save item");
+      setLocalExtras(prev => prev.map(it => it.id === localId ? { ...it, isSaving: false } : it));
+    }
   };
 
-  const toggleExtraMissing = (id: string) => {
-    setLocalExtras((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isMissing: !item.isMissing } : item,
-      ),
-    );
-  };
-
-  const toggleRegularMissing = (name: string) => {
-    setMissingRegular((prev) => {
-      const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
-      return next;
-    });
-  };
-
-  const toggleSpecialMissing = (name: string) => {
-    setMissingSpecial((prev) => {
-      const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
-      return next;
-    });
+  const toggleMissing = async (name: string, isSpecial: boolean) => {
+    const isMissing = missingItemsSet.has(name);
+    try {
+      await updateItem({
+        product_name: name,
+        is_special: isSpecial,
+        is_missing: !isMissing,
+      }).unwrap();
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
   if (isLoading) {
@@ -96,7 +109,46 @@ export function ShoppingList() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-3xl p-8 shadow-[0px_4px_16px_0px_#A9A9A940] border border-gray-100">
-        {/* Regular Items */}
+        
+        {/* Urgent: Missing Items / Current Needs */}
+        {missingItems.length > 0 && (
+          <div className="mb-10 bg-red-50/30 rounded-2xl p-6 border border-red-100/50">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                <X className="w-4 h-4 text-red-600" />
+              </div>
+              <h2 className="text-xl font-bold text-red-700">Currently Missing</h2>
+              <span className="text-xs font-bold text-white bg-red-500 px-2.5 py-1 rounded-full animate-pulse">
+                {missingItems.length} Needs Attention
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {missingItems.map((name) => {
+                const isSpecial = specialItems.includes(name);
+                return (
+                  <div
+                    key={`missing-${name}`}
+                    onClick={() => toggleMissing(name, isSpecial)}
+                    className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border border-red-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-5 h-5 rounded border border-red-500 flex items-center justify-center bg-red-50">
+                         <span className="text-red-500 text-xs font-black">✕</span>
+                      </div>
+                      <span className="text-sm font-bold text-red-600 truncate max-w-[120px]">
+                        {name}
+                      </span>
+                    </div>
+                    {isSpecial && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Regular Items List */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
             <ShoppingCart className="w-4 h-4 text-primary" />
@@ -110,14 +162,14 @@ export function ShoppingList() {
         {regularItems.length === 0 ? (
           <p className="text-secondary text-sm italic mb-6">No regular items in shopping list.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8 mb-8 border-b border-gray-100 pb-8">
             {regularItems.map((name) => {
-              const isMissing = missingRegular.has(name);
+              const isMissing = missingItemsSet.has(name);
               return (
                 <div
                   key={name}
                   className="flex items-center justify-start gap-2 group cursor-pointer py-1"
-                  onClick={() => toggleRegularMissing(name)}
+                  onClick={() => toggleMissing(name, false)}
                 >
                   <div
                     className={cn(
@@ -128,7 +180,7 @@ export function ShoppingList() {
                     )}
                   >
                     {isMissing && (
-                      <span className="text-red-500 text-md font-black">✕</span>
+                      <span className="text-red-500 text-xs font-black">✕</span>
                     )}
                   </div>
                   <span
@@ -172,14 +224,14 @@ export function ShoppingList() {
           {specialItems.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-8">
               {specialItems.map((name) => {
-                const isMissing = missingSpecial.has(name);
+                const isMissing = missingItemsSet.has(name);
                 return (
                   <div
                     key={name}
                     className="flex items-center justify-start gap-2 group cursor-pointer py-1"
-                    onClick={() => toggleSpecialMissing(name)}
                   >
                     <div 
+                      onClick={() => toggleMissing(name, true)}
                       className={cn(
                         "w-5 h-5 rounded border flex items-center justify-center transition-all shrink-0",
                         isMissing
@@ -188,25 +240,31 @@ export function ShoppingList() {
                       )}
                     >
                       {isMissing && (
-                        <span className="text-red-500 text-md font-black">✕</span>
+                        <span className="text-red-500 text-xs font-black">✕</span>
                       )}
                     </div>
                     <span
+                      onClick={() => toggleMissing(name, true)}
                       className={cn(
-                        "text-base transition-colors",
+                        "text-base transition-colors flex-1",
                         isMissing ? "text-red-500 font-semibold" : "text-secondary",
                       )}
                     >
                       {name}
                     </span>
-                    
+                    <button
+                      onClick={() => removeExtra(name, name)}
+                      className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 );
               })}
             </div>
           )}
 
-          {/* User-added extra items */}
+          {/* User-added extra items (unsaved) */}
           <div className="space-y-4 pt-2">
             {localExtras.length === 0 && specialItems.length === 0 && (
               <p className="text-secondary text-sm italic">
@@ -218,38 +276,29 @@ export function ShoppingList() {
                 key={item.id}
                 className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100 group"
               >
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full flex items-center gap-3">
                   <input
                     type="text"
                     placeholder="Enter special ingredient and event details..."
                     value={item.otherValue}
-                    onChange={(e) => updateExtraValue(item.id, e.target.value)}
+                    onChange={(e) => setLocalExtras(prev => prev.map(it => it.id === item.id ? { ...it, otherValue: e.target.value, name: e.target.value } : it))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveExtra(item.id, item.otherValue || "");
+                    }}
+                    autoFocus
                     className="w-full bg-transparent border-none focus:ring-0 text-foreground font-medium placeholder:text-gray-400 placeholder:italic"
                   />
                 </div>
 
-                <div className="flex items-center gap-6 shrink-0 w-full sm:w-auto justify-end sm:justify-start">
-                  <div
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => toggleExtraMissing(item.id)}
+                <div className="flex items-center gap-4 shrink-0 w-full sm:w-auto justify-end sm:justify-start">
+                  <button
+                    onClick={() => saveExtra(item.id, item.otherValue || "")}
+                    disabled={!item.otherValue?.trim() || item.isSaving}
+                    className="px-4 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2"
                   >
-                    <span className="text-sm font-semibold text-secondary">
-                      Missing?
-                    </span>
-                    <div
-                      className={cn(
-                        "w-5 h-5 rounded border flex items-center justify-center transition-all shrink-0",
-                        item.isMissing
-                          ? "bg-white border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.2)]"
-                          : "bg-white border-gray-200",
-                      )}
-                    >
-                      {item.isMissing && (
-                        <span className="text-red-500 text-[12px] font-black">✕</span>
-                      )}
-                    </div>
-                  </div>
-
+                    {item.isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                    Save
+                  </button>
                   <button
                     onClick={() => removeExtra(item.id)}
                     className="text-gray-400 hover:text-red-500 transition-colors p-1"

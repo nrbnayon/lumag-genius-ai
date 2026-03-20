@@ -215,6 +215,7 @@ export interface PriceHistoryResponse {
 // ── Price Alerts ──────────────────────────────────────────────────────────────
 
 export interface PriceAlertItem {
+  purchase_id: number;
   supplier_id: number;
   supplier_name: string;
   product_name: string;
@@ -226,6 +227,13 @@ export interface PriceAlertItem {
   alert_type: "increase" | "decrease";
   purchase_date: string;
   unit: string;
+}
+
+export interface PriceAlertActionPayload {
+  purchase_id: number;
+  action_type: "accept" | "negotiate";
+  proposed_price?: number;
+  message?: string;
 }
 
 export interface PriceAlertsResponse {
@@ -241,7 +249,15 @@ export interface ShoppingListResponse {
   grouped_data: {
     regular_items: string[];
     special_items: string[];
+    missing_items: string[];
   };
+}
+
+export interface ShoppingListActionPayload {
+  product_name: string;
+  is_special?: boolean;
+  is_missing?: boolean;
+  outlet_type?: "bar" | "restaurant";
 }
 
 // ── Pending Staff (re-exported for supplier area) ─────────────────────────────

@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { useGetPriceAlertsQuery } from "@/redux/services/suppliersApi";
+import { 
+  useGetPriceAlertsQuery, 
+  useHandlePriceAlertActionMutation 
+} from "@/redux/services/suppliersApi";
 import { PriceAlertItem } from "@/types/supplier";
 import { AcceptAlertModal } from "../AcceptAlertModal";
 import { NegotiateAlertModal } from "../NegotiateAlertModal";
@@ -11,6 +14,7 @@ import { toast } from "sonner";
 
 export function PriceAlerts() {
   const { data, isLoading } = useGetPriceAlertsQuery();
+  const [handleAction] = useHandlePriceAlertActionMutation();
   const [selectedAlert, setSelectedAlert] = useState<PriceAlertItem | null>(null);
   const [isAcceptOpen, setIsAcceptOpen] = useState(false);
   const [isNegotiateOpen, setIsNegotiateOpen] = useState(false);
@@ -27,21 +31,38 @@ export function PriceAlerts() {
     setIsNegotiateOpen(true);
   };
 
-  const onConfirmAccept = (alert: PriceAlertItem) => {
-    toast.success(`Price change for ${alert.product_name} accepted`);
-    setIsAcceptOpen(false);
-    setSelectedAlert(null);
+  const onConfirmAccept = async (alert: PriceAlertItem) => {
+    try {
+      await handleAction({
+        purchase_id: alert.purchase_id,
+        action_type: "accept",
+      }).unwrap();
+      toast.success(`Price change for ${alert.product_name} accepted`);
+      setIsAcceptOpen(false);
+      setSelectedAlert(null);
+    } catch (err) {
+      toast.error("Failed to accept price alert");
+    }
   };
 
-  const onConfirmNegotiate = (
+  const onConfirmNegotiate = async (
     alert: PriceAlertItem,
     proposed: string,
     msg: string,
-    method: string,
   ) => {
-    toast.success(`Negotiation request sent to ${alert.supplier_name}`);
-    setIsNegotiateOpen(false);
-    setSelectedAlert(null);
+    try {
+      await handleAction({
+        purchase_id: alert.purchase_id,
+        action_type: "negotiate",
+        proposed_price: parseFloat(proposed),
+        message: msg,
+      }).unwrap();
+      toast.success(`Negotiation request sent to ${alert.supplier_name}`);
+      setIsNegotiateOpen(false);
+      setSelectedAlert(null);
+    } catch (err) {
+      toast.error("Failed to send negotiation request");
+    }
   };
 
   if (isLoading) {
