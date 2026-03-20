@@ -43,22 +43,22 @@ export function StaffCard({
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => onView(staff)}
-            className="p-1.5 text-secondary hover:text-blue-500 transition-colors cursor-pointer"
+            className="p-2 bg-[#FEF3C7] text-[#F59E0B] rounded-lg hover:bg-yellow-100 transition-colors cursor-pointer"
           >
             <Eye className="w-5 h-5" />
           </button>
           <button
             onClick={() => onEdit(staff)}
-            className="p-1.5 text-secondary hover:text-primary transition-colors cursor-pointer"
+            className="p-2 bg-[#E0F2FE] text-[#0EA5E9] rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
           >
             <SquarePen className="w-5 h-5" />
           </button>
           <button
             onClick={() => onDelete(staff)}
-            className="p-1.5 text-red-400 hover:text-red-500 transition-colors cursor-pointer"
+            className="p-2 bg-[#FEF2F2] text-[#EF4444] rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
           >
             <Trash2 className="w-5 h-5" />
           </button>

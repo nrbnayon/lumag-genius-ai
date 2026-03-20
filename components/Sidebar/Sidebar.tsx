@@ -54,7 +54,7 @@ interface DashboardWrapperProps {
 export default function DashboardWrapper({ children }: DashboardWrapperProps) {
   const pathname = usePathname();
   // Use centralized user hook
-  const { name, role, isAuthenticated, logout } = useUser();
+  const { name, role, isAuthenticated, logout, image } = useUser();
 
   // State management
   const [open, setOpen] = useState(true);
@@ -543,12 +543,13 @@ export default function DashboardWrapper({ children }: DashboardWrapperProps) {
                     }}
                     className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
                   >
-                    <div className="w-10 h-10 rounded-full bg-pink-100 flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center shrink-0 border border-border">
                       <Image
-                        src="/images/user.webp"
-                        alt="User"
+                        src={image || "/images/user.webp"}
+                        alt={name || "User"}
                         width={40}
                         height={40}
+                        className="object-cover w-full h-full"
                       />
                     </div>
                     <motion.div

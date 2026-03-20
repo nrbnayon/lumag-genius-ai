@@ -29,6 +29,7 @@ export interface LoginUser {
   email_address: string;
   full_name: string;
   role: UserRole;
+  avatar?: string | null;
 }
 
 export interface LoginResponse {

@@ -116,17 +116,9 @@ export function ShoppingList() {
               return (
                 <div
                   key={name}
-                  className="flex items-center justify-between group cursor-pointer py-1"
+                  className="flex items-center justify-start gap-2 group cursor-pointer py-1"
                   onClick={() => toggleRegularMissing(name)}
                 >
-                  <span
-                    className={cn(
-                      "text-base transition-colors",
-                      isMissing ? "text-red-500 font-semibold" : "text-secondary",
-                    )}
-                  >
-                    {name}
-                  </span>
                   <div
                     className={cn(
                       "w-5 h-5 rounded border flex items-center justify-center transition-all shrink-0",
@@ -139,6 +131,14 @@ export function ShoppingList() {
                       <span className="text-red-500 text-md font-black">✕</span>
                     )}
                   </div>
+                  <span
+                    className={cn(
+                      "text-base transition-colors",
+                      isMissing ? "text-red-500 font-semibold" : "text-secondary",
+                    )}
+                  >
+                    {name}
+                  </span>
                 </div>
               );
             })}
@@ -176,18 +176,10 @@ export function ShoppingList() {
                 return (
                   <div
                     key={name}
-                    className="flex items-center justify-between group cursor-pointer py-1"
+                    className="flex items-center justify-start gap-2 group cursor-pointer py-1"
                     onClick={() => toggleSpecialMissing(name)}
                   >
-                    <span
-                      className={cn(
-                        "text-base transition-colors",
-                        isMissing ? "text-red-500 font-semibold" : "text-secondary",
-                      )}
-                    >
-                      {name}
-                    </span>
-                    <div
+                    <div 
                       className={cn(
                         "w-5 h-5 rounded border flex items-center justify-center transition-all shrink-0",
                         isMissing
@@ -199,6 +191,15 @@ export function ShoppingList() {
                         <span className="text-red-500 text-md font-black">✕</span>
                       )}
                     </div>
+                    <span
+                      className={cn(
+                        "text-base transition-colors",
+                        isMissing ? "text-red-500 font-semibold" : "text-secondary",
+                      )}
+                    >
+                      {name}
+                    </span>
+                    
                   </div>
                 );
               })}

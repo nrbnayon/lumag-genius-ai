@@ -37,6 +37,7 @@ const initialRole = getCookieLocal("userRole") as UserRole | null;
 const initialUserId = getCookieLocal("userId");
 const initialEmail = getCookieLocal("userEmail");
 const initialName = getCookieLocal("userName");
+const initialAvatar = getCookieLocal("userAvatar");
 
 const initialState: AuthState = {
   user:
@@ -46,6 +47,7 @@ const initialState: AuthState = {
           email_address: decodeURIComponent(initialEmail),
           full_name: initialName ? decodeURIComponent(initialName) : "",
           role: initialRole,
+          avatar: initialAvatar ? decodeURIComponent(initialAvatar) : undefined,
         }
       : null,
   token: initialToken,

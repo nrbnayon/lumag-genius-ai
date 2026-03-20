@@ -6,6 +6,7 @@ import { StaffMember } from "@/types/staff";
 import { cn } from "@/lib/utils";
 import { useUpdateStaffMutation } from "@/redux/services/staffApi";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface StaffReportModalProps {
   isOpen: boolean;
@@ -28,8 +29,6 @@ export function StaffReportModal({
   isOpen,
   onClose,
   staff,
-  onViewCV,
-  onExport,
 }: StaffReportModalProps) {
   const [updateStaff, { isLoading: isUpdating }] = useUpdateStaffMutation();
   const [schedule, setSchedule] = useState<Record<string, string>>({});
@@ -49,11 +48,6 @@ export function StaffReportModal({
   }, [staff]);
 
   if (!isOpen || !staff) return null;
-
-  const initials = staff.full_name
-    .split(" ")
-    .map((n) => n[0])
-    .join("");
 
   const handleScheduleChange = async (day: string, newShift: string) => {
     const updatedSchedule = { ...schedule, [day]: newShift };
@@ -90,14 +84,27 @@ export function StaffReportModal({
           onClick={onClose}
           className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-600 cursor-pointer z-10 bg-white rounded-full shadow-sm"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5 text-red-600" />
         </button>
 
         <div className="md:p-8 p-4 overflow-y-auto custom-scrollbar">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 shrink-0 rounded-full bg-red-100 flex items-center justify-center text-red-600 text-xl font-bold">
-                {initials}
+              <div className="relative w-16 h-16 shrink-0 rounded-full overflow-hidden border border-gray-100">
+                <Image
+                  src={
+                    staff?.avatar ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                      staff.full_name
+                    )}&background=random&size=256`
+                  }
+                  alt={staff.full_name}
+                  width={128}
+                  height={128}
+                  className="object-cover w-full h-full"
+                  priority
+                  quality={100}
+                />
               </div>
               <div>
                 <h2 className="md:text-2xl text-xl font-bold text-foreground overflow-hidden text-ellipsis line-clamp-1">

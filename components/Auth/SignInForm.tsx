@@ -80,6 +80,7 @@ export const SignInForm = () => {
             email_address: user.email_address,
             full_name: user.full_name,
             role: user.role,
+            avatar: user.avatar || undefined,
           },
           token: tokens.access_token,
           refreshToken: tokens.refresh_token,
@@ -104,6 +105,9 @@ export const SignInForm = () => {
         "userName",
         encodeURIComponent(user.full_name)
       );
+      if (user.avatar) {
+        setCookie("userAvatar", encodeURIComponent(user.avatar));
+      }
       if (data.rememberMe) {
         setCookie("rememberMe", "true");
       }
